@@ -106,12 +106,61 @@ const HubSpokes: React.FC = () => (
   </svg>
 );
 
+const EMAIL_KEY = 'brainspark.rememberedEmail';
+
+/**
+ * Deliberately alarming key name. "Remember me" persists the password as well as
+ * the email for demo convenience, which means a plaintext credential sits in
+ * localStorage where any script on this origin can read it and where it survives
+ * on a shared machine until cleared.
+ *
+ * This is acceptable only because every account here is a mock identity sharing
+ * one throwaway password (see DEMO_PASSWORD). Do not carry this into a build
+ * that talks to a real directory — remember the email and a server-issued
+ * session token instead.
+ */
+const INSECURE_PASSWORD_KEY = 'brainspark.INSECURE_rememberedPassword';
+
+interface Remembered {
+  email: string;
+  password: string;
+}
+
+const readRemembered = (): Remembered => {
+  try {
+    return {
+      email: window.localStorage.getItem(EMAIL_KEY) ?? '',
+      password: window.localStorage.getItem(INSECURE_PASSWORD_KEY) ?? '',
+    };
+  } catch {
+    // Storage can be unavailable (private mode, blocked cookies).
+    return { email: '', password: '' };
+  }
+};
+
+const writeRemembered = (creds: Remembered | null) => {
+  try {
+    if (creds) {
+      window.localStorage.setItem(EMAIL_KEY, creds.email);
+      window.localStorage.setItem(INSECURE_PASSWORD_KEY, creds.password);
+    } else {
+      window.localStorage.removeItem(EMAIL_KEY);
+      window.localStorage.removeItem(INSECURE_PASSWORD_KEY);
+    }
+  } catch {
+    /* non-fatal — remembering is a convenience, not a requirement */
+  }
+};
+
 export const LoginView: React.FC = () => {
   const { login, requestAccess, users } = useApp();
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const remembered = readRemembered();
+
+  const [email, setEmail] = useState(remembered.email);
+  const [password, setPassword] = useState(remembered.password);
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(remembered.email !== '');
   const [error, setError] = useState<string | null>(null);
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
   const [accountsOpen, setAccountsOpen] = useState(false);
@@ -132,6 +181,10 @@ export const LoginView: React.FC = () => {
 
     const result = login(email, password, method);
     setError(result.ok ? null : result.error ?? null);
+
+    if (result.ok) {
+      writeRemembered(rememberMe ? { email: email.trim(), password } : null);
+    }
   };
 
   /** Prefill a demo identity so every role is reachable without memorising emails. */
@@ -288,6 +341,33 @@ export const LoginView: React.FC = () => {
                   </button>
                 </div>
               </label>
+            )}
+
+            {mode === 'signin' && (
+              <div className="pt-0.5">
+                <label className="flex w-fit cursor-pointer items-center gap-2 select-none">
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => {
+                      setRememberMe(e.target.checked);
+                      // Unticking forgets immediately rather than waiting for the
+                      // next successful sign-in.
+                      if (!e.target.checked) writeRemembered(null);
+                    }}
+                    className="h-3.5 w-3.5 cursor-pointer rounded border-slate-300 accent-[#0b3a72] focus:ring-1 focus:ring-[#0b3a72]/30"
+                  />
+                  <span className="text-[11px] font-semibold text-slate-600">
+                    Remember me on this device
+                  </span>
+                </label>
+                {rememberMe && (
+                  <p className="mt-1 pl-5.5 text-[10px] leading-snug text-slate-400">
+                    Saves your email and password in this browser. Use only on a device you
+                    control.
+                  </p>
+                )}
+              </div>
             )}
 
             {error && (
