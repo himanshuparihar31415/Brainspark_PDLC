@@ -15,6 +15,7 @@ import { PromptControlsView } from './components/views/PromptControlsView';
 import { SecurityView } from './components/views/SecurityView';
 import { MyServicesView } from './components/views/MyServicesView';
 import { CommandCentreView } from './components/views/CommandCentreView';
+import { SpecAiView } from './components/views/SpecAiView';
 import { MyTasksView } from './components/views/MyTasksView';
 import { LoginView } from './components/views/LoginView';
 
@@ -45,6 +46,8 @@ const AppContent: React.FC = () => {
         return <MyServicesView />;
       case 'Command Centre':
         return <CommandCentreView />;
+      case 'Spec AI':
+        return <SpecAiView />;
       case 'My Tasks':
         return <MyTasksView />;
       default:

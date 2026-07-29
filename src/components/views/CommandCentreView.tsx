@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import { ModuleKey } from '../../types';
+import { ModuleKey, NavView } from '../../types';
 import { FOCUS_MODULE_BY_ROLE, MODULE_DEFS, moduleDef, relativeTime } from '../../data/modules';
 import { Pipeline } from '../command/Pipeline';
 import { MyTasksQueue, buildMyTasks } from '../command/MyTasksQueue';
@@ -26,6 +26,7 @@ export const CommandCentreView: React.FC = () => {
     agents,
     pipeline,
     addToast,
+    navigateTo,
   } = useApp();
 
   const [minutesAgo, setMinutesAgo] = useState(2);
@@ -58,14 +59,25 @@ export const CommandCentreView: React.FC = () => {
     blockers.length === 0 && reviewRows.length === 0 && myTasks.length === 0;
   const pipelineHealthy = blockers.length === 0 && myTasks.every((t) => t.status !== 'Blocked');
 
+  /** Module workspaces that exist as real destinations rather than a stub. */
+  const WORKSPACE_ROUTE: Partial<Record<ModuleKey, NavView>> = { specai: 'Spec AI' };
+
   const openWorkspace = (module: ModuleKey) => {
     const def = moduleDef(module);
+    const route = WORKSPACE_ROUTE[module];
+
+    if (route) {
+      // The workspace enforces its own read-only rule for non-owning personas.
+      navigateTo(route);
+      return;
+    }
+
     const readOnly = !ownedModules.includes(module);
     addToast(
       readOnly
         ? `You have read-only access to this workspace. (${def.name})`
-        : `Opening ${def.name} workspace…`,
-      readOnly ? 'info' : 'success'
+        : `${def.name} workspace is not built yet.`,
+      'info'
     );
   };
 

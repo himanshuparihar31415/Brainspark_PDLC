@@ -41,6 +41,9 @@ export const NAV_VISIBILITY: Record<NavView, Role[]> = {
   'My Services': PDLC_ROLES,
   'Command Centre': ['Project Admin', ...PDLC_ROLES],
   'My Tasks': ['Project Admin', ...PDLC_ROLES],
+  // Module workspace: reached from the Command Centre doors, not the sidebar.
+  // PM and Architect own it; everyone else opens it read-only.
+  'Spec AI': ['Project Admin', ...PDLC_ROLES],
 };
 
 export const isGovernanceRole = (role: Role) => GOVERNANCE_ROLES.includes(role);
