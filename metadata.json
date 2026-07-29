@@ -1,0 +1,6 @@
+{
+  "name": "BrainSpark Governance Platform",
+  "description": "AI-Native PDLC Operating System & Governance Platform featuring multi-tenant controls, agent registry, golden evaluations, prompt versioning, security & audit logs, and project orchestration.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
