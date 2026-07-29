@@ -39,7 +39,7 @@ export const NAV_VISIBILITY: Record<NavView, Role[]> = {
   'Prompt Controls': TENANT_ROLES,
   Security: TENANT_ROLES,
   'My Services': PDLC_ROLES,
-  Orchestration: ['Project Admin', ...PDLC_ROLES],
+  'Command Centre': ['Project Admin', ...PDLC_ROLES],
   'My Tasks': ['Project Admin', ...PDLC_ROLES],
 };
 
@@ -57,7 +57,7 @@ export const canAccessNav = (role: Role, nav: NavView) => NAV_VISIBILITY[nav].in
 
 /** Where a role lands on sign-in, or after a role switch invalidates the current view. */
 export const landingNavForRole = (role: Role): NavView =>
-  isGovernanceRole(role) ? 'Dashboard' : 'My Services';
+  isGovernanceRole(role) ? 'Dashboard' : 'Command Centre';
 
 /**
  * Scope a role operates at, narrowed to whatever the signed-in identity is

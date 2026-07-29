@@ -45,7 +45,7 @@ export const Sidebar: React.FC = () => {
     { label: 'Prompt Controls', icon: Terminal },
     { label: 'Security', icon: ShieldCheck },
     { label: 'My Services', icon: Sparkles },
-    { label: 'Orchestration', icon: GitMerge },
+    { label: 'Command Centre', icon: GitMerge },
     {
       label: 'My Tasks',
       icon: CheckSquare,

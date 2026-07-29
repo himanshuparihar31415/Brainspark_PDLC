@@ -1,5 +1,6 @@
 import {
   MetricUnit,
+  Role,
   ModuleActivity,
   ModuleDef,
   ModuleKey,
@@ -24,6 +25,11 @@ export const MODULE_DEFS: ModuleDef[] = [
     secondary: { label: 'pushed to tracker', unit: 'count' },
     quality: { label: 'Avg story quality', unit: 'score' },
     pooledRoles: ['Product Manager'],
+    pipeline: {
+      unit: 'stories',
+      completionPhrase: 'stories finalized',
+      workspaceSubLabel: 'Requirements & architecture',
+    },
   },
   {
     key: 'design',
@@ -34,6 +40,11 @@ export const MODULE_DEFS: ModuleDef[] = [
     secondary: { label: 'accepted', unit: 'count' },
     quality: { label: 'Avg design consistency', unit: 'score' },
     pooledRoles: ['Designer'],
+    pipeline: {
+      unit: 'artifacts',
+      completionPhrase: 'artifacts approved',
+      workspaceSubLabel: 'UX & design artifacts',
+    },
   },
   {
     key: 'codeiq',
@@ -44,6 +55,11 @@ export const MODULE_DEFS: ModuleDef[] = [
     secondary: { label: 'test suites generated', unit: 'count' },
     quality: { label: 'Avg code-scan pass rate', unit: 'percent' },
     pooledRoles: ['Tech Lead'],
+    pipeline: {
+      unit: 'PRs',
+      completionPhrase: 'merged',
+      workspaceSubLabel: 'Code intelligence & scaffolding',
+    },
   },
   {
     key: 'intelliqa',
@@ -55,6 +71,11 @@ export const MODULE_DEFS: ModuleDef[] = [
     quality: { label: 'Avg defect-detection rate', unit: 'percent' },
     // QA capacity is the classic tenant-level shared pool.
     pooledRoles: ['QA Manager', 'QA Engineer'],
+    pipeline: {
+      unit: 'test cases',
+      completionPhrase: 'passed',
+      workspaceSubLabel: 'Test automation & QA',
+    },
   },
   {
     key: 'release',
@@ -65,6 +86,11 @@ export const MODULE_DEFS: ModuleDef[] = [
     secondary: { label: 'deploy success rate', unit: 'percent' },
     quality: { label: 'Avg lead time to release', unit: 'days' },
     pooledRoles: ['Release Manager'],
+    pipeline: {
+      unit: 'checks',
+      completionPhrase: 'readiness checks cleared',
+      workspaceSubLabel: 'Release readiness',
+    },
   },
 ];
 
@@ -185,4 +211,37 @@ export const formatUsd = (n: number): string => `$${Math.round(n).toLocaleString
 export const trendPct = (current: number, previous: number): number => {
   if (previous === 0) return 0;
   return Math.round(((current - previous) / previous) * 1000) / 10;
+};
+
+/**
+ * The module a persona's Command Centre foregrounds. Everyone else's phases stay
+ * collapsed as context. A Project Admin gets no focus — all five carry equal
+ * weight beneath their governance tiles.
+ */
+export const FOCUS_MODULE_BY_ROLE: Partial<Record<Role, ModuleKey>> = {
+  'Product Manager': 'specai',
+  Architect: 'specai',
+  Designer: 'design',
+  'Tech Lead': 'codeiq',
+  Developer: 'codeiq',
+  'QA Manager': 'intelliqa',
+  'QA Engineer': 'intelliqa',
+  'Release Manager': 'release',
+};
+
+/** Thresholds past which the Command Centre escalates a value to amber / red. */
+export const STALE_DAYS = 4;
+export const ITEM_STATUS_DAYS = 3;
+export const BLOCKED_DAYS_WARN = 2;
+export const BLOCKED_DAYS_HARD = 4;
+export const REVIEW_HOURS_WARN = 24;
+
+/** "2 min ago" style stamp from a minutes-ago number. */
+export const relativeTime = (minutesAgo: number): string => {
+  if (minutesAgo < 1) return 'just now';
+  if (minutesAgo < 60) return `${minutesAgo} min ago`;
+  const hours = Math.floor(minutesAgo / 60);
+  if (hours < 24) return `${hours} ${hours === 1 ? 'hour' : 'hours'} ago`;
+  const days = Math.floor(hours / 24);
+  return `${days} ${days === 1 ? 'day' : 'days'} ago`;
 };

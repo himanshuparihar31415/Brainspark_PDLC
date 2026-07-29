@@ -32,7 +32,7 @@ export type NavView =
   | 'Prompt Controls'
   | 'Security'
   | 'My Services'
-  | 'Orchestration'
+  | 'Command Centre'
   | 'My Tasks';
 
 /**
@@ -264,24 +264,47 @@ export interface Task {
   reviewHoursOpen?: number;
 }
 
-export interface OrchestrationPhase {
+// ─────────────────────────────── Command Centre ───────────────────────────────
+
+/**
+ * Phase status as the Command Centre presents it. `Waiting` is distinct from
+ * `Blocked`: blocked means the work is stuck, waiting means the agent service
+ * behind the phase is unavailable.
+ */
+export type PhaseStatus = 'Not started' | 'In progress' | 'Blocked' | 'Waiting' | 'Complete';
+
+export type ItemStatus = 'To do' | 'In progress' | 'Blocked' | 'In review' | 'Done';
+
+export interface PhaseItem {
   id: string;
-  name: string;
-  agentService: string;
-  description: string;
-  status: 'Completed' | 'In Progress' | 'Blocked' | 'Pending';
-  completionPercent: number;
-  activeArtifacts: number;
-  blockers?: string[];
-  currentTask?: string;
-  /** Structured blocker rows for the Project Admin triage rail. */
-  blockerDetails?: BlockerDetail[];
+  title: string;
+  status: ItemStatus;
+  daysInStatus: number;
+  owner: string;
 }
 
-export interface BlockerDetail {
-  item: string;
-  owner: string;
-  hoursBlocked: number;
+/**
+ * One module's phase within one project's pipeline. Cards render only for the
+ * modules a project actually uses, so absence here means "omit the card".
+ */
+export interface PipelinePhase {
+  id: string;
+  projectId: string;
+  module: ModuleKey;
+  status: PhaseStatus;
+  /** Completion numerator / denominator, in the module's own unit. */
+  done: number;
+  total: number;
+  /** Items advanced this week — the lead "movement" line. */
+  movementThisWeek: number;
+  /** Days since anything moved; drives the stale flag. */
+  daysSinceChange: number;
+  /** Role accountable for this phase. */
+  ownerRole: Role;
+  /** Capability name shown when status is `Waiting`. */
+  unavailableCapability?: string;
+  items: PhaseItem[];
+  blockedBy?: string;
 }
 
 /** The five capability modules the platform rolls activity up by. */
@@ -294,12 +317,22 @@ export interface ModuleMetricDef {
   unit: MetricUnit;
 }
 
+/** Command Centre wording for a module — the completion denominator differs per module. */
+export interface ModulePipelineCopy {
+  /** Noun used in the movement line: "+3 stories this week". */
+  unit: string;
+  /** Verb phrase completing "{done} / {total} …": "stories finalized". */
+  completionPhrase: string;
+  /** Sub-label on the workspace tile. */
+  workspaceSubLabel: string;
+}
+
 export interface ModuleDef {
   key: ModuleKey;
   name: string;
   /** Matching AgentService.id, so cards can link to the registry. */
   agentId: string;
-  /** Substring matched against OrchestrationPhase.name for the project strip. */
+  /** Substring matched against a task's free-text module name. */
   phaseMatch: string;
   primary: ModuleMetricDef;
   secondary: ModuleMetricDef;
@@ -307,6 +340,7 @@ export interface ModuleDef {
   quality: ModuleMetricDef;
   /** Roles whose shared pool this module draws on — powers contention chips. */
   pooledRoles: Role[];
+  pipeline: ModulePipelineCopy;
 }
 
 /** One project's activity within one module. Cards aggregate these. */

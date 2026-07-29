@@ -12,7 +12,6 @@ import {
   AuditLogEntry,
   NotificationItem,
   Task,
-  OrchestrationPhase,
   UserAccount,
   ModuleActivity,
   AgentUsage,
@@ -340,7 +339,7 @@ export const INITIAL_TEAM_MEMBERS: TeamMember[] = [
     roles: ['Project Admin', 'Product Manager'],
     tenantId: 't-incedo',
     projectId: 'p-mobile-v2',
-    moduleAccess: ['SpecAI', 'Orchestration', 'My Tasks'],
+    moduleAccess: ['SpecAI', 'Command Centre', 'My Tasks'],
     status: 'Assigned',
     allocationPercent: 80,
     drawnOnByProjects: ['Mobile Banking V2', 'Cloud Core Modernization'],
@@ -443,7 +442,7 @@ export const INITIAL_CONNECTORS: Connector[] = [
     id: 'conn-jira',
     name: 'Jira',
     category: 'Issue Tracking',
-    usedByModules: ['SpecAI', 'Orchestration', 'My Tasks'],
+    usedByModules: ['SpecAI', 'Command Centre', 'My Tasks'],
     enabledTenant: true,
     activatedProject: true,
     health: '● Connected',
@@ -977,81 +976,7 @@ export const INITIAL_TASKS: Task[] = [
   },
 ];
 
-export const INITIAL_ORCHESTRATION_PHASES: OrchestrationPhase[] = [
-  {
-    id: 'phase-specai',
-    name: '1. Intake & Requirements (SpecAI)',
-    agentService: 'SpecAI Requirement Engine',
-    description: 'Turns client briefs & audio into structured Jira user stories with acceptance criteria.',
-    status: 'Completed',
-    completionPercent: 100,
-    activeArtifacts: 24,
-    currentTask: 'All intake stories approved by PM Sarah Jenkins',
-  },
-  {
-    id: 'phase-arch',
-    name: '2. System & API Architecture (Architect Hub)',
-    agentService: 'Architect Hub Diagrammer',
-    description: 'Generates Mermaid sequence diagrams, ER graphs, and OpenAPI schemas.',
-    status: 'Completed',
-    completionPercent: 100,
-    activeArtifacts: 12,
-    currentTask: 'OpenAPI 3.1 Spec generated & checked against domain rules',
-  },
-  {
-    id: 'phase-design',
-    name: '3. Interface & UX (DesignAI)',
-    agentService: 'DesignAI Token & UI Synthesizer',
-    description: 'Enforces WCAG 2.1 AA accessibility ratios and design system token mapping.',
-    status: 'Completed',
-    completionPercent: 100,
-    activeArtifacts: 18,
-    currentTask: 'Tailwind CSS token sync complete',
-  },
-  {
-    id: 'phase-codeiq',
-    name: '4. Generation & Code Review (CodeIQ)',
-    agentService: 'CodeIQ Generation & Review',
-    description: 'Synthesizes clean TypeScript code, AST security scans, and unit tests.',
-    status: 'In Progress',
-    completionPercent: 68,
-    activeArtifacts: 42,
-    currentTask: 'Generating BiometricAuthModal.tsx and JWT handler middleware',
-  },
-  {
-    id: 'phase-intelliqa',
-    name: '5. Quality Engineering (IntelliQA)',
-    agentService: 'IntelliQA Suite Generator',
-    description: 'Automates Playwright E2E suites and regression matrix validation.',
-    status: 'Blocked',
-    completionPercent: 40,
-    activeArtifacts: 8,
-    blockers: ['IntelliQA Agent Service is currently Held out of Registry due to Evaluation Failure'],
-    blockerDetails: [
-      {
-        item: 'IntelliQA Suite Generator held out of Registry (evaluation failure)',
-        owner: 'Alex Rivera',
-        hoursBlocked: 31,
-      },
-      {
-        item: 'Playwright selector syntax fix awaiting QA Manager sign-off',
-        owner: 'Jordan Vance',
-        hoursBlocked: 14,
-      },
-    ],
-    currentTask: 'Awaiting QA Manager sign-off on Playwright selector syntax fix',
-  },
-  {
-    id: 'phase-release',
-    name: '6. Release Confidence (Release Pulse)',
-    agentService: 'Release Pulse Auditor',
-    description: 'Generates SOC2 evidence packages, release notes, and canary monitoring specs.',
-    status: 'Pending',
-    completionPercent: 0,
-    activeArtifacts: 0,
-    currentTask: 'Waiting for Phase 5 completion',
-  },
-];
+
 
 /**
  * Per-project activity inside each capability module. Module roll-up cards

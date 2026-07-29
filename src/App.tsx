@@ -14,7 +14,7 @@ import { EvaluationView } from './components/views/EvaluationView';
 import { PromptControlsView } from './components/views/PromptControlsView';
 import { SecurityView } from './components/views/SecurityView';
 import { MyServicesView } from './components/views/MyServicesView';
-import { OrchestrationView } from './components/views/OrchestrationView';
+import { CommandCentreView } from './components/views/CommandCentreView';
 import { MyTasksView } from './components/views/MyTasksView';
 import { LoginView } from './components/views/LoginView';
 
@@ -43,8 +43,8 @@ const AppContent: React.FC = () => {
         return <SecurityView />;
       case 'My Services':
         return <MyServicesView />;
-      case 'Orchestration':
-        return <OrchestrationView />;
+      case 'Command Centre':
+        return <CommandCentreView />;
       case 'My Tasks':
         return <MyTasksView />;
       default:

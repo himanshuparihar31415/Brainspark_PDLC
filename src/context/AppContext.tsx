@@ -14,12 +14,12 @@ import {
   AuditLogEntry,
   NotificationItem,
   Task,
-  OrchestrationPhase,
   UserAccount,
   NavView,
   NavIntent,
   ModuleActivity,
   AgentUsage,
+  PipelinePhase,
 } from '../types';
 import { canAccessNav, canDeprecateAgent, landingNavForRole, scopeForRole } from '../data/rbac';
 import {
@@ -36,10 +36,10 @@ import {
   INITIAL_AUDIT_LOGS,
   INITIAL_NOTIFICATIONS,
   INITIAL_TASKS,
-  INITIAL_ORCHESTRATION_PHASES,
   INITIAL_MODULE_ACTIVITY,
   INITIAL_AGENT_USAGE,
 } from '../data/mockData';
+import { INITIAL_PIPELINE } from '../data/pipelineData';
 
 export type { NavView };
 
@@ -92,9 +92,9 @@ interface AppContextType {
   auditLogs: AuditLogEntry[];
   notifications: NotificationItem[];
   tasks: Task[];
-  orchestrationPhases: OrchestrationPhase[];
   moduleActivity: ModuleActivity[];
   agentUsage: AgentUsage[];
+  pipeline: PipelinePhase[];
 
   // Mutations
   createTenant: (name: string, adminEmail: string, inheritDefaults: boolean) => void;
@@ -149,9 +149,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [tasks, setTasks] = useState<Task[]>(INITIAL_TASKS);
   const [moduleActivity] = useState<ModuleActivity[]>(INITIAL_MODULE_ACTIVITY);
   const [agentUsage] = useState<AgentUsage[]>(INITIAL_AGENT_USAGE);
-  const [orchestrationPhases, setOrchestrationPhases] = useState<OrchestrationPhase[]>(
-    INITIAL_ORCHESTRATION_PHASES
-  );
+  const [pipeline] = useState<PipelinePhase[]>(INITIAL_PIPELINE);
 
   const addToast = (message: string, type: 'success' | 'info' | 'error' = 'success') => {
     const id = 'toast-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4);
@@ -588,9 +586,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         auditLogs,
         notifications,
         tasks,
-        orchestrationPhases,
         moduleActivity,
         agentUsage,
+        pipeline,
         createTenant,
         deactivateTenant,
         suspendTenant,
