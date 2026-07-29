@@ -13,6 +13,7 @@ import {
   Check,
   Calendar,
   Layers,
+  Building2,
 } from 'lucide-react';
 
 export const ProjectsView: React.FC = () => {
@@ -24,6 +25,7 @@ export const ProjectsView: React.FC = () => {
     setActiveNav,
     tenants,
     currentScope,
+    currentRole,
     navIntent,
     moduleActivity,
   } = useApp();
@@ -41,10 +43,18 @@ export const ProjectsView: React.FC = () => {
   const [selectedTemplate, setSelectedTemplate] = useState('None (blank project)');
   const [selectedTenantId, setSelectedTenantId] = useState(currentScope.tenantId || 't-incedo');
 
-  const scopedProjects =
-    currentScope.type === 'tenant' && currentScope.tenantId
-      ? projects.filter((p) => p.tenantId === currentScope.tenantId)
-      : projects;
+  // Only a Super Admin spans tenants, so only they get the tenant filter — for
+  // a Tenant Admin it would be a locked single-option dropdown.
+  const canFilterByTenant = currentRole === 'Super Admin';
+  const [tenantFilter, setTenantFilter] = useState<string>(currentScope.tenantId ?? 'all');
+
+  const scopedProjects = canFilterByTenant
+    ? tenantFilter === 'all'
+      ? projects
+      : projects.filter((p) => p.tenantId === tenantFilter)
+    : currentScope.type === 'tenant' && currentScope.tenantId
+    ? projects.filter((p) => p.tenantId === currentScope.tenantId)
+    : projects;
 
   // A dashboard tile or module card can arrive here with a pre-filter attached.
   const moduleIntent = navIntent?.projectModule;
@@ -61,6 +71,12 @@ export const ProjectsView: React.FC = () => {
       if (navIntent?.projectSort === 'spend-desc') return b.spend30d - a.spend30d;
       return 0;
     });
+
+  const filterLabel = canFilterByTenant
+    ? tenantFilter === 'all'
+      ? 'All Tenants'
+      : tenants.find((t) => t.id === tenantFilter)?.name ?? 'Tenant'
+    : currentScope.tenantName || 'All Tenants';
 
   const handleCreateSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,16 +107,49 @@ export const ProjectsView: React.FC = () => {
         <div>
           <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">Projects</h1>
           <p className="text-xs md:text-sm text-slate-500 mt-1">
-            Projects active in scope: {currentScope.tenantName || 'All Tenants'}
+            Projects active in scope: {filterLabel}
+            <span className="text-slate-400">
+              {' '}
+              · {filteredProjects.length} {filteredProjects.length === 1 ? 'project' : 'projects'}
+            </span>
           </p>
         </div>
-        <button
-          onClick={() => setCreateModalOpen(true)}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-md shadow-indigo-600/20 transition-all cursor-pointer shrink-0"
-        >
-          <Plus className="w-4 h-4" />
-          <span>+ Create project</span>
-        </button>
+        <div className="flex items-center gap-2 shrink-0">
+          {canFilterByTenant && (
+            <label className="flex items-center gap-1.5">
+              <Building2 className="w-3.5 h-3.5 text-slate-400" />
+              <select
+                value={tenantFilter}
+                onChange={(e) => setTenantFilter(e.target.value)}
+                className="cursor-pointer rounded-xl border border-slate-200 bg-white px-2.5 py-2 text-xs font-semibold text-slate-800 outline-none focus:border-indigo-600"
+              >
+                <option value="all">All tenants ({projects.length})</option>
+                {tenants.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name} ({projects.filter((p) => p.tenantId === t.id).length})
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+
+          {canFilterByTenant && tenantFilter !== 'all' && (
+            <button
+              onClick={() => setTenantFilter('all')}
+              className="cursor-pointer text-xs font-semibold text-indigo-600 hover:underline"
+            >
+              Clear
+            </button>
+          )}
+
+          <button
+            onClick={() => setCreateModalOpen(true)}
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-md shadow-indigo-600/20 transition-all cursor-pointer shrink-0"
+          >
+            <Plus className="w-4 h-4" />
+            <span>+ Create project</span>
+          </button>
+        </div>
       </div>
 
       <LandingNote />
@@ -109,7 +158,11 @@ export const ProjectsView: React.FC = () => {
       <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
         {filteredProjects.length === 0 ? (
           <div className="p-12 text-center text-slate-500 text-xs">
-            No projects in this tenant yet.
+            {moduleIntent
+              ? 'No projects in this scope use that module.'
+              : canFilterByTenant && tenantFilter !== 'all'
+              ? `No projects in ${filterLabel} yet.`
+              : 'No projects in this tenant yet.'}
           </div>
         ) : (
           <div className="overflow-x-auto">
