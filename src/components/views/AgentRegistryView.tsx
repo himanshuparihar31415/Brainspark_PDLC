@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { AgentService } from '../../types';
 import { canAccessNav, canDeprecateAgent } from '../../data/rbac';
+import { ScopeFilterBar, useScopeFilter } from '../common/ScopeFilterBar';
+import { MODULE_DEFS } from '../../data/modules';
 import {
   Cpu,
   AlertTriangle,
@@ -16,7 +18,9 @@ import {
 } from 'lucide-react';
 
 export const AgentRegistryView: React.FC = () => {
-  const { agents, deprecateAgent, setActiveNav, currentRole } = useApp();
+  const { agents, deprecateAgent, setActiveNav, currentRole, moduleActivity, projects } = useApp();
+
+  const [scopeFilter, setScopeFilter] = useScopeFilter();
 
   const canDeprecate = canDeprecateAgent(currentRole);
   // Version history lives in Prompt Controls, which is tenant-scoped.
@@ -41,7 +45,27 @@ export const AgentRegistryView: React.FC = () => {
     return 0;
   });
 
+  // Scope narrows the registry to the agents actually exercised by the projects
+  // in view, so a tenant or project filter answers "which agents do we depend on".
+  const scopedProjectIds = projects
+    .filter((p) => {
+      if (currentRole === 'Super Admin' && scopeFilter.tenantId !== 'all' && p.tenantId !== scopeFilter.tenantId)
+        return false;
+      if (scopeFilter.projectId !== 'all' && p.id !== scopeFilter.projectId) return false;
+      return true;
+    })
+    .map((p) => p.id);
+
+  const scopeNarrowed = scopeFilter.tenantId !== 'all' || scopeFilter.projectId !== 'all';
+  const agentIdsInScope = new Set(
+    moduleActivity
+      .filter((m) => scopedProjectIds.includes(m.projectId))
+      .map((m) => MODULE_DEFS.find((d) => d.key === m.module)?.agentId)
+      .filter((id): id is string => Boolean(id))
+  );
+
   const filteredAgents = sortedAgents.filter((a) => {
+    if (scopeNarrowed && !agentIdsInScope.has(a.id)) return false;
     if (selectedModule !== 'All' && a.module !== selectedModule) return false;
     if (selectedStatus !== 'All' && a.status !== selectedStatus) return false;
     if (filterSearch && !a.capability.toLowerCase().includes(filterSearch.toLowerCase())) return false;
@@ -67,6 +91,13 @@ export const AgentRegistryView: React.FC = () => {
           Every agent-backed capability wired into the platform via API/MCP. Registry status is the runtime gate — only Active services can be invoked.
         </p>
       </div>
+
+      <ScopeFilterBar
+        value={scopeFilter}
+        onChange={setScopeFilter}
+        resultCount={filteredAgents.length}
+        resultNoun="agent services"
+      />
 
       {!canDeprecate && (
         <div className="flex items-start gap-2.5 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3">

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { PdlcRole, TeamMember } from '../../types';
 import { LandingNote } from '../common/LandingNote';
+import { ScopeFilterBar, useScopeFilter } from '../common/ScopeFilterBar';
 import {
   Users,
   UserPlus,
@@ -22,12 +23,17 @@ export const TeamView: React.FC = () => {
     navIntent,
   } = useApp();
 
-  // Roster is scoped: platform sees everyone, a tenant or project scope only sees
-  // the people bound to it.
+  const [scopeFilter, setScopeFilter] = useScopeFilter();
+
+  // Roster is scoped twice over: the header scope sets the ceiling, the filter
+  // narrows within it. A Super Admin's ceiling is everything.
   const teamMembers = allTeamMembers.filter((m) => {
-    if (currentScope.type === 'platform') return true;
-    if (currentScope.type === 'tenant') return m.tenantId === currentScope.tenantId;
-    return m.projectId === currentScope.projectId;
+    if (currentScope.type === 'tenant' && m.tenantId !== currentScope.tenantId) return false;
+    if (currentScope.type === 'project' && m.projectId !== currentScope.projectId) return false;
+    if (currentRole === 'Super Admin' && scopeFilter.tenantId !== 'all' && m.tenantId !== scopeFilter.tenantId)
+      return false;
+    if (scopeFilter.projectId !== 'all' && m.projectId !== scopeFilter.projectId) return false;
+    return true;
   });
 
   // A Tenant Admin arriving from the headcount tile lands on the shared pool —
@@ -89,6 +95,13 @@ export const TeamView: React.FC = () => {
       </div>
 
       <LandingNote />
+
+      <ScopeFilterBar
+        value={scopeFilter}
+        onChange={setScopeFilter}
+        resultCount={teamMembers.length}
+        resultNoun="people"
+      />
 
       {/* Tabs */}
       <div className="flex items-center gap-2 border-b border-slate-200">

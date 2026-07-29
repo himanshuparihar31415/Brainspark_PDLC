@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
+import { ScopeFilterBar, useScopeFilter } from '../common/ScopeFilterBar';
 import { Role } from '../../types';
 import {
   ShieldCheck,
@@ -27,8 +28,10 @@ export const SecurityView: React.FC = () => {
     auditLogs,
     exportEvidencePackage,
     currentScope,
+    tenants,
   } = useApp();
 
+  const [scopeFilter, setScopeFilter] = useScopeFilter();
   const [activeTab, setActiveTab] = useState<'rbac' | 'sessions' | 'sensitive' | 'audit' | 'compliance'>('rbac');
   const [explainUserDrawer, setExplainUserDrawer] = useState<string | null>(null);
 
@@ -51,6 +54,12 @@ export const SecurityView: React.FC = () => {
   ];
 
   const filteredAuditLogs = auditLogs.filter((entry) => {
+    // Audit context carries the scope the action was taken at, so the same
+    // tenant / project filter narrows the trail.
+    if (scopeFilter.tenantId !== 'all') {
+      const tenantName = tenants.find((t) => t.id === scopeFilter.tenantId)?.name;
+      if (tenantName && !entry.context.includes(tenantName)) return false;
+    }
     if (actorFilter !== 'All' && entry.actorType !== actorFilter) return false;
     if (auditSearch) {
       const q = auditSearch.toLowerCase();
@@ -72,6 +81,15 @@ export const SecurityView: React.FC = () => {
           Governance controls, RBAC permission matrix, session rules, PII masking, append-only audit trail, and regulatory compliance.
         </p>
       </div>
+
+      {/* Scope narrows the audit trail; the other tabs are policy, not per-tenant records. */}
+      <ScopeFilterBar
+        value={scopeFilter}
+        onChange={setScopeFilter}
+        showProject={false}
+        resultCount={activeTab === 'audit' ? filteredAuditLogs.length : undefined}
+        resultNoun="audit entries"
+      />
 
       {/* Tabs */}
       <div className="flex items-center gap-2 border-b border-slate-200 overflow-x-auto">
