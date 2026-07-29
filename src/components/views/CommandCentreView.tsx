@@ -71,7 +71,7 @@ export const CommandCentreView: React.FC = () => {
 
   if (!activeProject) {
     return (
-      <div className="mx-auto max-w-5xl p-6 md:p-8">
+      <div className="mx-auto max-w-7xl p-6 md:p-8">
         <p className="rounded-xl border border-slate-200 bg-white px-4 py-8 text-center text-xs text-slate-500">
           No project is in scope.
         </p>
@@ -83,7 +83,7 @@ export const CommandCentreView: React.FC = () => {
   const emptyProject = projectPhases.every((p) => p.done === 0 && p.status === 'Not started');
 
   return (
-    <div className="mx-auto max-w-5xl animate-in fade-in space-y-7 p-6 duration-200 md:p-8">
+    <div className="mx-auto max-w-7xl animate-in fade-in space-y-7 p-6 duration-200 md:p-8">
       {/* ── Zone header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
