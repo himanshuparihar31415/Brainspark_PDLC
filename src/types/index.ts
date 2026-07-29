@@ -66,6 +66,11 @@ export interface Tenant {
   projectsCount: number;
   headcount: number;
   spend30d: number;
+  /** Prior period spend — powers the "vs last period" trend in breakdowns. */
+  spendPrev30d: number;
+  tokens30d: number;
+  /** Spend envelope the Tenant Admin is accountable to. */
+  budget30d: number;
   status: TenantStatus;
   adminEmail: string;
   createdAt: string;
@@ -83,6 +88,8 @@ export interface Project {
   phase: string;
   completion: number;
   spend30d: number;
+  spendPrev30d: number;
+  tokens30d: number;
   lifecycle: ProjectLifecycle;
   description: string;
   startDate: string;
@@ -250,6 +257,11 @@ export interface Task {
   dueDate: string;
   artifactTitle?: string;
   artifactSummary?: string;
+  /** Attributed AI spend / tokens — feeds the project-level cost + token axes. */
+  costUsd?: number;
+  tokens?: number;
+  /** Hours this task has been sitting in review; drives the awaiting-review queue. */
+  reviewHoursOpen?: number;
 }
 
 export interface OrchestrationPhase {
@@ -262,4 +274,75 @@ export interface OrchestrationPhase {
   activeArtifacts: number;
   blockers?: string[];
   currentTask?: string;
+  /** Structured blocker rows for the Project Admin triage rail. */
+  blockerDetails?: BlockerDetail[];
+}
+
+export interface BlockerDetail {
+  item: string;
+  owner: string;
+  hoursBlocked: number;
+}
+
+/** The five capability modules the platform rolls activity up by. */
+export type ModuleKey = 'specai' | 'design' | 'codeiq' | 'intelliqa' | 'release';
+
+export type MetricUnit = 'count' | 'percent' | 'score' | 'days';
+
+export interface ModuleMetricDef {
+  label: string;
+  unit: MetricUnit;
+}
+
+export interface ModuleDef {
+  key: ModuleKey;
+  name: string;
+  /** Matching AgentService.id, so cards can link to the registry. */
+  agentId: string;
+  /** Substring matched against OrchestrationPhase.name for the project strip. */
+  phaseMatch: string;
+  primary: ModuleMetricDef;
+  secondary: ModuleMetricDef;
+  /** The module's headline quality metric. */
+  quality: ModuleMetricDef;
+  /** Roles whose shared pool this module draws on — powers contention chips. */
+  pooledRoles: Role[];
+}
+
+/** One project's activity within one module. Cards aggregate these. */
+export interface ModuleActivity {
+  projectId: string;
+  module: ModuleKey;
+  primary: number;
+  secondary: number;
+  quality: number;
+  /** Quality delta vs last period. */
+  qualityTrend: number;
+  spend30d: number;
+  tokens30d: number;
+}
+
+export interface AgentUsage {
+  agentId: string;
+  spend30d: number;
+  tokens30d: number;
+}
+
+/** A ranked row inside a cost / token breakdown. */
+export interface BreakdownRow {
+  label: string;
+  value: number;
+  sublabel?: string;
+}
+
+/**
+ * Carried alongside a navigation so the destination screen opens pre-filtered.
+ * Cleared once the target view has read it.
+ */
+export interface NavIntent {
+  /** Landing text explaining why the screen looks filtered. */
+  note?: string;
+  teamTab?: 'roster' | 'shared';
+  projectSort?: 'completion-asc' | 'spend-desc';
+  projectModule?: ModuleKey;
 }

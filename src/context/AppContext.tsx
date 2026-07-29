@@ -17,6 +17,9 @@ import {
   OrchestrationPhase,
   UserAccount,
   NavView,
+  NavIntent,
+  ModuleActivity,
+  AgentUsage,
 } from '../types';
 import { canAccessNav, canDeprecateAgent, landingNavForRole, scopeForRole } from '../data/rbac';
 import {
@@ -34,6 +37,8 @@ import {
   INITIAL_NOTIFICATIONS,
   INITIAL_TASKS,
   INITIAL_ORCHESTRATION_PHASES,
+  INITIAL_MODULE_ACTIVITY,
+  INITIAL_AGENT_USAGE,
 } from '../data/mockData';
 
 export type { NavView };
@@ -64,6 +69,10 @@ interface AppContextType {
   setCurrentScope: (scope: ScopeContext) => void;
   activeNav: NavView;
   setActiveNav: (nav: NavView) => void;
+  /** Navigate and hand the destination screen a pre-filter. */
+  navigateTo: (nav: NavView, intent?: NavIntent) => void;
+  navIntent: NavIntent | null;
+  clearNavIntent: () => void;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
   toasts: ToastMessage[];
@@ -84,6 +93,8 @@ interface AppContextType {
   notifications: NotificationItem[];
   tasks: Task[];
   orchestrationPhases: OrchestrationPhase[];
+  moduleActivity: ModuleActivity[];
+  agentUsage: AgentUsage[];
 
   // Mutations
   createTenant: (name: string, adminEmail: string, inheritDefaults: boolean) => void;
@@ -119,6 +130,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     tenantName: 'All Tenants',
   });
   const [activeNav, setActiveNavState] = useState<NavView>('Dashboard');
+  const [navIntent, setNavIntent] = useState<NavIntent | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
@@ -135,6 +147,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>(INITIAL_AUDIT_LOGS);
   const [notifications, setNotifications] = useState<NotificationItem[]>(INITIAL_NOTIFICATIONS);
   const [tasks, setTasks] = useState<Task[]>(INITIAL_TASKS);
+  const [moduleActivity] = useState<ModuleActivity[]>(INITIAL_MODULE_ACTIVITY);
+  const [agentUsage] = useState<AgentUsage[]>(INITIAL_AGENT_USAGE);
   const [orchestrationPhases, setOrchestrationPhases] = useState<OrchestrationPhase[]>(
     INITIAL_ORCHESTRATION_PHASES
   );
@@ -162,8 +176,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       addToast(`Your ${currentRole} role does not have access to ${nav}.`, 'error');
       return;
     }
+    setNavIntent(null);
     setActiveNavState(nav);
   };
+
+  const navigateTo = (nav: NavView, intent?: NavIntent) => {
+    if (!canAccessNav(currentRole, nav)) {
+      addToast(`Your ${currentRole} role does not have access to ${nav}.`, 'error');
+      return;
+    }
+    setNavIntent(intent ?? null);
+    setActiveNavState(nav);
+  };
+
+  const clearNavIntent = () => setNavIntent(null);
 
   const addAuditLog = (action: string, target: string, input: string, output: string) => {
     const entry: AuditLogEntry = {
@@ -290,6 +316,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       projectsCount: 0,
       headcount: 1,
       spend30d: 0,
+      spendPrev30d: 0,
+      tokens30d: 0,
+      budget30d: 10000,
       status: 'Active',
       adminEmail,
       createdAt: new Date().toISOString().split('T')[0],
@@ -328,6 +357,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       phase: 'SpecAI Requirements',
       completion: 5,
       spend30d: 0,
+      spendPrev30d: 0,
+      tokens30d: 0,
       lifecycle: 'Active',
       description: data.description || 'Project created in BrainSpark platform.',
       startDate: data.startDate || new Date().toISOString().split('T')[0],
@@ -537,6 +568,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setCurrentScope,
         activeNav,
         setActiveNav,
+        navigateTo,
+        navIntent,
+        clearNavIntent,
         searchQuery,
         setSearchQuery,
         toasts,
@@ -555,6 +589,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         notifications,
         tasks,
         orchestrationPhases,
+        moduleActivity,
+        agentUsage,
         createTenant,
         deactivateTenant,
         suspendTenant,

@@ -14,6 +14,8 @@ import {
   Task,
   OrchestrationPhase,
   UserAccount,
+  ModuleActivity,
+  AgentUsage,
 } from '../types';
 import { ALL_ROLES } from './rbac';
 
@@ -206,6 +208,9 @@ export const INITIAL_TENANTS: Tenant[] = [
     projectsCount: 3,
     headcount: 42,
     spend30d: 14850,
+    spendPrev30d: 13120,
+    tokens30d: 92400000,
+    budget30d: 16000,
     status: 'Active',
     adminEmail: 'sec.admin@incedolabs.com',
     createdAt: '2026-01-15',
@@ -217,6 +222,9 @@ export const INITIAL_TENANTS: Tenant[] = [
     projectsCount: 2,
     headcount: 28,
     spend30d: 8420,
+    spendPrev30d: 9010,
+    tokens30d: 61800000,
+    budget30d: 10000,
     status: 'Active',
     adminEmail: 'admin@acme.com',
     createdAt: '2026-02-01',
@@ -228,6 +236,9 @@ export const INITIAL_TENANTS: Tenant[] = [
     projectsCount: 1,
     headcount: 14,
     spend30d: 3100,
+    spendPrev30d: 4260,
+    tokens30d: 29900000,
+    budget30d: 6000,
     status: 'Suspended',
     adminEmail: 'tech-ops@apexglobal.io',
     createdAt: '2026-03-10',
@@ -245,6 +256,8 @@ export const INITIAL_PROJECTS: Project[] = [
     phase: 'CodeIQ Generation',
     completion: 68,
     spend30d: 6420,
+    spendPrev30d: 5980,
+    tokens30d: 42100000,
     lifecycle: 'Active',
     description: 'Next-generation mobile wealth & trading suite with AI-native assistance.',
     startDate: '2026-04-01',
@@ -260,6 +273,8 @@ export const INITIAL_PROJECTS: Project[] = [
     phase: 'IntelliQA Testing',
     completion: 82,
     spend30d: 5120,
+    spendPrev30d: 5340,
+    tokens30d: 31600000,
     lifecycle: 'Active',
     description: 'Automated portfolio rebalancing and FINRA-compliant recommendation pipeline.',
     startDate: '2026-02-15',
@@ -275,6 +290,8 @@ export const INITIAL_PROJECTS: Project[] = [
     phase: 'Architect Hub',
     completion: 34,
     spend30d: 3310,
+    spendPrev30d: 2410,
+    tokens30d: 18700000,
     lifecycle: 'Active',
     description: 'Migration of legacy mainframe ledgers to AWS serverless event streams.',
     startDate: '2026-05-10',
@@ -289,6 +306,8 @@ export const INITIAL_PROJECTS: Project[] = [
     phase: 'DesignAI Wireframing',
     completion: 45,
     spend30d: 4200,
+    spendPrev30d: 4480,
+    tokens30d: 27300000,
     lifecycle: 'Active',
     description: 'B2B ordering portal with live inventory streaming and automated quotes.',
     startDate: '2026-03-20',
@@ -303,6 +322,8 @@ export const INITIAL_PROJECTS: Project[] = [
     phase: 'SpecAI Requirements',
     completion: 15,
     spend30d: 4220,
+    spendPrev30d: 3120,
+    tokens30d: 24500000,
     lifecycle: 'Active',
     description: 'IoT telemetry ingestion platform for container temperature and tracking.',
     startDate: '2026-06-01',
@@ -845,6 +866,9 @@ export const INITIAL_TASKS: Task[] = [
     priority: 'High',
     status: 'Needs Approval',
     dueDate: '2026-07-30',
+    costUsd: 210,
+    tokens: 1400000,
+    reviewHoursOpen: 19,
     artifactTitle: 'User Story Set: US-MBV2-88 (Biometric Quick Login)',
     artifactSummary: 'Includes FaceID/TouchID fallbacks, JWT token refresh, and FINRA compliant session logging.',
   },
@@ -857,6 +881,8 @@ export const INITIAL_TASKS: Task[] = [
     priority: 'Medium',
     status: 'In Progress',
     dueDate: '2026-07-31',
+    costUsd: 380,
+    tokens: 2600000,
     artifactTitle: 'OpenAPI 3.1 Spec: /api/v2/wealth/transfer',
     artifactSummary: 'Defines schema for wire transfers, validation middleware, and double-entry transaction posting.',
   },
@@ -869,6 +895,8 @@ export const INITIAL_TASKS: Task[] = [
     priority: 'Low',
     status: 'Completed',
     dueDate: '2026-07-28',
+    costUsd: 145,
+    tokens: 900000,
     artifactTitle: 'Design Token Package v2.4',
     artifactSummary: 'Synced 48 color tokens, typography scales, and WCAG AA contrast compliance reports.',
   },
@@ -881,6 +909,9 @@ export const INITIAL_TASKS: Task[] = [
     priority: 'High',
     status: 'Needs Approval',
     dueDate: '2026-07-29',
+    costUsd: 495,
+    tokens: 3100000,
+    reviewHoursOpen: 31,
     artifactTitle: 'Playwright Test Spec: Payment Gateways',
     artifactSummary: 'Failed format compliance threshold on Playwright selector syntax. Review proposed fix.',
   },
@@ -893,6 +924,9 @@ export const INITIAL_TASKS: Task[] = [
     priority: 'High',
     status: 'Needs Approval',
     dueDate: '2026-07-30',
+    costUsd: 1240,
+    tokens: 8900000,
+    reviewHoursOpen: 7,
     artifactTitle: 'PR #482: TransferService refactor + idempotency keys',
     artifactSummary:
       'CodeIQ split the transfer orchestrator into command handlers and added idempotency keys. 94% diff coverage.',
@@ -906,6 +940,8 @@ export const INITIAL_TASKS: Task[] = [
     priority: 'Medium',
     status: 'In Progress',
     dueDate: '2026-08-03',
+    costUsd: 860,
+    tokens: 6200000,
     artifactTitle: 'Patch Set: exponential backoff on ledger sync',
     artifactSummary: 'Adds jittered exponential backoff and circuit breaker around the mainframe ledger adapter.',
   },
@@ -918,6 +954,8 @@ export const INITIAL_TASKS: Task[] = [
     priority: 'Medium',
     status: 'Pending',
     dueDate: '2026-08-01',
+    costUsd: 240,
+    tokens: 1700000,
     artifactTitle: 'Regression Report: RUN-2291 (3 failing scenarios)',
     artifactSummary: 'FaceID enrolment flow times out on Android 15 emulators. Awaiting device-farm rerun.',
   },
@@ -930,6 +968,9 @@ export const INITIAL_TASKS: Task[] = [
     priority: 'High',
     status: 'Needs Approval',
     dueDate: '2026-07-31',
+    costUsd: 320,
+    tokens: 2100000,
+    reviewHoursOpen: 12,
     artifactTitle: 'Release Readiness Report: v2.4.0-rc3',
     artifactSummary:
       'All FINRA evidence attached, 2 medium findings waived with rationale. Requires Release Manager sign-off.',
@@ -986,6 +1027,18 @@ export const INITIAL_ORCHESTRATION_PHASES: OrchestrationPhase[] = [
     completionPercent: 40,
     activeArtifacts: 8,
     blockers: ['IntelliQA Agent Service is currently Held out of Registry due to Evaluation Failure'],
+    blockerDetails: [
+      {
+        item: 'IntelliQA Suite Generator held out of Registry (evaluation failure)',
+        owner: 'Alex Rivera',
+        hoursBlocked: 31,
+      },
+      {
+        item: 'Playwright selector syntax fix awaiting QA Manager sign-off',
+        owner: 'Jordan Vance',
+        hoursBlocked: 14,
+      },
+    ],
     currentTask: 'Awaiting QA Manager sign-off on Playwright selector syntax fix',
   },
   {
@@ -998,4 +1051,54 @@ export const INITIAL_ORCHESTRATION_PHASES: OrchestrationPhase[] = [
     activeArtifacts: 0,
     currentTask: 'Waiting for Phase 5 completion',
   },
+];
+
+/**
+ * Per-project activity inside each capability module. Module roll-up cards
+ * aggregate these rows over whatever tenant / project filter is active, so
+ * narrowing the filter genuinely recomputes every number rather than swapping
+ * in a second set of hardcoded figures.
+ *
+ * A project only appears for the modules it actually uses — absence is what
+ * "projects in zone" counts.
+ */
+export const INITIAL_MODULE_ACTIVITY: ModuleActivity[] = [
+  // ── Mobile Banking V2 (Incedo Labs) — uses every module
+  { projectId: 'p-mobile-v2', module: 'specai', primary: 142, secondary: 128, quality: 91, qualityTrend: 2.4, spend30d: 640, tokens30d: 4200000 },
+  { projectId: 'p-mobile-v2', module: 'design', primary: 68, secondary: 54, quality: 88, qualityTrend: 1.1, spend30d: 480, tokens30d: 3100000 },
+  { projectId: 'p-mobile-v2', module: 'codeiq', primary: 37, secondary: 29, quality: 84, qualityTrend: -1.8, spend30d: 2980, tokens30d: 21400000 },
+  { projectId: 'p-mobile-v2', module: 'intelliqa', primary: 412, secondary: 96, quality: 79, qualityTrend: -4.2, spend30d: 1420, tokens30d: 9800000 },
+  { projectId: 'p-mobile-v2', module: 'release', primary: 14, secondary: 86, quality: 4.2, qualityTrend: -0.3, spend30d: 900, tokens30d: 3600000 },
+
+  // ── AI Wealth Advisor Engine (Incedo Labs) — no design work in flight
+  { projectId: 'p-wealth-ai', module: 'specai', primary: 96, secondary: 96, quality: 93, qualityTrend: 3.1, spend30d: 410, tokens30d: 2700000 },
+  { projectId: 'p-wealth-ai', module: 'codeiq', primary: 28, secondary: 24, quality: 89, qualityTrend: 2.2, spend30d: 2240, tokens30d: 16100000 },
+  { projectId: 'p-wealth-ai', module: 'intelliqa', primary: 388, secondary: 141, quality: 91, qualityTrend: 1.6, spend30d: 1610, tokens30d: 10200000 },
+  { projectId: 'p-wealth-ai', module: 'release', primary: 22, secondary: 95, quality: 2.8, qualityTrend: -0.6, spend30d: 860, tokens30d: 2600000 },
+
+  // ── Cloud Core Modernization (Incedo Labs) — early, architecture-heavy
+  { projectId: 'p-cloud-mig', module: 'specai', primary: 74, secondary: 51, quality: 86, qualityTrend: -0.9, spend30d: 380, tokens30d: 2400000 },
+  { projectId: 'p-cloud-mig', module: 'codeiq', primary: 11, secondary: 6, quality: 81, qualityTrend: 0.4, spend30d: 1640, tokens30d: 11900000 },
+  { projectId: 'p-cloud-mig', module: 'intelliqa', primary: 96, secondary: 18, quality: 74, qualityTrend: -2.1, spend30d: 620, tokens30d: 4400000 },
+
+  // ── Acme B2B Partner Portal — design-led
+  { projectId: 'p-acme-portal', module: 'specai', primary: 88, secondary: 80, quality: 87, qualityTrend: 1.4, spend30d: 390, tokens30d: 2500000 },
+  { projectId: 'p-acme-portal', module: 'design', primary: 104, secondary: 71, quality: 92, qualityTrend: 4.0, spend30d: 810, tokens30d: 5200000 },
+  { projectId: 'p-acme-portal', module: 'codeiq', primary: 19, secondary: 14, quality: 83, qualityTrend: 1.2, spend30d: 1880, tokens30d: 13600000 },
+  { projectId: 'p-acme-portal', module: 'intelliqa', primary: 164, secondary: 42, quality: 82, qualityTrend: 0.8, spend30d: 720, tokens30d: 4900000 },
+  { projectId: 'p-acme-portal', module: 'release', primary: 9, secondary: 78, quality: 5.6, qualityTrend: 0.4, spend30d: 400, tokens30d: 1100000 },
+
+  // ── Supply Chain Tracker (Acme) — requirements stage only
+  { projectId: 'p-acme-supply', module: 'specai', primary: 61, secondary: 34, quality: 84, qualityTrend: -1.6, spend30d: 340, tokens30d: 2200000 },
+  { projectId: 'p-acme-supply', module: 'design', primary: 22, secondary: 9, quality: 80, qualityTrend: -2.8, spend30d: 260, tokens30d: 1700000 },
+];
+
+/** Spend / tokens attributed to each registered agent service. */
+export const INITIAL_AGENT_USAGE: AgentUsage[] = [
+  { agentId: 'agent-codeiq', spend30d: 8740, tokens30d: 63000000 },
+  { agentId: 'agent-intelliqa', spend30d: 4370, tokens30d: 29300000 },
+  { agentId: 'agent-specai', spend30d: 2160, tokens30d: 14000000 },
+  { agentId: 'agent-release', spend30d: 2160, tokens30d: 7300000 },
+  { agentId: 'agent-design', spend30d: 1550, tokens30d: 10000000 },
+  { agentId: 'agent-arch', spend30d: 1390, tokens30d: 9600000 },
 ];

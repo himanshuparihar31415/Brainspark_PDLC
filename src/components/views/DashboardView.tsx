@@ -1,308 +1,382 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import {
-  Users,
-  DollarSign,
-  Cpu,
-  TrendingUp,
-  AlertTriangle,
-  ChevronRight,
-  ArrowLeft,
-  ChevronDown,
-  Layers,
-  Sparkles,
-  CheckCircle2,
-  Clock,
-  ExternalLink,
-} from 'lucide-react';
+import { BreakdownRow, NavView } from '../../types';
+import { MODULE_DEFS, formatTokens, formatUsd } from '../../data/modules';
+import { canAccessNav } from '../../data/rbac';
+import { RollupTiles, TileAction, TileKey } from '../dashboard/RollupTiles';
+import { BreakdownModal, BreakdownSection } from '../dashboard/BreakdownModal';
+import { ModuleStrip } from '../dashboard/ModuleStrip';
+import { ProjectPhaseStrip } from '../dashboard/ProjectPhaseStrip';
+import { Wallet, AlertTriangle } from 'lucide-react';
+
+/** Tile behaviour per tier. Admin tiers redirect (detail lives on other
+ *  screens); the Project Admin filters in place (detail is co-located). */
+const TILE_SPECS: Record<'platform' | 'tenant' | 'project', Record<TileKey, TileAction>> = {
+  platform: { headcount: 'redirect', cost: 'modal', tokens: 'modal', completion: 'redirect' },
+  tenant: { headcount: 'redirect', cost: 'modal', tokens: 'modal', completion: 'redirect' },
+  project: { headcount: 'filter', cost: 'modal', tokens: 'modal', completion: 'filter' },
+};
+
+const rank = (rows: BreakdownRow[]): BreakdownRow[] =>
+  rows.filter((r) => r.value > 0).sort((a, b) => b.value - a.value);
 
 export const DashboardView: React.FC = () => {
-  const { currentScope, currentRole, tenants, projects, agents, orchestrationPhases, setActiveNav } = useApp();
+  const {
+    currentScope,
+    currentRole,
+    tenants,
+    projects,
+    teamMembers,
+    tasks,
+    agents,
+    moduleActivity,
+    agentUsage,
+    navigateTo,
+  } = useApp();
 
-  const [drillDownCostOpen, setDrillDownCostOpen] = useState(false);
-  const [highlightedPhase, setHighlightedPhase] = useState<string | null>(null);
-  const [breadcrumbPath, setBreadcrumbPath] = useState<string[]>([]);
+  const [openModal, setOpenModal] = useState<'cost' | 'tokens' | null>(null);
+  const [activeFilter, setActiveFilter] = useState<TileKey | null>(null);
 
-  // Calculate scope numbers
+  /**
+   * Two different axes, deliberately kept separate:
+   *
+   * `persona` decides the *layout* — which tile behaviours apply and which lower
+   * strip renders. Keyed on role so they can never diverge: a Tenant Admin who
+   * narrows scope to one project must not get project-tier tiles that filter a
+   * module strip which cannot respond to them.
+   *
+   * `tier` decides the *numbers and breakdown axes* — keyed on scope, because if
+   * only one tenant is in scope there is no point ranking by tenant.
+   */
+  const persona: 'platform' | 'tenant' | 'project' =
+    currentRole === 'Super Admin' ? 'platform' : currentRole === 'Tenant Admin' ? 'tenant' : 'project';
+
+  const tier = currentScope.type;
+
+  // ── Scope resolution: which tenants / projects this dashboard totals over
+  const scopeTenants = useMemo(
+    () => (tier === 'platform' ? tenants : tenants.filter((t) => t.id === currentScope.tenantId)),
+    [tier, tenants, currentScope.tenantId]
+  );
+
+  const scopeProjects = useMemo(() => {
+    if (tier === 'platform') return projects;
+    if (tier === 'tenant') return projects.filter((p) => p.tenantId === currentScope.tenantId);
+    return projects.filter((p) => p.id === currentScope.projectId);
+  }, [tier, projects, currentScope.tenantId, currentScope.projectId]);
+
+  const scopeProjectIds = scopeProjects.map((p) => p.id);
+  const scopeActivity = moduleActivity.filter((a) => scopeProjectIds.includes(a.projectId));
+
+  const scopeTasks = useMemo(
+    () =>
+      tier === 'project'
+        ? tasks.filter((t) => t.project === currentScope.projectName)
+        : tasks.filter((t) => scopeProjects.some((p) => p.name === t.project)),
+    [tier, tasks, currentScope.projectName, scopeProjects]
+  );
+
+  // ── Tile values, aggregated rather than hardcoded
+  const headcount =
+    tier === 'platform'
+      ? scopeTenants.reduce((a, t) => a + t.headcount, 0)
+      : tier === 'tenant'
+      ? scopeTenants.reduce((a, t) => a + t.headcount, 0)
+      : teamMembers.filter((m) => m.projectId === currentScope.projectId).length;
+
+  const cost =
+    tier === 'project'
+      ? scopeProjects.reduce((a, p) => a + p.spend30d, 0)
+      : scopeTenants.reduce((a, t) => a + t.spend30d, 0);
+
+  const costPrev =
+    tier === 'project'
+      ? scopeProjects.reduce((a, p) => a + p.spendPrev30d, 0)
+      : scopeTenants.reduce((a, t) => a + t.spendPrev30d, 0);
+
+  const tokens =
+    tier === 'project'
+      ? scopeProjects.reduce((a, p) => a + p.tokens30d, 0)
+      : scopeTenants.reduce((a, t) => a + t.tokens30d, 0);
+
+  const completion = scopeProjects.length
+    ? Math.round(scopeProjects.reduce((a, p) => a + p.completion, 0) / scopeProjects.length)
+    : 0;
+
+  const budget = persona === 'tenant' ? scopeTenants.reduce((a, t) => a + t.budget30d, 0) : undefined;
+
+  const scopeLabel =
+    tier === 'platform'
+      ? 'Platform'
+      : tier === 'tenant'
+      ? `Tenant: ${currentScope.tenantName}`
+      : `Project: ${currentScope.projectName}`;
+
   const scopeTitle =
-    currentScope.type === 'platform'
+    tier === 'platform'
       ? 'Platform-wide roll-up across all tenants'
-      : currentScope.type === 'tenant'
+      : tier === 'tenant'
       ? `${currentScope.tenantName} — all projects`
-      : `${currentScope.projectName}`;
+      : `${currentScope.projectName} — unified project view`;
 
-  const headcountVal =
-    currentScope.type === 'platform'
-      ? tenants.reduce((acc, t) => acc + t.headcount, 0)
-      : currentScope.type === 'tenant'
-      ? 42
-      : 18;
+  // ── Breakdown axes, re-axised per tier: by tenant → by project → by task/person
+  const moduleRows = (metric: 'spend30d' | 'tokens30d'): BreakdownRow[] =>
+    rank(
+      MODULE_DEFS.map((def) => ({
+        label: def.name,
+        value: scopeActivity
+          .filter((a) => a.module === def.key)
+          .reduce((sum, a) => sum + a[metric], 0),
+      }))
+    );
 
-  const totalCostVal =
-    currentScope.type === 'platform'
-      ? tenants.reduce((acc, t) => acc + t.spend30d, 0)
-      : currentScope.type === 'tenant'
-      ? 14850
-      : 6420;
+  const agentRows = (metric: 'spend30d' | 'tokens30d'): BreakdownRow[] =>
+    rank(
+      agentUsage.map((u) => ({
+        label: agents.find((a) => a.id === u.agentId)?.capability ?? u.agentId,
+        value: u[metric],
+      }))
+    ).slice(0, 5);
 
-  const tokensVal =
-    currentScope.type === 'platform'
-      ? '184.2M'
-      : currentScope.type === 'tenant'
-      ? '92.4M'
-      : '42.1M';
+  const taskRows = (metric: 'costUsd' | 'tokens'): BreakdownRow[] =>
+    rank(
+      scopeTasks.map((t) => ({
+        label: t.title,
+        value: t[metric] ?? 0,
+        sublabel: `${t.module} · ${t.assignee}`,
+      }))
+    ).slice(0, 6);
 
-  const completionVal =
-    currentScope.type === 'platform'
-      ? 62
-      : currentScope.type === 'tenant'
-      ? 68
-      : 74;
+  const personRows = (): BreakdownRow[] => {
+    const totals = new Map<string, number>();
+    for (const t of scopeTasks) {
+      totals.set(t.assignee, (totals.get(t.assignee) ?? 0) + (t.costUsd ?? 0));
+    }
+    return rank([...totals].map(([label, value]) => ({ label, value })));
+  };
 
-  const handleTileClick = (metricName: string) => {
-    if (metricName === 'Total cost') {
-      setDrillDownCostOpen(!drillDownCostOpen);
-      setBreadcrumbPath(['Platform', currentScope.tenantName || 'Incedo Labs', currentScope.projectName || 'Mobile Banking V2', 'AI Spend']);
-    } else if (metricName === 'Overall completion') {
-      setHighlightedPhase('phase-codeiq');
+  const costSections: BreakdownSection[] =
+    tier === 'platform'
+      ? [
+          { title: 'By tenant', rows: rank(scopeTenants.map((t) => ({ label: t.name, value: t.spend30d }))) },
+          { title: 'By module', rows: moduleRows('spend30d') },
+        ]
+      : tier === 'tenant'
+      ? [
+          // A Tenant Admin acts at project level, so projects lead here.
+          { title: 'By project', rows: rank(scopeProjects.map((p) => ({ label: p.name, value: p.spend30d }))) },
+          { title: 'By module', rows: moduleRows('spend30d') },
+        ]
+      : [
+          { title: 'By module', rows: moduleRows('spend30d') },
+          { title: 'By task', rows: taskRows('costUsd') },
+          { title: 'By person', rows: personRows() },
+          { title: 'By agent service', rows: agentRows('spend30d') },
+        ];
+
+  const tokenSections: BreakdownSection[] =
+    tier === 'platform'
+      ? [
+          { title: 'By tenant', rows: rank(scopeTenants.map((t) => ({ label: t.name, value: t.tokens30d }))) },
+          { title: 'By module', rows: moduleRows('tokens30d') },
+          { title: 'By agent service (top 5)', rows: agentRows('tokens30d') },
+        ]
+      : tier === 'tenant'
+      ? [
+          { title: 'By project', rows: rank(scopeProjects.map((p) => ({ label: p.name, value: p.tokens30d }))) },
+          { title: 'By module', rows: moduleRows('tokens30d') },
+          { title: 'By agent service (top 5)', rows: agentRows('tokens30d') },
+        ]
+      : [
+          { title: 'By module', rows: moduleRows('tokens30d') },
+          { title: 'By task', rows: taskRows('tokens') },
+          { title: 'By agent service (top 5)', rows: agentRows('tokens30d') },
+        ];
+
+  const handleTileClick = (key: TileKey) => {
+    const action = TILE_SPECS[persona][key];
+
+    if (action === 'modal') {
+      setOpenModal(key === 'cost' ? 'cost' : 'tokens');
+      return;
+    }
+
+    if (action === 'filter') {
+      setActiveFilter(activeFilter === key ? null : key);
+      return;
+    }
+
+    // Redirects: land on the screen that already owns this data, pre-filtered.
+    if (key === 'headcount') {
+      navigateTo('Team', {
+        // The Tenant Admin's lever is the cross-project pool, not the flat roster.
+        teamTab: persona === 'tenant' ? 'shared' : 'roster',
+        note:
+          persona === 'tenant'
+            ? "Showing your tenant's shared team."
+            : 'Showing all people across the platform.',
+      });
+    } else if (key === 'completion') {
+      navigateTo('Projects', {
+        projectSort: 'completion-asc',
+        note:
+          persona === 'tenant'
+            ? 'Your projects, furthest behind first.'
+            : 'Sorted by completion — furthest behind first.',
+      });
     }
   };
 
-  return (
-    <div className="p-6 md:p-8 space-y-8 max-w-7xl mx-auto animate-in fade-in duration-200">
-      {/* Header & Breadcrumb */}
-      <div>
-        {breadcrumbPath.length > 0 && (
-          <div className="flex items-center gap-2 text-xs text-slate-500 mb-2">
-            <button
-              onClick={() => setBreadcrumbPath([])}
-              className="flex items-center gap-1 text-indigo-600 font-semibold hover:underline cursor-pointer"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span>‹ Back to previous level</span>
-            </button>
-            <span>•</span>
-            <div className="flex items-center gap-1 text-slate-600">
-              {breadcrumbPath.map((item, idx) => (
-                <React.Fragment key={idx}>
-                  {idx > 0 && <span>›</span>}
-                  <span className={idx === breadcrumbPath.length - 1 ? 'font-bold text-slate-900' : ''}>{item}</span>
-                </React.Fragment>
-              ))}
-            </div>
-          </div>
-        )}
+  const tokenDestination: NavView = canAccessNav(currentRole, 'My Services')
+    ? 'My Services'
+    : 'Agent Registry';
 
-        <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">Dashboard</h1>
-        <p className="text-xs md:text-sm text-slate-500 mt-1">{scopeTitle}</p>
+  const budgetUsedPct = budget ? Math.min(100, Math.round((cost / budget) * 100)) : 0;
+  const budgetTone = budgetUsedPct >= 100 ? 'bad' : budgetUsedPct >= 85 ? 'warn' : 'good';
+
+  return (
+    <div className="mx-auto max-w-7xl animate-in fade-in space-y-8 p-6 duration-200 md:p-8">
+      <div>
+        <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 md:text-3xl">Dashboard</h1>
+        <p className="mt-1 text-xs text-slate-500 md:text-sm">{scopeTitle}</p>
       </div>
 
-      {/* 2.1 Roll-up Tiles (4) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        {/* Tile 1: Headcount */}
+      {/* Tenant Admins own a spend envelope — the number they log in to check. */}
+      {persona === 'tenant' && budget !== undefined && (
         <div
-          onClick={() => handleTileClick('Headcount')}
-          title="Click to see where this comes from."
-          className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs hover:border-slate-300 transition-all cursor-pointer group relative overflow-hidden"
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500">Team headcount</span>
-            <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600 group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-colors">
-              <Users className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="mt-3 text-2xl font-black text-slate-900 tracking-tight">{headcountVal} people</div>
-          <div className="mt-1 text-xs text-slate-500">assigned in {currentScope.type}</div>
-          <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-emerald-600 font-semibold">
-            <span className="flex items-center gap-1">
-              <TrendingUp className="w-3 h-3" /> +12% vs last month
-            </span>
-            <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
-          </div>
-        </div>
-
-        {/* Tile 2: Total Cost */}
-        <div
-          onClick={() => handleTileClick('Total cost')}
-          title="Click to see where this comes from."
-          className={`bg-white p-5 rounded-2xl border transition-all cursor-pointer group relative overflow-hidden ${
-            drillDownCostOpen ? 'ring-2 ring-indigo-600 border-indigo-600' : 'border-slate-200 hover:border-slate-300'
+          className={`flex flex-col gap-3 rounded-2xl border px-5 py-4 sm:flex-row sm:items-center sm:justify-between ${
+            budgetTone === 'bad'
+              ? 'border-rose-200 bg-rose-50'
+              : budgetTone === 'warn'
+              ? 'border-amber-200 bg-amber-50'
+              : 'border-slate-200 bg-white'
           }`}
         >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500">Total cost</span>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200 flex items-center gap-1">
-              <AlertTriangle className="w-3 h-3 text-amber-600" /> Over budget
-            </span>
-          </div>
-          <div className="mt-3 text-2xl font-black text-slate-900 tracking-tight">
-            ${totalCostVal.toLocaleString()}
-          </div>
-          <div className="mt-1 text-xs text-slate-500">cumulative AI spend</div>
-          <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-600 font-semibold">
-            <span className="text-slate-500">Target: $12,000/mo</span>
-            <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
-          </div>
-        </div>
-
-        {/* Tile 3: Tokens Consumed */}
-        <div
-          onClick={() => handleTileClick('Tokens')}
-          title="Click to see where this comes from."
-          className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs hover:border-slate-300 transition-all cursor-pointer group relative overflow-hidden"
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500">Tokens consumed</span>
-            <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600 group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-colors">
-              <Cpu className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="mt-3 text-2xl font-black text-slate-900 tracking-tight">{tokensVal}</div>
-          <div className="mt-1 text-xs text-slate-500">across all invocations</div>
-          <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-600 font-semibold">
-            <span className="text-indigo-600 font-medium">99.4% Gemini 2.5 Pro/Flash</span>
-            <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
-          </div>
-        </div>
-
-        {/* Tile 4: Overall Completion */}
-        <div
-          onClick={() => handleTileClick('Overall completion')}
-          title="Click to see where this comes from."
-          className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs hover:border-slate-300 transition-all cursor-pointer group relative overflow-hidden"
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500">Overall completion</span>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200">
-              On track
-            </span>
-          </div>
-          <div className="mt-3 text-2xl font-black text-slate-900 tracking-tight">{completionVal}%</div>
-          <div className="mt-1 text-xs text-slate-500">of planned work</div>
-          <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-600 font-semibold">
-            <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden mr-2">
-              <div className="bg-emerald-500 h-full rounded-full" style={{ width: `${completionVal}%` }} />
-            </div>
-            <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:translate-x-0.5 transition-transform shrink-0" />
-          </div>
-        </div>
-      </div>
-
-      {/* 2.2 Quick-Drill (from Cost tile) */}
-      {drillDownCostOpen && (
-        <div className="bg-slate-900 text-white p-6 rounded-2xl shadow-xl border border-slate-800 animate-in fade-in slide-in-from-top-2">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="text-sm font-bold uppercase tracking-wider text-indigo-400">
-                Top spend in {currentScope.type}
-              </h2>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Breakdown by active capability and project resource consumption
-              </p>
-            </div>
-            <button
-              onClick={() => setDrillDownCostOpen(false)}
-              className="text-xs text-slate-400 hover:text-white px-3 py-1 bg-slate-800 rounded-lg"
+          <div className="flex items-center gap-3">
+            <div
+              className={`flex h-9 w-9 items-center justify-center rounded-xl ${
+                budgetTone === 'good' ? 'bg-slate-100 text-slate-600' : 'bg-white/70 text-amber-700'
+              }`}
             >
-              Close
-            </button>
+              {budgetTone === 'good' ? (
+                <Wallet className="h-4 w-4" />
+              ) : (
+                <AlertTriangle className="h-4 w-4" />
+              )}
+            </div>
+            <div>
+              <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                Budget headroom
+              </div>
+              <div className="text-sm font-extrabold text-slate-900">
+                {formatUsd(cost)} of {formatUsd(budget)}
+                <span className="ml-2 text-xs font-medium text-slate-500">· 12 days left in period</span>
+              </div>
+            </div>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs text-slate-300">
-              <thead>
-                <tr className="border-b border-slate-800 text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                  <th className="py-2.5 px-3">Rank</th>
-                  <th className="py-2.5 px-3">Agent / Project</th>
-                  <th className="py-2.5 px-3">Cost</th>
-                  <th className="py-2.5 px-3">Share</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800">
-                <tr className="hover:bg-slate-800/50">
-                  <td className="py-3 px-3 font-mono text-slate-400">#1</td>
-                  <td className="py-3 px-3 font-semibold text-white">CodeIQ Generation & Review (Agent)</td>
-                  <td className="py-3 px-3 font-mono text-indigo-300">$6,420</td>
-                  <td className="py-3 px-3">43.2%</td>
-                </tr>
-                <tr className="hover:bg-slate-800/50">
-                  <td className="py-3 px-3 font-mono text-slate-400">#2</td>
-                  <td className="py-3 px-3 font-semibold text-white">AI Wealth Advisor Engine (Project)</td>
-                  <td className="py-3 px-3 font-mono text-indigo-300">$5,120</td>
-                  <td className="py-3 px-3">34.4%</td>
-                </tr>
-                <tr className="hover:bg-slate-800/50">
-                  <td className="py-3 px-3 font-mono text-slate-400">#3</td>
-                  <td className="py-3 px-3 font-semibold text-white">SpecAI Requirement Engine (Agent)</td>
-                  <td className="py-3 px-3 font-mono text-indigo-300">$3,310</td>
-                  <td className="py-3 px-3">22.4%</td>
-                </tr>
-              </tbody>
-            </table>
+          <div className="flex items-center gap-3 sm:w-64">
+            <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-200/70">
+              <div
+                className={`h-full rounded-full ${
+                  budgetTone === 'bad'
+                    ? 'bg-rose-500'
+                    : budgetTone === 'warn'
+                    ? 'bg-amber-500'
+                    : 'bg-emerald-500'
+                }`}
+                style={{ width: `${budgetUsedPct}%` }}
+              />
+            </div>
+            <span className="shrink-0 font-mono text-xs font-bold text-slate-700">
+              {budgetUsedPct}%
+            </span>
           </div>
         </div>
       )}
 
-      {/* 2.3 Project Admin Unified Orchestration View */}
-      <div className="space-y-4 pt-4 border-t border-slate-200">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-extrabold text-slate-900 tracking-tight">
-              Where the project stands now
-            </h2>
-            <p className="text-xs text-slate-500">
-              Live PDLC phase strip & automated agent pipeline status
-            </p>
-          </div>
-          <button
-            onClick={() => setActiveNav('Orchestration')}
-            className="text-xs text-indigo-600 font-semibold hover:underline flex items-center gap-1 cursor-pointer"
-          >
-            <span>Open Orchestration Center</span>
-            <ExternalLink className="w-3.5 h-3.5" />
-          </button>
-        </div>
+      <RollupTiles
+        headcount={headcount}
+        cost={cost}
+        costPrev={costPrev}
+        budget={budget}
+        tokens={tokens}
+        completion={completion}
+        scopeNoun={tier}
+        specs={TILE_SPECS[persona]}
+        activeFilter={activeFilter}
+        onTileClick={handleTileClick}
+      />
 
-        {/* Phase Strip Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {orchestrationPhases.map((phase) => {
-            const isHighlighted = highlightedPhase === phase.id;
-            return (
-              <div
-                key={phase.id}
-                onClick={() => setHighlightedPhase(isHighlighted ? null : phase.id)}
-                className={`p-4 rounded-xl border transition-all cursor-pointer ${
-                  isHighlighted
-                    ? 'ring-2 ring-indigo-600 bg-indigo-50/20 border-indigo-500 shadow-md'
-                    : 'bg-white border-slate-200 hover:border-slate-300'
-                }`}
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-bold text-slate-900">{phase.name}</span>
-                  <span
-                    className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
-                      phase.status === 'Completed'
-                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                        : phase.status === 'In Progress'
-                        ? 'bg-indigo-50 text-indigo-700 border border-indigo-200'
-                        : phase.status === 'Blocked'
-                        ? 'bg-amber-50 text-amber-700 border border-amber-200'
-                        : 'bg-slate-100 text-slate-600 border border-slate-200'
-                    }`}
-                  >
-                    {phase.status}
-                  </span>
-                </div>
-                <p className="text-xs text-slate-500 line-clamp-2">{phase.description}</p>
-                <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px]">
-                  <span className="text-slate-600 font-medium">{phase.agentService}</span>
-                  <span className="font-mono text-slate-500">{phase.completionPercent}%</span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
+      {/* Lower strip is role-dependent: module roll-up for the admin tiers,
+          single-project phase strip for the Project Admin. */}
+      {persona === 'project' ? (
+        <ProjectPhaseStrip activeFilter={activeFilter} completion={completion} />
+      ) : (
+        <ModuleStrip />
+      )}
+
+      <BreakdownModal
+        open={openModal === 'cost'}
+        title={`Cost breakdown — ${
+          tier === 'platform' ? 'Platform' : currentScope.projectName ?? currentScope.tenantName
+        }`}
+        scopeLabel={scopeLabel}
+        total={cost}
+        totalLabel="last 30 days"
+        format={formatUsd}
+        sections={costSections}
+        trend={{ current: cost, previous: costPrev, label: 'Spend vs last period' }}
+        footerLink={
+          persona === 'project'
+            ? {
+                // Filters the strip in place rather than navigating — the
+                // Project Admin's detail is co-located on this screen.
+                label: 'See most expensive tasks',
+                onClick: () => {
+                  setOpenModal(null);
+                  setActiveFilter('cost');
+                },
+              }
+            : {
+                label: 'View top spenders',
+                onClick: () => {
+                  setOpenModal(null);
+                  navigateTo('Projects', {
+                    projectSort: 'spend-desc',
+                    note: 'Top spenders — ranked by 30-day AI spend.',
+                  });
+                },
+              }
+        }
+        emptyMessage="No cost data recorded for this period."
+        onClose={() => setOpenModal(null)}
+      />
+
+      <BreakdownModal
+        open={openModal === 'tokens'}
+        title={`Token consumption — ${
+          tier === 'platform' ? 'Platform' : currentScope.projectName ?? currentScope.tenantName
+        }`}
+        scopeLabel={scopeLabel}
+        total={tokens}
+        totalLabel="tokens, last 30 days"
+        format={formatTokens}
+        sections={tokenSections}
+        footerLink={{
+          // Tokens map to agent-service invocations. The destination is chosen
+          // by entitlement: My Services where the role has it, otherwise the
+          // (read-only) Agent Registry — a Project Admin has the latter, not
+          // the former.
+          label: tokenDestination === 'My Services' ? 'Open My Services' : 'Open Agent Registry',
+          onClick: () => {
+            setOpenModal(null);
+            navigateTo(tokenDestination);
+          },
+        }}
+        emptyMessage="No token data recorded for this period."
+        onClose={() => setOpenModal(null)}
+      />
     </div>
   );
 };

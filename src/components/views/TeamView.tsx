@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { PdlcRole, TeamMember } from '../../types';
+import { LandingNote } from '../common/LandingNote';
 import {
   Users,
   UserPlus,
@@ -13,7 +14,13 @@ import {
 } from 'lucide-react';
 
 export const TeamView: React.FC = () => {
-  const { teamMembers: allTeamMembers, assignTeamMember, currentRole, currentScope } = useApp();
+  const {
+    teamMembers: allTeamMembers,
+    assignTeamMember,
+    currentRole,
+    currentScope,
+    navIntent,
+  } = useApp();
 
   // Roster is scoped: platform sees everyone, a tenant or project scope only sees
   // the people bound to it.
@@ -23,7 +30,9 @@ export const TeamView: React.FC = () => {
     return m.projectId === currentScope.projectId;
   });
 
-  const [activeTab, setActiveTab] = useState<'roster' | 'shared'>('roster');
+  // A Tenant Admin arriving from the headcount tile lands on the shared pool —
+  // the cross-project lever they uniquely own — not the flat roster.
+  const [activeTab, setActiveTab] = useState<'roster' | 'shared'>(navIntent?.teamTab ?? 'roster');
   const [assignModalOpen, setAssignModalOpen] = useState(false);
   const [expandedMemberId, setExpandedMemberId] = useState<string | null>(null);
 
@@ -78,6 +87,8 @@ export const TeamView: React.FC = () => {
           <span>+ Assign person</span>
         </button>
       </div>
+
+      <LandingNote />
 
       {/* Tabs */}
       <div className="flex items-center gap-2 border-b border-slate-200">

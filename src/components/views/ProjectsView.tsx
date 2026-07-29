@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { Project } from '../../types';
+import { LandingNote } from '../common/LandingNote';
 import {
   FolderGit2,
   Plus,
@@ -15,7 +16,17 @@ import {
 } from 'lucide-react';
 
 export const ProjectsView: React.FC = () => {
-  const { projects, createProject, closeProject, setCurrentScope, setActiveNav, tenants, currentScope } = useApp();
+  const {
+    projects,
+    createProject,
+    closeProject,
+    setCurrentScope,
+    setActiveNav,
+    tenants,
+    currentScope,
+    navIntent,
+    moduleActivity,
+  } = useApp();
 
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [closeTarget, setCloseTarget] = useState<Project | null>(null);
@@ -30,10 +41,26 @@ export const ProjectsView: React.FC = () => {
   const [selectedTemplate, setSelectedTemplate] = useState('None (blank project)');
   const [selectedTenantId, setSelectedTenantId] = useState(currentScope.tenantId || 't-incedo');
 
-  const filteredProjects =
+  const scopedProjects =
     currentScope.type === 'tenant' && currentScope.tenantId
       ? projects.filter((p) => p.tenantId === currentScope.tenantId)
       : projects;
+
+  // A dashboard tile or module card can arrive here with a pre-filter attached.
+  const moduleIntent = navIntent?.projectModule;
+  const moduleProjectIds = moduleIntent
+    ? moduleActivity.filter((a) => a.module === moduleIntent).map((a) => a.projectId)
+    : null;
+
+  const filteredProjects = (
+    moduleProjectIds ? scopedProjects.filter((p) => moduleProjectIds.includes(p.id)) : scopedProjects
+  )
+    .slice()
+    .sort((a, b) => {
+      if (navIntent?.projectSort === 'completion-asc') return a.completion - b.completion;
+      if (navIntent?.projectSort === 'spend-desc') return b.spend30d - a.spend30d;
+      return 0;
+    });
 
   const handleCreateSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,6 +102,8 @@ export const ProjectsView: React.FC = () => {
           <span>+ Create project</span>
         </button>
       </div>
+
+      <LandingNote />
 
       {/* Projects Table */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
