@@ -6,6 +6,7 @@ import {
   CardType,
   EvidenceClass,
   RelationKind,
+  SourceType,
   SpecAiState,
   SpecStageKey,
   SpecStageState,
@@ -28,10 +29,9 @@ export const SPEC_STAGES: SpecStageDef[] = [
     key: 'knowledge',
     index: 1,
     railLabel: 'Knowledge',
-    title: 'Requirement Chalk Board',
-    subtitle:
-      'Bring together evidence, observations, ideas, and decisions before formalizing requirements.',
-    gateLabel: 'Build project understanding',
+    title: 'Knowledge Creation & Contextualization',
+    subtitle: 'Bring together everything you know, inspect what exists, and shape rough requirements.',
+    gateLabel: 'Build understanding',
   },
   {
     key: 'understanding',
@@ -60,9 +60,10 @@ export const SPEC_STAGES: SpecStageDef[] = [
   {
     key: 'stories',
     index: 5,
-    railLabel: 'Stories',
-    title: 'Stories',
-    subtitle: 'Implementation-ready work items, generated from your module map.',
+    railLabel: 'User Stories',
+    title: 'User Stories',
+    subtitle:
+      'Implementation-ready work items, split into non-technical and technical tracks and generated from your module map.',
     gateLabel: 'Review and export to Jira',
   },
 ];
@@ -91,6 +92,11 @@ export const activeStage = (state: SpecAiState): SpecStageKey =>
 // ───────────────────────────── Card vocabulary ─────────────────────────────
 
 export interface CardTypeMeta {
+  /**
+   * Board-facing name. The union member is the stable key; this is what the chalk
+   * board prints, so a card reads as what a person would call it.
+   */
+  label: string;
   /** Lucide icon name resolved by the board component. */
   icon: 'file' | 'eye' | 'spark' | 'question' | 'split' | 'lock' | 'check' | 'file-check';
   /** Tailwind classes for the card border and its type chip. */
@@ -102,53 +108,95 @@ export interface CardTypeMeta {
 
 export const CARD_TYPES: Record<CardType, CardTypeMeta> = {
   Evidence: {
+    label: 'Evidence',
     icon: 'file',
-    border: 'border-slate-200',
+    border: 'border-slate-300',
     chip: 'bg-slate-100 text-slate-700',
     requiredFields: ['Title', 'Excerpt', 'Source', 'Timestamp'],
   },
   Observation: {
+    label: 'Observed flow',
     icon: 'eye',
-    border: 'border-emerald-200',
+    border: 'border-emerald-400',
     chip: 'bg-emerald-50 text-emerald-700',
     requiredFields: ['Observed behavior', 'Screen or flow', 'Environment'],
   },
   Idea: {
+    label: 'Feature idea',
     icon: 'spark',
-    border: 'border-indigo-200',
+    border: 'border-indigo-400',
     chip: 'bg-indigo-50 text-indigo-700',
     requiredFields: ['Idea', 'Rationale', 'Author'],
   },
   Question: {
+    label: 'Open question',
     icon: 'question',
-    border: 'border-amber-200',
+    border: 'border-amber-400',
     chip: 'bg-amber-50 text-amber-800',
     requiredFields: ['Question', 'Owner', 'Due state'],
   },
   Conflict: {
+    label: 'Conflict',
     icon: 'split',
-    border: 'border-rose-300',
+    border: 'border-rose-400',
     chip: 'bg-rose-50 text-rose-700',
     requiredFields: ['Conflicting claims', 'Sources', 'Decision state'],
   },
   Constraint: {
+    label: 'Technical context',
     icon: 'lock',
-    border: 'border-blue-200',
+    border: 'border-blue-400',
     chip: 'bg-blue-50 text-blue-700',
     requiredFields: ['Constraint', 'Source', 'Impacted areas'],
   },
   Decision: {
+    label: 'Decision',
     icon: 'check',
-    border: 'border-teal-200',
+    border: 'border-teal-400',
     chip: 'bg-teal-50 text-teal-700',
     requiredFields: ['Decision', 'Decider', 'Rationale', 'Date'],
   },
   'Requirement seed': {
+    label: 'Requirement seed',
     icon: 'file-check',
-    border: 'border-violet-300',
+    border: 'border-violet-400',
     chip: 'bg-violet-100 text-violet-700',
     requiredFields: ['Actor', 'Need', 'Value', 'Scope', 'Evidence', 'Status'],
   },
+};
+
+/**
+ * The line the chalk board prints at the foot of a card. A conflict says how many
+ * sources disagree, a question says who it is waiting on, and anything sourced
+ * names its source — so the card's standing is readable without opening it.
+ */
+export const cardFooter = (card: {
+  type: CardType;
+  provenance?: { system: string; itemId?: string };
+  conflict?: unknown;
+  owner?: string;
+  dueState?: string;
+  author?: string;
+  evidenceClass: EvidenceClass;
+}): string => {
+  if (card.type === 'Conflict') return '2 sources disagree';
+  if (card.type === 'Question') return card.dueState ?? 'Needs stakeholder input';
+  if (card.provenance) return `Source: ${card.provenance.itemId ?? card.provenance.system}`;
+  if (card.author) return `Added by ${card.author}`;
+  return card.evidenceClass;
+};
+
+/** Avatar glyph and tint for a knowledge source, keyed by what it came from. */
+export const SOURCE_BADGE: Record<SourceType, { glyph: string; tint: string }> = {
+  Jira: { glyph: 'J', tint: 'bg-blue-100 text-blue-700' },
+  Confluence: { glyph: 'C', tint: 'bg-sky-100 text-sky-700' },
+  DOCX: { glyph: 'D', tint: 'bg-indigo-100 text-indigo-700' },
+  PDF: { glyph: 'P', tint: 'bg-rose-100 text-rose-700' },
+  TXT: { glyph: 'T', tint: 'bg-slate-200 text-slate-600' },
+  URL: { glyph: '↗', tint: 'bg-slate-200 text-slate-600' },
+  Transcript: { glyph: 'M', tint: 'bg-violet-100 text-violet-700' },
+  App: { glyph: 'A', tint: 'bg-emerald-100 text-emerald-700' },
+  Repository: { glyph: '</>', tint: 'bg-slate-800 text-white' },
 };
 
 /** Card states, and what each one allows next. */
@@ -210,6 +258,26 @@ export const BOARD_ACTIONS: BoardAction[] = [
   { id: 'conflicts', label: 'Find conflicts', minSelection: 2 },
   { id: 'draft', label: 'Draft requirement', minSelection: 1 },
   { id: 'remove', label: 'Remove', minSelection: 1 },
+];
+
+/**
+ * Copilot prompt chips. Each one is a board action wearing a question, so the
+ * conversational surface and the direct-manipulation surface can never drift:
+ * asking "what is missing?" runs exactly what the Find-gaps button runs.
+ */
+export interface CopilotSuggestion {
+  label: string;
+  /** Board action this dispatches. */
+  actionId: string;
+  /** What the user's turn reads as in the transcript. */
+  asks: string;
+}
+
+export const COPILOT_SUGGESTIONS: CopilotSuggestion[] = [
+  { label: 'What is missing?', actionId: 'gaps', asks: 'What is missing from this?' },
+  { label: 'Find evidence', actionId: 'summarize', asks: 'What evidence supports this?' },
+  { label: 'Draft requirement', actionId: 'draft', asks: 'Draft a requirement from this.' },
+  { label: 'Compare sources', actionId: 'conflicts', asks: 'Do these sources agree?' },
 ];
 
 export const DEFAULT_LANES = [
@@ -379,6 +447,60 @@ export const canLockStage = (key: SpecStageKey, state: SpecAiState): GateCheck =
 export const unmappedStoryTypes = (state: SpecAiState): StoryType[] => {
   const used = [...new Set(state.stories.map((s) => s.storyType))];
   return used.filter((t) => !state.jiraMapping.issueTypes[t]);
+};
+
+// ─────────────────────── Story tracks: technical vs not ───────────────────────
+
+/**
+ * Stage 5 splits into two tracks. Non-technical work is what a stakeholder can
+ * read and accept on their own; technical work is everything that exists because
+ * of how the system is built. The split drives grouping, not permissions —
+ * both tracks export to the same backlog.
+ */
+export type StoryTrack = 'Non-technical' | 'Technical';
+
+export const STORY_TRACKS: StoryTrack[] = ['Non-technical', 'Technical'];
+
+export const STORY_TRACK_OF: Record<StoryType, StoryTrack> = {
+  'User story': 'Non-technical',
+  'Technical story': 'Technical',
+  'API story': 'Technical',
+  'Security story': 'Technical',
+  'Data story': 'Technical',
+  'Testing story': 'Technical',
+  'Migration story': 'Technical',
+};
+
+export const STORY_TRACK_COPY: Record<StoryTrack, { helper: string; chip: string }> = {
+  'Non-technical': {
+    helper: 'Customer-facing behaviour a stakeholder can accept without reading the design.',
+    chip: 'bg-indigo-50 text-indigo-700',
+  },
+  Technical: {
+    helper: 'Work that exists because of how the system is built — services, contracts, data, tests.',
+    chip: 'bg-slate-800 text-white',
+  },
+};
+
+export const storyTrackCounts = (state: SpecAiState): Record<StoryTrack, number> => ({
+  'Non-technical': state.stories.filter((s) => STORY_TRACK_OF[s.storyType] === 'Non-technical')
+    .length,
+  Technical: state.stories.filter((s) => STORY_TRACK_OF[s.storyType] === 'Technical').length,
+});
+
+/**
+ * How much of the workspace has actually been looked at: every locked stage
+ * counts in full, and the stage in hand counts for the share of its board cards
+ * that have moved off Captured.
+ */
+export const workspaceProgress = (state: SpecAiState): number => {
+  const perStage = 1 / SPEC_STAGES.length;
+  const locked = state.lockedStages.length * perStage;
+  const reviewed = state.cards.length
+    ? state.cards.filter((c) => c.state !== 'Captured').length / state.cards.length
+    : 0;
+  const inFlight = state.lockedStages.length < SPEC_STAGES.length ? reviewed * perStage : 0;
+  return Math.round(Math.min(1, locked + inFlight) * 100);
 };
 
 // ───────────────────────────── Copy & permissions ─────────────────────────────

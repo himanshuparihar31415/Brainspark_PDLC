@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { SpecAiState, UnderstandingKey } from '../../types/specai';
-import { UNDERSTANDING_COPY } from '../../data/specai';
+import { CARD_TYPES, UNDERSTANDING_COPY } from '../../data/specai';
 import { History, RefreshCw, Pencil, Check, Info, Link2, ChevronDown } from 'lucide-react';
 
 /** Stage 2 — Project Understanding and the formal requirement register. */
@@ -117,7 +117,7 @@ export const Stage2Understanding: React.FC<{
                   {cards.map((c) => (
                     <div key={c.id} className="flex items-center gap-2 text-[10px]">
                       <span className="shrink-0 rounded bg-white px-1 py-0.5 font-bold text-slate-600">
-                        {c.type}
+                        {CARD_TYPES[c.type].label}
                       </span>
                       <span className="min-w-0 flex-1 truncate text-slate-700">{c.title}</span>
                       {c.provenance && (

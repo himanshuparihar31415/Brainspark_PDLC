@@ -3,10 +3,10 @@ import { GateCheck } from '../../data/specai';
 import { AlertTriangle, ArrowRight, Check, Lock, X } from 'lucide-react';
 
 /**
- * The stage gate. Locking is the only way forward, and a closed gate always says
- * why rather than simply being greyed out.
+ * The stage gate, as the primary action in the stage header. Locking is the only
+ * way forward, and a closed gate always says why rather than simply greying out.
  */
-export const GateBar: React.FC<{
+export const GateButton: React.FC<{
   label: string;
   check: GateCheck;
   locked: boolean;
@@ -19,52 +19,30 @@ export const GateBar: React.FC<{
 
   if (locked) {
     return (
-      <div className="flex items-center gap-2.5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
-        <Check className="h-4 w-4 shrink-0 text-emerald-600" />
-        <span className="text-xs font-bold text-emerald-800">
-          Stage locked. Finalized documents are version-locked before the pipeline proceeds.
-        </span>
-      </div>
+      <span className="flex shrink-0 items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-[11px] font-bold text-emerald-800">
+        <Check className="h-3.5 w-3.5" /> Stage locked
+      </span>
     );
   }
 
   const disabled = !check.ok || readOnly;
-  const reason = readOnly
-    ? 'You have read-only access to this workspace.'
-    : check.reason;
+  const reason = readOnly ? 'You have read-only access to this workspace.' : check.reason;
 
   return (
     <>
-      <div className="flex flex-col gap-2.5 rounded-xl border border-slate-200 bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-start gap-2">
-          {disabled ? (
-            <AlertTriangle className="mt-px h-3.5 w-3.5 shrink-0 text-amber-600" />
-          ) : (
-            <Lock className="mt-px h-3.5 w-3.5 shrink-0 text-slate-400" />
-          )}
-          <span
-            className={`text-[11px] font-semibold ${
-              disabled ? 'text-amber-800' : 'text-slate-500'
-            }`}
-          >
-            {reason ?? 'Locking this stage unlocks the next one.'}
-          </span>
-        </div>
-
-        <button
-          onClick={() => (confirm ? setConfirming(true) : onLock())}
-          disabled={disabled}
-          title={disabled ? reason : undefined}
-          className={`flex shrink-0 items-center justify-center gap-1.5 rounded-lg px-4 py-2 text-xs font-bold transition-colors ${
-            disabled
-              ? 'cursor-not-allowed bg-slate-100 text-slate-400'
-              : 'cursor-pointer bg-indigo-600 text-white hover:bg-indigo-700'
-          }`}
-        >
-          {label}
-          <ArrowRight className="h-3.5 w-3.5" />
-        </button>
-      </div>
+      <button
+        onClick={() => (confirm ? setConfirming(true) : onLock())}
+        disabled={disabled}
+        title={disabled ? reason : 'Version-locks this stage and opens the next one.'}
+        className={`flex shrink-0 items-center justify-center gap-1.5 rounded-lg px-4 py-2 text-xs font-bold transition-colors ${
+          disabled
+            ? 'cursor-not-allowed bg-slate-100 text-slate-400'
+            : 'cursor-pointer bg-indigo-600 text-white hover:bg-indigo-700'
+        }`}
+      >
+        {label}
+        <ArrowRight className="h-3.5 w-3.5" />
+      </button>
 
       {confirming && confirm && (
         <div
@@ -108,5 +86,32 @@ export const GateBar: React.FC<{
         </div>
       )}
     </>
+  );
+};
+
+/**
+ * The one-line explanation that sits under the header: what is holding the gate,
+ * or what locking has already settled. Silent when there is nothing to say.
+ */
+export const GateNote: React.FC<{
+  check: GateCheck;
+  locked: boolean;
+  readOnly: boolean;
+}> = ({ check, locked, readOnly }) => {
+  if (locked)
+    return (
+      <p className="flex items-center gap-1.5 text-[10.5px] font-semibold text-emerald-700">
+        <Lock className="h-3 w-3 shrink-0" />
+        Version-locked. Downstream stages were generated from this version.
+      </p>
+    );
+
+  if (readOnly || check.ok) return null;
+
+  return (
+    <p className="flex items-start gap-1.5 text-[10.5px] font-semibold text-amber-800">
+      <AlertTriangle className="mt-px h-3 w-3 shrink-0" />
+      {check.reason}
+    </p>
   );
 };

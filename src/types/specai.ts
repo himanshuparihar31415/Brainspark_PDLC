@@ -17,12 +17,23 @@ export type SpecStageState = 'Locked' | 'Current' | 'Locked out';
 
 // ─────────────────────── Stage 1: Knowledge & Chalk Board ───────────────────────
 
-export type SourceType = 'PDF' | 'DOCX' | 'TXT' | 'URL' | 'Confluence';
+export type SourceType =
+  | 'PDF'
+  | 'DOCX'
+  | 'TXT'
+  | 'URL'
+  | 'Confluence'
+  | 'Jira'
+  | 'Repository'
+  | 'Transcript'
+  | 'App';
 
 export interface SpecSource {
   id: string;
   name: string;
   type: SourceType;
+  /** Second line in the knowledge-sources list, e.g. "184 selected items". */
+  detail?: string;
 }
 
 /**
@@ -115,7 +126,14 @@ export interface BoardLane {
 
 export interface BoardCard {
   id: string;
+  /** Retained as the grouping key even though the board positions freely. */
   laneId: string;
+  /**
+   * Position on the chalk board, in canvas pixels. Absent on cards the AI just
+   * created — the board lays those out in the first free slot.
+   */
+  x?: number;
+  y?: number;
   type: CardType;
   state: CardState;
   title: string;

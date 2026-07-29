@@ -48,7 +48,7 @@ export const CardInspector: React.FC<{
         <div className="flex items-start justify-between gap-3 border-b border-slate-200 px-5 py-4">
           <div className="min-w-0">
             <span className={`rounded px-1.5 py-0.5 text-[9px] font-bold ${meta.chip}`}>
-              {card.type}
+              {meta.label}
             </span>
             <h3 className="mt-1.5 text-sm font-extrabold leading-tight text-slate-900">
               {card.title}

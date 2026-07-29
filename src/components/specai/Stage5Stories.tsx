@@ -1,7 +1,14 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import { SpecAiState, SpecStageKey, StoryType } from '../../types/specai';
-import { unmappedStoryTypes } from '../../data/specai';
+import { SpecAiState, SpecStageKey, StoryType, UserStory } from '../../types/specai';
+import {
+  STORY_TRACKS,
+  STORY_TRACK_COPY,
+  STORY_TRACK_OF,
+  StoryTrack,
+  storyTrackCounts,
+  unmappedStoryTypes,
+} from '../../data/specai';
 import { relativeTime } from '../../data/modules';
 import {
   AlertTriangle,
@@ -41,12 +48,21 @@ const PRIORITY_CHIP: Record<string, string> = {
 
 const JIRA_ISSUE_TYPES = ['Story', 'Task', 'Bug', 'Test', 'Sub-task'];
 
-/** Stage 5 — Stories and Jira export. */
+/**
+ * Stage 5 — Stories and Jira export.
+ *
+ * The backlog is presented in two tracks: work a stakeholder can accept on its
+ * own, and work that exists because of how the system is built. Both export to
+ * the same board — the split is for reading and reviewing, not for permissions.
+ */
 export const Stage5Stories: React.FC<{
   state: SpecAiState;
   readOnly: boolean;
   onViewSource: (stage: SpecStageKey) => void;
-}> = ({ state, readOnly, onViewSource }) => {
+  /** Controlled by the shell, so the pipeline rail's sub-entries can drive it. */
+  track: StoryTrack | 'All';
+  onTrackChange: (track: StoryTrack | 'All') => void;
+}> = ({ state, readOnly, onViewSource, track, onTrackChange }) => {
   const { connectors, reviewStaleStory, exportStoriesToJira, setJiraMapping } = useApp();
 
   const [typeFilter, setTypeFilter] = useState<StoryType | 'All'>('All');
@@ -68,12 +84,19 @@ export const Stage5Stories: React.FC<{
   }
 
   const modules = [...new Set(state.stories.map((s) => s.moduleName))];
+  const trackCounts = storyTrackCounts(state);
   const visible = state.stories.filter(
     (s) =>
+      (track === 'All' || STORY_TRACK_OF[s.storyType] === track) &&
       (typeFilter === 'All' || s.storyType === typeFilter) &&
       (priorityFilter === 'All' || s.priority === priorityFilter) &&
       (moduleFilter === 'All' || s.moduleName === moduleFilter)
   );
+
+  /** One section per track, so a flat filter and the split view render the same way. */
+  const groups: { track: StoryTrack; stories: UserStory[] }[] = (
+    track === 'All' ? STORY_TRACKS : [track]
+  ).map((t) => ({ track: t, stories: visible.filter((s) => STORY_TRACK_OF[s.storyType] === t) }));
 
   const countOf = (fn: (s: (typeof state.stories)[number]) => boolean) =>
     state.stories.filter(fn).length;
@@ -115,6 +138,29 @@ export const Stage5Stories: React.FC<{
         <aside className="h-fit space-y-3 xl:sticky xl:top-4">
           <div className="rounded-2xl border border-slate-200 bg-white p-3.5">
             <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+              Track
+            </div>
+            <div className="mt-1.5 flex overflow-hidden rounded-lg border border-slate-200">
+              {(['All', ...STORY_TRACKS] as const).map((t) => (
+                <button
+                  key={t}
+                  onClick={() => onTrackChange(t)}
+                  title={t === 'All' ? 'Both tracks' : STORY_TRACK_COPY[t].helper}
+                  className={`flex-1 cursor-pointer border-r border-slate-200 px-1.5 py-1.5 text-[9.5px] font-bold leading-tight transition-colors last:border-r-0 ${
+                    track === t
+                      ? 'bg-slate-900 text-white'
+                      : 'bg-white text-slate-600 hover:bg-slate-50'
+                  }`}
+                >
+                  {t === 'All' ? 'All' : t === 'Non-technical' ? 'Non-tech' : 'Technical'}
+                  <span className={`ml-1 ${track === t ? 'text-slate-300' : 'text-slate-400'}`}>
+                    {t === 'All' ? state.stories.length : trackCounts[t]}
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            <div className="mt-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">
               Story type
             </div>
             <div className="mt-1.5">
@@ -250,7 +296,27 @@ export const Stage5Stories: React.FC<{
             </p>
           )}
 
-          {visible.map((s) => (
+          {groups.map(
+            (g) =>
+              g.stories.length > 0 && (
+                <section key={g.track} className="space-y-2.5">
+                  <div className="flex flex-wrap items-baseline gap-2 pt-1">
+                    <h3 className="text-[13px] font-extrabold tracking-tight text-slate-900">
+                      {g.track}
+                    </h3>
+                    <span
+                      className={`rounded px-1.5 py-0.5 text-[9px] font-bold ${
+                        STORY_TRACK_COPY[g.track].chip
+                      }`}
+                    >
+                      {g.stories.length}
+                    </span>
+                    <span className="min-w-0 flex-1 text-[10px] text-slate-500">
+                      {STORY_TRACK_COPY[g.track].helper}
+                    </span>
+                  </div>
+
+                  {g.stories.map((s) => (
             <article
               key={s.id}
               className={`rounded-2xl border bg-white p-4 ${
@@ -362,7 +428,10 @@ export const Stage5Stories: React.FC<{
                 </div>
               </div>
             </article>
-          ))}
+                  ))}
+                </section>
+              )
+          )}
 
           {/* Export */}
           <section className="space-y-2.5 rounded-2xl border border-slate-200 bg-white p-4">
