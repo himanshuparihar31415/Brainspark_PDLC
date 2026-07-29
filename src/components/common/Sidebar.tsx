@@ -1,5 +1,6 @@
 import React from 'react';
 import { useApp, NavView } from '../../context/AppContext';
+import { canAccessNav } from '../../data/rbac';
 import {
   LayoutDashboard,
   Building2,
@@ -20,115 +21,40 @@ import {
 interface NavItemDef {
   label: NavView;
   icon: React.ElementType;
-  visibleTo: string[]; // Role matching or 'ALL_GOVERNANCE', 'ALL_PDLC', 'ALL'
   badge?: string;
 }
 
 export const Sidebar: React.FC = () => {
-  const { currentRole, activeNav, setActiveNav, tasks, agents, notifications } = useApp();
-
-  const isGovernanceRole = ['Super Admin', 'Tenant Admin', 'Project Admin'].includes(currentRole);
-  const isPdlcRole = [
-    'Product Manager',
-    'Architect',
-    'Designer',
-    'Tech Lead',
-    'Developer',
-    'QA Manager',
-    'QA Engineer',
-    'Release Manager',
-  ].includes(currentRole);
+  const { currentRole, activeNav, setActiveNav, tasks, agents } = useApp();
 
   const pendingTasksCount = tasks.filter((t) => t.status === 'Needs Approval').length;
   const heldAgentsCount = agents.filter((a) => a.status === 'Held').length;
 
   const navItems: NavItemDef[] = [
-    {
-      label: 'Dashboard',
-      icon: LayoutDashboard,
-      visibleTo: ['Super Admin', 'Tenant Admin', 'Project Admin'],
-    },
-    {
-      label: 'Tenants',
-      icon: Building2,
-      visibleTo: ['Super Admin'],
-    },
-    {
-      label: 'Projects',
-      icon: FolderGit2,
-      visibleTo: ['Super Admin', 'Tenant Admin'],
-    },
-    {
-      label: 'Team',
-      icon: Users,
-      visibleTo: ['Super Admin', 'Tenant Admin', 'Project Admin'],
-    },
-    {
-      label: 'Connectors',
-      icon: Plug,
-      visibleTo: ['Super Admin', 'Tenant Admin', 'Project Admin'],
-    },
+    { label: 'Dashboard', icon: LayoutDashboard },
+    { label: 'Tenants', icon: Building2 },
+    { label: 'Projects', icon: FolderGit2 },
+    { label: 'Team', icon: Users },
+    { label: 'Connectors', icon: Plug },
     {
       label: 'Agent Registry',
       icon: Cpu,
-      visibleTo: ['Super Admin', 'Tenant Admin', 'Project Admin'],
       badge: heldAgentsCount > 0 ? `${heldAgentsCount} Held` : undefined,
     },
-    {
-      label: 'Evaluation',
-      icon: Award,
-      visibleTo: ['Super Admin', 'Tenant Admin', 'Project Admin'],
-    },
-    {
-      label: 'Prompt Controls',
-      icon: Terminal,
-      visibleTo: ['Super Admin', 'Tenant Admin', 'Project Admin'],
-    },
-    {
-      label: 'Security',
-      icon: ShieldCheck,
-      visibleTo: ['Super Admin', 'Tenant Admin', 'Project Admin'],
-    },
-    {
-      label: 'My Services',
-      icon: Sparkles,
-      visibleTo: ['Product Manager', 'Architect', 'Designer', 'Tech Lead', 'Developer', 'QA Manager', 'QA Engineer', 'Release Manager'],
-    },
-    {
-      label: 'Orchestration',
-      icon: GitMerge,
-      visibleTo: [
-        'Project Admin',
-        'Product Manager',
-        'Architect',
-        'Designer',
-        'Tech Lead',
-        'Developer',
-        'QA Manager',
-        'QA Engineer',
-        'Release Manager',
-      ],
-    },
+    { label: 'Evaluation', icon: Award },
+    { label: 'Prompt Controls', icon: Terminal },
+    { label: 'Security', icon: ShieldCheck },
+    { label: 'My Services', icon: Sparkles },
+    { label: 'Orchestration', icon: GitMerge },
     {
       label: 'My Tasks',
       icon: CheckSquare,
-      visibleTo: [
-        'Project Admin',
-        'Product Manager',
-        'Architect',
-        'Designer',
-        'Tech Lead',
-        'Developer',
-        'QA Manager',
-        'QA Engineer',
-        'Release Manager',
-      ],
       badge: pendingTasksCount > 0 ? `${pendingTasksCount}` : undefined,
     },
   ];
 
-  // Subtractive visibility filter
-  const visibleNavs = navItems.filter((item) => item.visibleTo.includes(currentRole));
+  // Subtractive visibility filter — driven by the shared RBAC map
+  const visibleNavs = navItems.filter((item) => canAccessNav(currentRole, item.label));
 
   return (
     <aside className="w-64 bg-slate-900 text-slate-300 flex flex-col justify-between border-r border-slate-800 shrink-0 select-none">

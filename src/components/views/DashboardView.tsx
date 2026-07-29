@@ -62,7 +62,7 @@ export const DashboardView: React.FC = () => {
   const handleTileClick = (metricName: string) => {
     if (metricName === 'Total cost') {
       setDrillDownCostOpen(!drillDownCostOpen);
-      setBreadcrumbPath(['Platform', currentScope.tenantName || 'LPL Financial', currentScope.projectName || 'Mobile Banking V2', 'AI Spend']);
+      setBreadcrumbPath(['Platform', currentScope.tenantName || 'Incedo Labs', currentScope.projectName || 'Mobile Banking V2', 'AI Spend']);
     } else if (metricName === 'Overall completion') {
       setHighlightedPhase('phase-codeiq');
     }

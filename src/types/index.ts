@@ -21,6 +21,43 @@ export interface ScopeContext {
   projectName?: string;
 }
 
+export type NavView =
+  | 'Dashboard'
+  | 'Tenants'
+  | 'Projects'
+  | 'Team'
+  | 'Connectors'
+  | 'Agent Registry'
+  | 'Evaluation'
+  | 'Prompt Controls'
+  | 'Security'
+  | 'My Services'
+  | 'Orchestration'
+  | 'My Tasks';
+
+/**
+ * A sign-in identity. Mock only — passwords live in mock data purely so the
+ * prototype can demonstrate role- and scope-based access from the login screen.
+ */
+export interface UserAccount {
+  id: string;
+  /** Links to a TeamMember when the user sits on a project roster. */
+  memberId?: string;
+  name: string;
+  email: string;
+  password: string;
+  avatar?: string;
+  title: string;
+  /** Role applied on sign-in. */
+  primaryRole: Role;
+  /** Every role this identity is entitled to act as. */
+  roles: Role[];
+  /** Scope the identity is bound to; drives the header scope selector. */
+  scope: ScopeContext;
+  ssoEnabled: boolean;
+  lastLogin: string;
+}
+
 export type TenantStatus = 'Active' | 'Suspended' | 'Deactivated';
 
 export interface Tenant {

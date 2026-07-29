@@ -16,9 +16,10 @@ import { SecurityView } from './components/views/SecurityView';
 import { MyServicesView } from './components/views/MyServicesView';
 import { OrchestrationView } from './components/views/OrchestrationView';
 import { MyTasksView } from './components/views/MyTasksView';
+import { LoginView } from './components/views/LoginView';
 
 const AppContent: React.FC = () => {
-  const { activeNav } = useApp();
+  const { activeNav, isAuthenticated } = useApp();
 
   const renderView = () => {
     switch (activeNav) {
@@ -50,6 +51,15 @@ const AppContent: React.FC = () => {
         return <DashboardView />;
     }
   };
+
+  if (!isAuthenticated) {
+    return (
+      <>
+        <LoginView />
+        <ToastContainer />
+      </>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-100/70 text-slate-800 flex flex-col font-sans antialiased">

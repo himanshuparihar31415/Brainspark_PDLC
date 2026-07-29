@@ -13,7 +13,15 @@ import {
 } from 'lucide-react';
 
 export const TeamView: React.FC = () => {
-  const { teamMembers, assignTeamMember, currentRole, currentScope } = useApp();
+  const { teamMembers: allTeamMembers, assignTeamMember, currentRole, currentScope } = useApp();
+
+  // Roster is scoped: platform sees everyone, a tenant or project scope only sees
+  // the people bound to it.
+  const teamMembers = allTeamMembers.filter((m) => {
+    if (currentScope.type === 'platform') return true;
+    if (currentScope.type === 'tenant') return m.tenantId === currentScope.tenantId;
+    return m.projectId === currentScope.projectId;
+  });
 
   const [activeTab, setActiveTab] = useState<'roster' | 'shared'>('roster');
   const [assignModalOpen, setAssignModalOpen] = useState(false);
@@ -42,9 +50,9 @@ export const TeamView: React.FC = () => {
     if (!memberName.trim()) return;
     assignTeamMember({
       name: memberName.trim(),
-      email: memberEmail.trim() || `${memberName.toLowerCase().replace(/\s+/g, '')}@lplfinancial.com`,
+      email: memberEmail.trim() || `${memberName.toLowerCase().replace(/\s+/g, '')}@incedolabs.com`,
       roles: [selectedRole],
-      tenantId: currentScope.tenantId || 't-lpl',
+      tenantId: currentScope.tenantId || 't-incedo',
       projectId: currentScope.projectId || 'p-mobile-v2',
     });
     setMemberName('');
@@ -294,7 +302,7 @@ export const TeamView: React.FC = () => {
                   type="email"
                   value={memberEmail}
                   onChange={(e) => setMemberEmail(e.target.value)}
-                  placeholder="a.rivera@lplfinancial.com"
+                  placeholder="a.rivera@incedolabs.com"
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-900 focus:bg-white focus:border-indigo-600 outline-none"
                 />
               </div>

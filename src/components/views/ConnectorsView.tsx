@@ -187,7 +187,7 @@ export const ConnectorsView: React.FC = () => {
                   type="text"
                   value={endpointUrl}
                   onChange={(e) => setEndpointUrl(e.target.value)}
-                  placeholder="https://lplfinancial.atlassian.net"
+                  placeholder="https://incedolabs.atlassian.net"
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-900 focus:bg-white focus:border-indigo-600 outline-none font-mono"
                 />
               </div>
@@ -210,7 +210,7 @@ export const ConnectorsView: React.FC = () => {
                   type="text"
                   value={workspaceRepo}
                   onChange={(e) => setWorkspaceRepo(e.target.value)}
-                  placeholder="lpl-org/mobile-banking-v2"
+                  placeholder="incedolabs/mobile-banking-v2"
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-900 focus:bg-white focus:border-indigo-600 outline-none font-mono"
                 />
               </div>

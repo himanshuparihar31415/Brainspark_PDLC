@@ -28,7 +28,7 @@ export const ProjectsView: React.FC = () => {
   const [targetReleaseDate, setTargetReleaseDate] = useState('2026-12-31');
   const [assignedAdmin, setAssignedAdmin] = useState('Sarah Jenkins');
   const [selectedTemplate, setSelectedTemplate] = useState('None (blank project)');
-  const [selectedTenantId, setSelectedTenantId] = useState(currentScope.tenantId || 't-lpl');
+  const [selectedTenantId, setSelectedTenantId] = useState(currentScope.tenantId || 't-incedo');
 
   const filteredProjects =
     currentScope.type === 'tenant' && currentScope.tenantId
@@ -48,7 +48,7 @@ export const ProjectsView: React.FC = () => {
       targetReleaseDate,
       admins: [assignedAdmin],
       tenantId: selectedTenantId,
-      tenantName: t?.name || 'LPL Financial',
+      tenantName: t?.name || 'Incedo Labs',
       template: selectedTemplate,
     });
 

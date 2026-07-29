@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { Role } from '../../types';
+import { isGovernanceRole } from '../../data/rbac';
 import {
   Brain,
   Search,
@@ -15,6 +16,7 @@ import {
   Building2,
   FolderGit2,
   Sparkles,
+  LogOut,
 } from 'lucide-react';
 
 export const Header: React.FC = () => {
@@ -30,6 +32,8 @@ export const Header: React.FC = () => {
     tenants,
     projects,
     setActiveNav,
+    logout,
+    currentUser,
   } = useApp();
 
   const [scopeDropdownOpen, setScopeDropdownOpen] = useState(false);
@@ -39,19 +43,23 @@ export const Header: React.FC = () => {
 
   const unreadNotifs = notifications.filter((n) => !n.read);
 
-  const rolesList: { role: Role; category: string }[] = [
-    { role: 'Super Admin', category: 'Platform Governance' },
-    { role: 'Tenant Admin', category: 'Platform Governance' },
-    { role: 'Project Admin', category: 'Platform Governance' },
-    { role: 'Product Manager', category: 'PDLC Personas' },
-    { role: 'Architect', category: 'PDLC Personas' },
-    { role: 'Designer', category: 'PDLC Personas' },
-    { role: 'Tech Lead', category: 'PDLC Personas' },
-    { role: 'Developer', category: 'PDLC Personas' },
-    { role: 'QA Manager', category: 'PDLC Personas' },
-    { role: 'QA Engineer', category: 'PDLC Personas' },
-    { role: 'Release Manager', category: 'PDLC Personas' },
-  ];
+  // Only the roles the signed-in identity is entitled to act as.
+  const rolesList: { role: Role; category: string }[] = (currentUser?.roles ?? []).map((role) => ({
+    role,
+    category: isGovernanceRole(role) ? 'Platform Governance' : 'PDLC Personas',
+  }));
+
+  // Scope entitlement: Super Admin roams the platform, Tenant Admin stays inside
+  // its own tenant, everyone else is pinned to their assigned project.
+  const canSwitchScope = currentRole === 'Super Admin' || currentRole === 'Tenant Admin';
+  const visibleTenants =
+    currentRole === 'Super Admin'
+      ? tenants
+      : tenants.filter((t) => t.id === currentUser?.scope.tenantId);
+  const visibleProjects =
+    currentRole === 'Super Admin'
+      ? projects
+      : projects.filter((p) => p.tenantId === currentUser?.scope.tenantId);
 
   const handleScopeSelect = (type: 'platform' | 'tenant' | 'project', id?: string, name?: string) => {
     if (type === 'platform') {
@@ -100,13 +108,13 @@ export const Header: React.FC = () => {
 
         {/* Scope Selector */}
         <div className="relative">
-          {currentRole === 'Project Admin' ? (
+          {!canSwitchScope ? (
             <div
               className="group flex items-center gap-2 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-600 cursor-not-allowed"
-              title="You have access to one project."
+              title={`Your ${currentRole} role is scoped to this project.`}
             >
               <FolderGit2 className="w-3.5 h-3.5 text-indigo-600" />
-              <span>Project: Mobile Banking V2</span>
+              <span>Project: {currentScope.projectName}</span>
             </div>
           ) : (
             <button
@@ -148,7 +156,7 @@ export const Header: React.FC = () => {
               <div className="px-3 pt-2 pb-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
                 Tenants
               </div>
-              {tenants.map((t) => (
+              {visibleTenants.map((t) => (
                 <button
                   key={t.id}
                   onClick={() => handleScopeSelect('tenant', t.id, t.name)}
@@ -171,7 +179,7 @@ export const Header: React.FC = () => {
               <div className="px-3 pt-2 pb-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
                 Projects
               </div>
-              {projects.map((p) => (
+              {visibleProjects.map((p) => (
                 <button
                   key={p.id}
                   onClick={() => handleScopeSelect('project', p.id, p.name)}
@@ -251,26 +259,39 @@ export const Header: React.FC = () => {
 
       {/* Right controls */}
       <div className="flex items-center gap-3">
-        {/* Role Demo Persona Quick Switcher Button */}
+        {/* Active role — switchable only across the user's entitled roles */}
         <div className="relative">
-          <button
-            onClick={() => setRoleMenuOpen(!roleMenuOpen)}
-            className="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-950 border border-indigo-200 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
-            title="Switch Persona to test subtracted navigation"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
-            <span className="hidden sm:inline">Persona:</span>
-            <span className="font-bold text-indigo-900">{currentRole}</span>
-            <ChevronDown className="w-3.5 h-3.5 text-indigo-500" />
-          </button>
+          {rolesList.length > 1 ? (
+            <button
+              onClick={() => setRoleMenuOpen(!roleMenuOpen)}
+              className="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-950 border border-indigo-200 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+              title="Switch between the roles assigned to you"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+              <span className="hidden sm:inline">Role:</span>
+              <span className="font-bold text-indigo-900">{currentRole}</span>
+              <ChevronDown className="w-3.5 h-3.5 text-indigo-500" />
+            </button>
+          ) : (
+            <div
+              className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-600 cursor-default"
+              title="You are assigned a single role"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-slate-400" />
+              <span className="hidden sm:inline">Role:</span>
+              <span className="font-bold text-slate-800">{currentRole}</span>
+            </div>
+          )}
 
           {/* Role Picker Menu */}
-          {roleMenuOpen && (
+          {roleMenuOpen && rolesList.length > 1 && (
             <div className="absolute top-full right-0 mt-2 w-72 bg-white rounded-xl shadow-2xl border border-slate-200 py-2 z-50 text-xs animate-in fade-in slide-in-from-top-1">
               <div className="px-3 py-1.5 border-b border-slate-100 bg-slate-50/50">
-                <div className="font-bold text-slate-900">Switch Role Persona</div>
+                <div className="font-bold text-slate-900">Switch Role</div>
                 <div className="text-[11px] text-slate-500 leading-tight mt-0.5">
-                  Test subtractive nav & role-based view limits instantly.
+                  {currentUser?.primaryRole === 'Super Admin'
+                    ? 'Platform operator — impersonate any persona to verify access limits.'
+                    : `Roles assigned to ${currentUser?.name} on this project.`}
                 </div>
               </div>
 
@@ -359,11 +380,35 @@ export const Header: React.FC = () => {
           )}
         </div>
 
-        {/* User avatar */}
+        {/* Signed-in identity */}
         <div className="flex items-center gap-2 pl-2 border-l border-slate-200">
-          <div className="w-8 h-8 rounded-full bg-slate-900 text-white font-bold text-xs flex items-center justify-center">
-            {currentRole.substring(0, 2).toUpperCase()}
+          {currentUser?.avatar ? (
+            <img
+              src={currentUser.avatar}
+              alt={currentUser.name}
+              className="w-8 h-8 rounded-full object-cover ring-1 ring-slate-200"
+            />
+          ) : (
+            <div className="w-8 h-8 rounded-full bg-slate-900 text-white font-bold text-xs flex items-center justify-center">
+              {(currentUser?.name || currentRole)
+                .split(' ')
+                .map((w) => w[0])
+                .join('')
+                .substring(0, 2)
+                .toUpperCase()}
+            </div>
+          )}
+          <div className="hidden lg:block leading-tight">
+            <div className="text-xs font-bold text-slate-900">{currentUser?.name}</div>
+            <div className="text-[10px] text-slate-500">{currentUser?.email}</div>
           </div>
+          <button
+            onClick={logout}
+            title="Sign out"
+            className="p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+          >
+            <LogOut className="w-4 h-4" />
+          </button>
         </div>
       </div>
     </header>

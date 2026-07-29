@@ -15,8 +15,12 @@ import {
   NotificationItem,
   Task,
   OrchestrationPhase,
+  UserAccount,
+  NavView,
 } from '../types';
+import { canAccessNav, landingNavForRole, scopeForRole } from '../data/rbac';
 import {
+  INITIAL_USERS,
   INITIAL_TENANTS,
   INITIAL_PROJECTS,
   INITIAL_TEAM_MEMBERS,
@@ -32,19 +36,7 @@ import {
   INITIAL_ORCHESTRATION_PHASES,
 } from '../data/mockData';
 
-export type NavView =
-  | 'Dashboard'
-  | 'Tenants'
-  | 'Projects'
-  | 'Team'
-  | 'Connectors'
-  | 'Agent Registry'
-  | 'Evaluation'
-  | 'Prompt Controls'
-  | 'Security'
-  | 'My Services'
-  | 'Orchestration'
-  | 'My Tasks';
+export type { NavView };
 
 export interface ToastMessage {
   id: string;
@@ -52,7 +44,20 @@ export interface ToastMessage {
   message: string;
 }
 
+export type AuthMethod = 'password' | 'sso';
+
+export interface AuthResult {
+  ok: boolean;
+  error?: string;
+}
+
 interface AppContextType {
+  isAuthenticated: boolean;
+  currentUser: UserAccount | null;
+  users: UserAccount[];
+  login: (email: string, password: string, method?: AuthMethod) => AuthResult;
+  logout: () => void;
+  requestAccess: (email: string) => AuthResult;
   currentRole: Role;
   setCurrentRole: (role: Role) => void;
   currentScope: ScopeContext;
@@ -106,6 +111,8 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [currentUser, setCurrentUser] = useState<UserAccount | null>(null);
+  const [users] = useState<UserAccount[]>(INITIAL_USERS);
   const [currentRole, setCurrentRoleState] = useState<Role>('Super Admin');
   const [currentScope, setCurrentScope] = useState<ScopeContext>({
     type: 'platform',
@@ -148,7 +155,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const entry: AuditLogEntry = {
       id: 'audit-' + Date.now(),
       timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19),
-      actor: currentRole === 'Super Admin' ? 'Platform Super Admin' : 'Current User (' + currentRole + ')',
+      actor: currentUser
+        ? `${currentUser.name} (${currentRole})`
+        : currentRole === 'Super Admin'
+        ? 'Platform Super Admin'
+        : 'Current User (' + currentRole + ')',
       actorType: 'user',
       action,
       targetArtifact: target,
@@ -159,36 +170,101 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setAuditLogs((prev) => [entry, ...prev]);
   };
 
-  // Switch role logic with subtractive nav enforcement
+  /**
+   * Credential check against the mock directory. The matched account decides the
+   * active role, the scope the session is bound to, and therefore which views
+   * the sidebar renders.
+   */
+  const login = (email: string, password: string, method: AuthMethod = 'password'): AuthResult => {
+    const normalized = email.trim().toLowerCase();
+
+    if (!normalized) {
+      return { ok: false, error: 'Enter your corporate email address.' };
+    }
+
+    const account = users.find((u) => u.email.toLowerCase() === normalized);
+    if (!account) {
+      return { ok: false, error: 'No Brainspark account found for that email.' };
+    }
+
+    if (method === 'sso') {
+      if (!account.ssoEnabled) {
+        return { ok: false, error: 'SSO is not enabled for this tenant. Sign in with your password.' };
+      }
+    } else if (password !== account.password) {
+      return { ok: false, error: 'Incorrect password. Please try again.' };
+    }
+
+    const role = account.primaryRole;
+    setCurrentUser(account);
+    setCurrentRoleState(role);
+    setCurrentScope(scopeForRole(role, account));
+    setActiveNav(landingNavForRole(role));
+
+    addToast(`Welcome back, ${account.name.split(' ')[0]} — signed in as ${role}.`);
+    addAuditLog(
+      'Sign In',
+      `User: ${account.email}`,
+      `Method: ${method === 'sso' ? 'Incedo SSO' : 'Password'} · Role: ${role}`,
+      `Session established at ${account.scope.type.toUpperCase()} scope`
+    );
+
+    return { ok: true };
+  };
+
+  const logout = () => {
+    addAuditLog(
+      'Sign Out',
+      `User: ${currentUser?.email || 'unknown'}`,
+      'User initiated sign out',
+      'Session terminated'
+    );
+    setCurrentUser(null);
+    setCurrentRoleState('Super Admin');
+    setCurrentScope({ type: 'platform', tenantName: 'All Tenants' });
+    setActiveNav('Dashboard');
+  };
+
+  /**
+   * Corporate-email sign-up. Provisioning is governed, so this raises an access
+   * request for a Tenant Admin rather than minting a session.
+   */
+  const requestAccess = (email: string): AuthResult => {
+    const normalized = email.trim().toLowerCase();
+
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(normalized)) {
+      return { ok: false, error: 'Enter a valid corporate email address.' };
+    }
+
+    if (users.some((u) => u.email.toLowerCase() === normalized)) {
+      return { ok: false, error: 'An account already exists for that email. Try signing in.' };
+    }
+
+    const tenant = tenants.find((t) => normalized.endsWith(t.adminEmail.split('@')[1]));
+    addToast(`Access request sent to ${tenant ? tenant.name : 'the platform'} admin for approval.`, 'info');
+    addAuditLog(
+      'Request Workspace Access',
+      `Prospective user: ${normalized}`,
+      `Detected tenant: ${tenant ? tenant.name : 'Unmatched domain'}`,
+      'Pending Tenant Admin approval'
+    );
+
+    return { ok: true };
+  };
+
+  // Switch role persona with entitlement + subtractive nav enforcement
   const setCurrentRole = (newRole: Role) => {
+    if (currentUser && !currentUser.roles.includes(newRole)) {
+      addToast(`${currentUser.name} is not entitled to the ${newRole} role.`, 'error');
+      return;
+    }
+
     setCurrentRoleState(newRole);
+    setCurrentScope(scopeForRole(newRole, currentUser));
     addToast(`Switched role persona to ${newRole}`, 'info');
 
-    // Scope locking & nav adjust
-    if (newRole === 'Project Admin') {
-      setCurrentScope({
-        type: 'project',
-        tenantId: 't-lpl',
-        projectId: 'p-mobile-v2',
-        tenantName: 'LPL Financial',
-        projectName: 'Mobile Banking V2',
-      });
-      if (['Tenants', 'Projects'].includes(activeNav)) {
-        setActiveNav('Dashboard');
-      }
-    } else if (newRole === 'Tenant Admin') {
-      setCurrentScope({
-        type: 'tenant',
-        tenantId: 't-lpl',
-        tenantName: 'LPL Financial',
-      });
-      if (activeNav === 'Tenants') {
-        setActiveNav('Dashboard');
-      }
-    } else if (['Product Manager', 'Architect', 'Designer', 'Tech Lead', 'Developer', 'QA Manager', 'QA Engineer', 'Release Manager'].includes(newRole)) {
-      if (['Tenants', 'Projects', 'Security', 'Prompt Controls'].includes(activeNav)) {
-        setActiveNav('My Services');
-      }
+    if (!canAccessNav(newRole, activeNav)) {
+      setActiveNav(landingNavForRole(newRole));
     }
   };
 
@@ -232,8 +308,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const newProj: Project = {
       id: 'p-' + Date.now().toString(36),
       name: data.name || 'New Project',
-      tenantId: data.tenantId || 't-lpl',
-      tenantName: data.tenantName || 'LPL Financial',
+      tenantId: data.tenantId || 't-incedo',
+      tenantName: data.tenantName || 'Incedo Labs',
       admins: data.admins && data.admins.length > 0 ? data.admins : ['Current User'],
       phase: 'SpecAI Requirements',
       completion: 5,
@@ -262,10 +338,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const newMember: TeamMember = {
       id: 'm-' + Date.now().toString(36),
       name: data.name || 'New Member',
-      email: data.email || 'member@lplfinancial.com',
+      email: data.email || 'member@incedolabs.com',
       avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
       roles: data.roles || ['Developer'],
-      tenantId: data.tenantId || 't-lpl',
+      tenantId: data.tenantId || 't-incedo',
       projectId: data.projectId || 'p-mobile-v2',
       moduleAccess: ['CodeIQ', 'My Tasks'],
       status: 'Assigned',
@@ -431,6 +507,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   return (
     <AppContext.Provider
       value={{
+        isAuthenticated: currentUser !== null,
+        currentUser,
+        users,
+        login,
+        logout,
+        requestAccess,
         currentRole,
         setCurrentRole,
         currentScope,

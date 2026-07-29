@@ -1,15 +1,26 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { Task } from '../../types';
+import { isGovernanceRole } from '../../data/rbac';
 import { CheckSquare, Check, X, Calendar, User, FileText, Sparkles, CheckCircle2 } from 'lucide-react';
 
 export const MyTasksView: React.FC = () => {
-  const { tasks, completeTask, approveTaskArtifact } = useApp();
+  const { tasks, completeTask, approveTaskArtifact, currentUser, currentRole, currentScope } = useApp();
 
   const [filterStatus, setFilterStatus] = useState<string>('All');
-  const [selectedTask, setSelectedTask] = useState<Task | null>(tasks[0] || null);
 
-  const filteredTasks = tasks.filter((t) => {
+  // Project Admins oversee the whole project queue; PDLC personas see only what
+  // is assigned to them.
+  const isOversight = isGovernanceRole(currentRole);
+  const myTasks = tasks.filter((t) =>
+    isOversight ? t.project === currentScope.projectName : t.assignee === currentUser?.name
+  );
+
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const selectedTask: Task | null =
+    myTasks.find((t) => t.id === selectedTaskId) || myTasks[0] || null;
+
+  const filteredTasks = myTasks.filter((t) => {
     if (filterStatus !== 'All' && t.status !== filterStatus) return false;
     return true;
   });
@@ -54,7 +65,7 @@ export const MyTasksView: React.FC = () => {
               return (
                 <div
                   key={t.id}
-                  onClick={() => setSelectedTask(t)}
+                  onClick={() => setSelectedTaskId(t.id)}
                   className={`p-4 rounded-2xl border transition-all cursor-pointer ${
                     isSelected
                       ? 'bg-indigo-50/40 border-indigo-500 ring-2 ring-indigo-500/20 shadow-md'
