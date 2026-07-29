@@ -29,12 +29,18 @@ export const SourceDrawer: React.FC<{
         : 'Local to this workspace',
     },
     { label: 'Knowledge index', value: channel.status },
+    { label: 'Scope', value: channel.scope },
     { label: 'Selected project', value: currentScope.projectName ?? '—' },
     { label: 'Items indexed', value: channel.itemsIndexed.toLocaleString() },
     { label: 'Last sync', value: channel.lastSync },
     {
       label: 'Embedding status',
-      value: channel.status === 'Ready' ? 'Healthy' : channel.status === 'Indexing' ? 'Building' : '—',
+      value:
+        channel.status === 'Ready'
+          ? 'Healthy'
+          : channel.status === 'Indexing' || channel.status === 'Partial'
+          ? 'Building'
+          : '—',
     },
   ];
 
@@ -70,6 +76,16 @@ export const SourceDrawer: React.FC<{
                 <b className="text-[11px] font-bold text-slate-900">{r.value}</b>
               </div>
             ))}
+          </div>
+
+          <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50/60 p-3">
+            <div className="text-[9px] font-bold uppercase tracking-wider text-slate-400">
+              Advanced details
+            </div>
+            <p className="mt-1 text-[10px] leading-relaxed text-slate-600">
+              Embedding model: text-embedding-3-large · {channel.itemsIndexed * 12} chunks · 0 failed
+              · Last indexed {channel.lastSync}
+            </p>
           </div>
 
           <button

@@ -25,7 +25,7 @@ interface NavItemDef {
 }
 
 export const Sidebar: React.FC = () => {
-  const { currentRole, activeNav, setActiveNav, tasks, agents } = useApp();
+  const { currentRole, activeNav, setActiveNav, tasks, agents, navCollapsed } = useApp();
 
   const pendingTasksCount = tasks.filter((t) => t.status === 'Needs Approval').length;
   const heldAgentsCount = agents.filter((a) => a.status === 'Held').length;
@@ -57,15 +57,21 @@ export const Sidebar: React.FC = () => {
   const visibleNavs = navItems.filter((item) => canAccessNav(currentRole, item.label));
 
   return (
-    <aside className="w-64 bg-slate-900 text-slate-300 flex flex-col justify-between border-r border-slate-800 shrink-0 select-none">
+    <aside
+      className={`bg-slate-900 text-slate-300 flex flex-col justify-between border-r border-slate-800 shrink-0 select-none transition-all duration-200 ${
+        navCollapsed ? 'w-14' : 'w-64'
+      }`}
+    >
       <div className="py-4">
-        <div className="px-5 mb-3 flex items-center justify-between">
-          <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
-            Navigation ({currentRole})
-          </span>
-        </div>
+        {!navCollapsed && (
+          <div className="px-5 mb-3 flex items-center justify-between">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
+              Navigation ({currentRole})
+            </span>
+          </div>
+        )}
 
-        <nav className="space-y-1 px-3">
+        <nav className={`space-y-1 ${navCollapsed ? 'px-2' : 'px-3'}`}>
           {visibleNavs.map((item) => {
             const Icon = item.icon;
             const isActive = activeNav === item.label;
@@ -74,7 +80,10 @@ export const Sidebar: React.FC = () => {
               <button
                 key={item.label}
                 onClick={() => setActiveNav(item.label)}
-                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-150 cursor-pointer ${
+                title={navCollapsed ? item.label : undefined}
+                className={`w-full flex items-center ${
+                  navCollapsed ? 'justify-center px-0' : 'justify-between px-3.5'
+                } py-2.5 rounded-xl text-xs font-semibold transition-all duration-150 cursor-pointer ${
                   isActive
                     ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
                     : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/60'
@@ -82,9 +91,9 @@ export const Sidebar: React.FC = () => {
               >
                 <div className="flex items-center gap-3">
                   <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-white' : 'text-slate-400'}`} />
-                  <span>{item.label}</span>
+                  {!navCollapsed && <span>{item.label}</span>}
                 </div>
-                {item.badge && (
+                {item.badge && !navCollapsed && (
                   <span
                     className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
                       isActive
@@ -104,7 +113,8 @@ export const Sidebar: React.FC = () => {
       </div>
 
       {/* Footer */}
-      <div className="p-4 border-t border-slate-800/80 bg-slate-950/40">
+      <div className={`border-t border-slate-800/80 bg-slate-950/40 ${navCollapsed ? 'p-2' : 'p-4'}`}>
+        {navCollapsed ? null : (
         <div className="flex items-center justify-between text-xs text-slate-400">
           <button className="flex items-center gap-1.5 hover:text-white transition-colors">
             <HelpCircle className="w-3.5 h-3.5" />
@@ -115,6 +125,7 @@ export const Sidebar: React.FC = () => {
             <span>What's new</span>
           </button>
         </div>
+        )}
       </div>
     </aside>
   );

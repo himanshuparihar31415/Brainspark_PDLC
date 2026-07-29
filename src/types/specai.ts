@@ -1,22 +1,21 @@
 /**
- * Spec AI — the front of the pipeline: raw knowledge to Jira-ready stories, with
- * a version-locked architecture package in between.
+ * Spec AI — converts fragmented product knowledge into an approved, traceable
+ * specification package and delivery backlog.
  *
- * The five stages form a linear gated pipeline. A stage unlocks only once the
- * one before it is locked, which is what makes this one continuous tool rather
- * than five stapled screens.
+ * Five stages, each ending in an approve-and-lock gate. The organizing idea is
+ * progressive structure: rough thinking first, formal documentation later.
  */
 export type SpecStageKey =
   | 'knowledge'
   | 'understanding'
-  | 'architecture'
+  | 'artifacts'
   | 'modules'
   | 'stories';
 
 /** Where a stage sits relative to the user's progress. */
 export type SpecStageState = 'Locked' | 'Current' | 'Locked out';
 
-// ── Stage 1: Knowledge Creation & Contextualization
+// ─────────────────────── Stage 1: Knowledge & Chalk Board ───────────────────────
 
 export type SourceType = 'PDF' | 'DOCX' | 'TXT' | 'URL' | 'Confluence';
 
@@ -27,35 +26,115 @@ export interface SpecSource {
 }
 
 /**
- * An ambiguity surfaced by multi-document fusion. Open flags block the stage
- * gate — the contextualization work is the point of the stage, not a nicety.
+ * A knowledge domain in the context strip. Distinct from an individual file: a
+ * channel is a connected system being drawn on, with its own index health.
  */
-export interface FlaggedQuestion {
+export interface KnowledgeChannel {
   id: string;
-  question: string;
-  /** Which sources disagree, for context on the row. */
-  fromSources: string;
-  status: 'Open' | 'Resolved';
+  label: string;
+  /** e.g. "184 issues", "27 endpoints". */
+  detail: string;
+  status: 'Ready' | 'Partial' | 'Indexing' | 'Not connected';
+  /** Connector this channel depends on, if any. */
+  connectorId?: string;
+  itemsIndexed: number;
+  lastSync: string;
+  /** What the channel is scoped to, shown in the inspector. */
+  scope: string;
+}
+
+/**
+ * The eight constrained card types. Constraining the vocabulary is what keeps the
+ * board a working surface rather than an unstructured whiteboard.
+ */
+export type CardType =
+  | 'Evidence'
+  | 'Observation'
+  | 'Idea'
+  | 'Question'
+  | 'Conflict'
+  | 'Constraint'
+  | 'Decision'
+  | 'Requirement seed';
+
+/**
+ * The visible content lifecycle. Every card sits at exactly one state, and the
+ * state decides which actions are offered.
+ */
+export type CardState =
+  | 'Captured'
+  | 'Interpreted'
+  | 'Flagged'
+  | 'Confirmed'
+  | 'Requirement seed'
+  | 'Superseded';
+
+/**
+ * Evidence hierarchy. The system must never blur a sourced fact with an AI
+ * guess, so every card declares which it is.
+ */
+export type EvidenceClass =
+  | 'Source fact'
+  | 'User decision'
+  | 'Inferred interpretation'
+  | 'AI assumption';
+
+/** Where a card came from, retained in full so a claim can always be traced. */
+export interface Provenance {
+  system: string;
+  /** e.g. "FMB2-142". */
+  itemId?: string;
+  deepLink?: string;
+  indexedAt: string;
+  /** The exact supporting excerpt or screen evidence. */
+  excerpt: string;
+}
+
+export type RelationKind = 'Supports' | 'Contradicts' | 'Depends on' | 'Refines' | 'Supersedes';
+
+export interface CardRelation {
+  toCardId: string;
+  kind: RelationKind;
+}
+
+/** The two claims and observed state behind a conflict card. */
+export interface ConflictDetail {
+  claimA: string;
+  claimASource: string;
+  claimB: string;
+  claimBSource: string;
+  observedState: string;
   resolution?: string;
+  resolvedBy?: string;
 }
 
-/** The Chalk Board validates a requirement layer by layer before accepting it. */
-export type ChalkLayer = 'Scope' | 'Dependencies' | 'Acceptance criteria';
-
-export type ChalkLayerState = 'Validating' | 'Locked' | 'Not yet';
-
-export interface ChalkMessage {
+export interface BoardLane {
   id: string;
-  from: 'bot' | 'user';
-  text: string;
+  name: string;
 }
 
-export interface ChalkBoardState {
-  started: boolean;
-  activeLayer: ChalkLayer;
-  layers: Record<ChalkLayer, ChalkLayerState>;
-  messages: ChalkMessage[];
-  acceptedRequirements: number;
+export interface BoardCard {
+  id: string;
+  laneId: string;
+  type: CardType;
+  state: CardState;
+  title: string;
+  /** Two-line preview until expanded. */
+  content: string;
+  evidenceClass: EvidenceClass;
+  provenance?: Provenance;
+  /** 0–1; surfaced alongside evidence coverage on AI propositions. */
+  confidence?: number;
+  author?: string;
+  /** Question cards carry an owner and a due state. */
+  owner?: string;
+  dueState?: string;
+  relations: CardRelation[];
+  /** AI-created cards are visually distinct and need explicit confirmation. */
+  aiCreated: boolean;
+  conflict?: ConflictDetail;
+  /** Why this was generated — the transformation chain, for explainability. */
+  rationale?: string;
 }
 
 export interface Archetype {
@@ -64,59 +143,26 @@ export interface Archetype {
   description: string;
 }
 
-/**
- * A knowledge channel in the source strip. Distinct from an individual uploaded
- * file: a channel is a connected system being drawn on, with its own index
- * health.
- */
-export interface KnowledgeChannel {
-  id: string;
-  label: string;
-  /** e.g. "184 items", "16 pages". */
-  detail: string;
-  status: 'Ready' | 'Indexing' | 'Not connected';
-  /** Connector this channel depends on, if any. */
-  connectorId?: string;
-  itemsIndexed: number;
-  lastSync: string;
-}
-
-/**
- * The chalk board is a spatial discovery surface — rough knowledge placed and
- * moved freely before any structure is imposed on it.
- */
-export type NoteKind =
-  | 'Feature idea'
-  | 'Observed flow'
-  | 'Conflict'
-  | 'Technical context'
-  | 'Open question'
-  | 'Requirement';
-
-export interface BoardNote {
-  id: string;
-  kind: NoteKind;
-  title: string;
-  body: string;
-  /** Provenance line, e.g. "Source: Live application". */
-  source: string;
-  x: number;
-  y: number;
-}
-
-// ── Stage 2: Project Understanding
+// ──────────────── Stage 2: Understanding & formal requirements ────────────────
 
 export type UnderstandingKey =
   | 'objective'
-  | 'stakeholders'
-  | 'scope'
+  | 'primaryUsers'
+  | 'currentState'
+  | 'proposedState'
+  | 'inScope'
+  | 'outOfScope'
+  | 'constraints'
   | 'assumptions'
-  | 'questions';
+  | 'openQuestions';
 
 export interface OpenQuestion {
   id: string;
   text: string;
-  status: 'Open' | 'Resolved' | 'Deferred';
+  status: 'Open' | 'Resolved' | 'Deferred' | 'Assumption';
+  owner?: string;
+  /** Recorded when deferring or converting to an assumption. */
+  rationale?: string;
 }
 
 export interface UnderstandingSection {
@@ -124,13 +170,51 @@ export interface UnderstandingSection {
   body: string;
   /** Count of stored versions, surfaced by the version-history caret. */
   versions: number;
+  /** Board cards supporting this section — the source map. */
+  supportingCardIds: string[];
 }
 
-// ── Stage 3: Architecture & Design
+export interface AcceptanceCriterion {
+  given: string;
+  when: string;
+  then: string;
+}
+
+export type RequirementType = 'Functional' | 'Non-functional' | 'Security' | 'Data';
+
+/** A confirmed requirement, promoted from one or more board seeds. */
+export interface FormalRequirement {
+  id: string;
+  title: string;
+  type: RequirementType;
+  status: 'Draft' | 'Confirmed' | 'Superseded';
+  priority: 'P0' | 'P1' | 'P2';
+  actor: string;
+  need: string;
+  businessValue: string;
+  preconditions: string;
+  mainBehavior: string;
+  fallback?: string;
+  acceptance: AcceptanceCriterion[];
+  evidenceCardIds: string[];
+  /** Human summary of the evidence set, e.g. "5 board cards, 2 Jira issues". */
+  evidenceSummary: string;
+  confidence: number;
+  owner: string;
+}
+
+// ───────────────────────── Stage 3: Artifact Studio ─────────────────────────
 
 export type ArchMode = 'Greenfield' | 'Brownfield';
 
-export type ArtifactGroup = 'Design docs' | 'Diagrams' | 'Contracts' | 'Decisions';
+export type ArtifactGroup =
+  | 'Product'
+  | 'Architecture'
+  | 'Contracts'
+  | 'Decisions'
+  | 'Visuals';
+
+export type ArtifactStatus = 'Not generated' | 'Generated' | 'In review' | 'Approved';
 
 /** Brownfield change bands. */
 export type ChangeTag = '+ New' | '~ Changed' | '− Deprecated';
@@ -141,19 +225,31 @@ export interface ArchArtifact {
   label: string;
   body: string;
   versions: number;
+  status: ArtifactStatus;
   /** Agent self-reported confidence; low surfaces a review-before-locking chip. */
   confidence: 'high' | 'low';
-  /** Set in Brownfield mode, driving the diff view bands. */
+  /** Marked for review after an upstream decision changed. */
+  stale: boolean;
+  reviewComments: number;
   changeTag?: ChangeTag;
-  /** Tooltip note shown beside the artifact label. */
   note?: string;
+  /** Node chain rendered for diagram artifacts. */
+  diagramFlow?: string[];
 }
 
-// ── Stage 4: Module & Feature Mapping
+// ──────────────────── Stage 4: Modules, features, capabilities ────────────────────
+
+export interface CapabilityNode {
+  id: string;
+  name: string;
+}
 
 export interface FeatureNode {
   id: string;
   name: string;
+  capabilities: CapabilityNode[];
+  /** Requirements and artifacts this feature realizes. */
+  requirementIds: string[];
 }
 
 export interface ModuleNode {
@@ -164,20 +260,21 @@ export interface ModuleNode {
   dependsOn: string[];
 }
 
-// ── Stage 5: User Stories & Jira Export
+// ───────────────────────── Stage 5: Stories & export ─────────────────────────
 
-export interface AcceptanceCriterion {
-  given: string;
-  when: string;
-  then: string;
-}
-
-/** Stories are generated across several lenses, not just end-user behaviour. */
-export type StoryType = 'User story' | 'Technical story' | 'Security story' | 'Testing story';
+export type StoryType =
+  | 'User story'
+  | 'Technical story'
+  | 'API story'
+  | 'Security story'
+  | 'Data story'
+  | 'Testing story'
+  | 'Migration story';
 
 export interface UserStory {
   id: string;
-  /** Story title, shown above the As-a sentence. */
+  /** e.g. "FMB2-AUTH-031". */
+  key: string;
   title: string;
   storyType: StoryType;
   role: string;
@@ -188,33 +285,50 @@ export interface UserStory {
   points: number;
   moduleName: string;
   featureName: string;
-  /** Upstream architecture artifacts this story traces to. */
+  linkedRequirementIds: string[];
+  /** Artifact references, e.g. "PRD §6.2". */
   linkedArtifactIds: string[];
-  /** True when a linked artifact was regenerated after the story was created. */
+  sourceEvidence: string;
+  /** True when a linked requirement or artifact changed after generation. */
   stale: boolean;
   exported: boolean;
 }
 
-// ── Whole-module state, per project
+/** Field mapping applied before a Jira export. */
+export interface JiraMapping {
+  epic: string;
+  release: string;
+  sprint: string;
+  /** Story type → Jira issue type. Unmapped types block the export. */
+  issueTypes: Partial<Record<StoryType, string>>;
+}
+
+// ─────────────────────── Whole-module state, per project ───────────────────────
+
+export type SaveState = 'Saved' | 'Saving' | 'Offline';
 
 export interface SpecAiState {
   projectId: string;
+  /** Display identity for the specification, independent of the platform project. */
+  specKey: string;
   currentStage: SpecStageKey;
   lockedStages: SpecStageKey[];
   sources: SpecSource[];
   channels: KnowledgeChannel[];
-  boardNotes: BoardNote[];
-  flaggedQuestions: FlaggedQuestion[];
-  chalkBoard: ChalkBoardState;
+  lanes: BoardLane[];
+  cards: BoardCard[];
   understanding: UnderstandingSection[];
-  openQuestions: OpenQuestion[];
+  requirements: FormalRequirement[];
   archMode: ArchMode;
-  /** Brownfield requires a legacy architecture added during Stage 1. */
   hasLegacyArchitecture: boolean;
   artifacts: ArchArtifact[];
   modules: ModuleNode[];
   stories: UserStory[];
+  jiraMapping: JiraMapping;
   jiraSyncedMinutesAgo?: number;
   /** Both personas on one pipeline; soft locks per section. */
   sectionEditors: Record<string, string>;
+  saveState: SaveState;
+  /** Set while a background generation job is running. */
+  generating?: string;
 }

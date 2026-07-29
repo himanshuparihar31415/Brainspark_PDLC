@@ -46,6 +46,15 @@ export const NAV_VISIBILITY: Record<NavView, Role[]> = {
   'Spec AI': ['Project Admin', ...PDLC_ROLES],
 };
 
+/**
+ * Full-screen module workspaces. They are reached from the Command Centre doors
+ * rather than the sidebar, and collapse the platform nav on entry so the module
+ * gets the whole viewport.
+ */
+export const MODULE_WORKSPACES: NavView[] = ['Spec AI'];
+
+export const isModuleWorkspace = (nav: NavView) => MODULE_WORKSPACES.includes(nav);
+
 export const isGovernanceRole = (role: Role) => GOVERNANCE_ROLES.includes(role);
 
 /**

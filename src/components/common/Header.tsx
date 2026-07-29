@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { Role } from '../../types';
-import { isGovernanceRole } from '../../data/rbac';
+import { isGovernanceRole, isModuleWorkspace } from '../../data/rbac';
 import {
   Brain,
   Search,
@@ -17,6 +17,9 @@ import {
   FolderGit2,
   Sparkles,
   LogOut,
+  PanelLeftClose,
+  PanelLeftOpen,
+  ChevronRight as Chevron,
 } from 'lucide-react';
 
 export const Header: React.FC = () => {
@@ -34,6 +37,9 @@ export const Header: React.FC = () => {
     setActiveNav,
     logout,
     currentUser,
+    activeNav,
+    navCollapsed,
+    setNavCollapsed,
   } = useApp();
 
   const [scopeDropdownOpen, setScopeDropdownOpen] = useState(false);
@@ -88,6 +94,19 @@ export const Header: React.FC = () => {
     <header className="h-16 bg-white border-b border-slate-200 px-4 md:px-6 flex items-center justify-between sticky top-0 z-30 shadow-xs">
       {/* Left branding & Scope Selector */}
       <div className="flex items-center gap-4 lg:gap-6">
+        {/* Nav collapse — pinned open or closed by the user, auto-set on entry */}
+        <button
+          onClick={() => setNavCollapsed(!navCollapsed)}
+          title={navCollapsed ? 'Expand navigation' : 'Collapse navigation'}
+          className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer shrink-0"
+        >
+          {navCollapsed ? (
+            <PanelLeftOpen className="w-4 h-4" />
+          ) : (
+            <PanelLeftClose className="w-4 h-4" />
+          )}
+        </button>
+
         <div className="flex items-center gap-2.5">
           <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-slate-900 to-indigo-950 flex items-center justify-center text-white shadow-md shadow-indigo-950/20">
             <Brain className="w-5 h-5 text-indigo-400" />
@@ -106,7 +125,42 @@ export const Header: React.FC = () => {
 
         <div className="h-5 w-px bg-slate-200 hidden sm:block" />
 
-        {/* Scope Selector */}
+        {isModuleWorkspace(activeNav) ? (
+          /* Module context lives in the upper bar, not inside the workspace */
+          <div className="flex items-center gap-2 min-w-0">
+            <button
+              onClick={() => setActiveNav('Command Centre')}
+              className="text-xs font-semibold text-indigo-600 hover:underline cursor-pointer shrink-0"
+            >
+              Command Centre
+            </button>
+            <Chevron className="w-3 h-3 text-slate-300 shrink-0" />
+            <span className="text-xs font-extrabold text-slate-900 shrink-0">{activeNav}</span>
+            <span className="text-slate-300 shrink-0">·</span>
+            <select
+              value={currentScope.projectId ?? ''}
+              onChange={(e) => {
+                const p = projects.find((x) => x.id === e.target.value);
+                if (p)
+                  setCurrentScope({
+                    type: 'project',
+                    tenantId: p.tenantId,
+                    tenantName: p.tenantName,
+                    projectId: p.id,
+                    projectName: p.name,
+                  });
+              }}
+              className="min-w-0 max-w-[14rem] cursor-pointer rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-800 outline-none focus:border-indigo-600"
+            >
+              {visibleProjects.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        ) : (
+        /* Scope Selector */
         <div className="relative">
           {!canSwitchScope ? (
             <div
@@ -201,6 +255,7 @@ export const Header: React.FC = () => {
             </div>
           )}
         </div>
+        )}
       </div>
 
       {/* Center Search Bar */}

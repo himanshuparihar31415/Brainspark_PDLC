@@ -5,35 +5,46 @@ import {
   Plus,
   Trash2,
   Merge,
+  Split,
   MoveRight,
   Network,
   ListTree,
   Info,
   Box,
   CornerDownRight,
+  Link2,
 } from 'lucide-react';
 
-/** Stage 4 — Module & Feature Mapping: the system, decomposed. */
+/** Stage 4 — Module, Feature and Capability decomposition. */
 export const Stage4Modules: React.FC<{
   state: SpecAiState;
   readOnly: boolean;
   locked: boolean;
 }> = ({ state, readOnly, locked }) => {
-  const { addSpecModule, addSpecFeature, removeSpecNode, reparentSpecFeature, mergeSpecModules } =
-    useApp();
+  const {
+    addSpecModule,
+    addSpecFeature,
+    addSpecCapability,
+    removeSpecNode,
+    reparentSpecFeature,
+    mergeSpecModules,
+    splitSpecModule,
+  } = useApp();
 
   const [view, setView] = useState<'tree' | 'graph'>('tree');
   const [newModule, setNewModule] = useState('');
   const [featureDraft, setFeatureDraft] = useState<Record<string, string>>({});
-  const [mergeSource, setMergeSource] = useState('');
-  const [mergeTarget, setMergeTarget] = useState('');
+  const [capDraft, setCapDraft] = useState<Record<string, string>>({});
+  const [expanded, setExpanded] = useState<string | null>(null);
+  const [mergeFrom, setMergeFrom] = useState('');
+  const [mergeTo, setMergeTo] = useState('');
 
   const disabled = readOnly || locked;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* Toolbar */}
-      <section className="flex flex-wrap items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4">
+      <section className="flex flex-wrap items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3.5">
         <div className="flex overflow-hidden rounded-lg border border-slate-200">
           {(
             [
@@ -68,8 +79,8 @@ export const Stage4Modules: React.FC<{
                     setNewModule('');
                   }
                 }}
-                placeholder="New module name"
-                className="w-40 rounded-lg border border-slate-200 bg-slate-50/60 px-2.5 py-1.5 text-xs outline-none focus:border-indigo-600 focus:bg-white"
+                placeholder="New module"
+                className="w-36 rounded-lg border border-slate-200 bg-slate-50/60 px-2.5 py-1.5 text-xs outline-none focus:border-indigo-600 focus:bg-white"
               />
               <button
                 onClick={() => {
@@ -84,12 +95,11 @@ export const Stage4Modules: React.FC<{
               </button>
             </div>
 
-            {/* Merge: an explicit two-select action rather than a drag gesture */}
             {state.modules.length > 1 && (
               <div className="flex items-center gap-1.5">
                 <select
-                  value={mergeSource}
-                  onChange={(e) => setMergeSource(e.target.value)}
+                  value={mergeFrom}
+                  onChange={(e) => setMergeFrom(e.target.value)}
                   className="cursor-pointer rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-[11px] outline-none focus:border-indigo-600"
                 >
                   <option value="">Merge…</option>
@@ -101,13 +111,13 @@ export const Stage4Modules: React.FC<{
                 </select>
                 <MoveRight className="h-3 w-3 shrink-0 text-slate-400" />
                 <select
-                  value={mergeTarget}
-                  onChange={(e) => setMergeTarget(e.target.value)}
+                  value={mergeTo}
+                  onChange={(e) => setMergeTo(e.target.value)}
                   className="cursor-pointer rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-[11px] outline-none focus:border-indigo-600"
                 >
                   <option value="">into…</option>
                   {state.modules
-                    .filter((m) => m.id !== mergeSource)
+                    .filter((m) => m.id !== mergeFrom)
                     .map((m) => (
                       <option key={m.id} value={m.id}>
                         {m.name}
@@ -116,11 +126,11 @@ export const Stage4Modules: React.FC<{
                 </select>
                 <button
                   onClick={() => {
-                    mergeSpecModules(state.projectId, mergeSource, mergeTarget);
-                    setMergeSource('');
-                    setMergeTarget('');
+                    mergeSpecModules(state.projectId, mergeFrom, mergeTo);
+                    setMergeFrom('');
+                    setMergeTo('');
                   }}
-                  disabled={!mergeSource || !mergeTarget}
+                  disabled={!mergeFrom || !mergeTo}
                   className="flex cursor-pointer items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1.5 text-[11px] font-bold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <Merge className="h-3 w-3" /> Merge
@@ -142,157 +152,260 @@ export const Stage4Modules: React.FC<{
 
       {state.modules.length === 0 ? (
         <p className="rounded-2xl border border-slate-200 bg-white px-4 py-10 text-center text-xs text-slate-500">
-          No modules yet — generate from the architecture or add one.
+          No modules yet — approve the artifact package to generate the map, or add one.
         </p>
       ) : view === 'tree' ? (
-        /* Canvas beside a persistent dependency rail */
-        <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_20rem]">
-          <div className="min-w-0 space-y-3">
-          {state.modules.map((m) => (
-            <section key={m.id} className="rounded-2xl border border-slate-200 bg-white p-4">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <Box className="h-3.5 w-3.5 text-indigo-600" />
-                  <span className="text-xs font-extrabold text-slate-900">{m.name}</span>
-                  <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[9px] font-bold text-slate-500">
-                    Module
-                  </span>
-                  <span className="text-[10px] text-slate-400">
-                    {m.features.length} {m.features.length === 1 ? 'feature' : 'features'}
-                  </span>
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_19rem]">
+          <div className="min-w-0 space-y-2.5">
+            {state.modules.map((m) => (
+              <section key={m.id} className="rounded-2xl border border-slate-200 bg-white p-4">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <Box className="h-3.5 w-3.5 text-indigo-600" />
+                    <span className="text-xs font-extrabold text-slate-900">{m.name}</span>
+                    <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[9px] font-bold text-slate-500">
+                      Module
+                    </span>
+                    <span className="text-[10px] text-slate-400">
+                      {m.features.length} features ·{' '}
+                      {m.features.reduce((n, f) => n + f.capabilities.length, 0)} capabilities
+                    </span>
+                  </div>
+                  {!disabled && (
+                    <button
+                      onClick={() => removeSpecNode(state.projectId, m.id)}
+                      className="cursor-pointer text-slate-400 hover:text-rose-600"
+                      title="Remove module"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </button>
+                  )}
                 </div>
 
-                {!disabled && (
-                  <button
-                    onClick={() => removeSpecNode(state.projectId, m.id)}
-                    className="cursor-pointer text-slate-400 transition-colors hover:text-rose-600"
-                    title="Remove module"
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </button>
-                )}
-              </div>
+                <div className="mt-2.5 space-y-1.5 pl-4">
+                  {m.features.map((f) => {
+                    const open = expanded === f.id;
+                    return (
+                      <div key={f.id} className="rounded-xl border border-slate-100 bg-slate-50/40 p-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <CornerDownRight className="h-3 w-3 shrink-0 text-slate-300" />
+                          <button
+                            onClick={() => setExpanded(open ? null : f.id)}
+                            className="min-w-0 flex-1 cursor-pointer truncate text-left text-[11px] font-semibold text-slate-800"
+                          >
+                            {f.name}
+                          </button>
+                          <span className="shrink-0 rounded bg-white px-1.5 py-0.5 text-[9px] font-bold text-slate-500">
+                            Feature
+                          </span>
+                          {f.requirementIds.length > 0 && (
+                            <span
+                              title={f.requirementIds.join(', ')}
+                              className="flex shrink-0 items-center gap-0.5 rounded bg-indigo-50 px-1.5 py-0.5 text-[9px] font-bold text-indigo-700"
+                            >
+                              <Link2 className="h-2.5 w-2.5" />
+                              {f.requirementIds.length}
+                            </span>
+                          )}
 
-              <div className="mt-2.5 space-y-1.5 pl-5">
-                {m.features.map((f) => (
-                  <div key={f.id} className="flex items-center gap-2">
-                    <CornerDownRight className="h-3 w-3 shrink-0 text-slate-300" />
-                    <span className="min-w-0 flex-1 truncate text-[11px] font-semibold text-slate-700">
-                      {f.name}
-                    </span>
-                    <span className="shrink-0 rounded bg-slate-100 px-1.5 py-0.5 text-[9px] font-bold text-slate-500">
-                      Feature
-                    </span>
+                          {!disabled && state.modules.length > 1 && (
+                            <select
+                              value=""
+                              onChange={(e) =>
+                                e.target.value &&
+                                reparentSpecFeature(state.projectId, f.id, e.target.value)
+                              }
+                              title="Re-parent"
+                              className="shrink-0 cursor-pointer rounded border border-slate-200 bg-white px-1 py-0.5 text-[9px] outline-none"
+                            >
+                              <option value="">Move…</option>
+                              {state.modules
+                                .filter((x) => x.id !== m.id)
+                                .map((x) => (
+                                  <option key={x.id} value={x.id}>
+                                    {x.name}
+                                  </option>
+                                ))}
+                            </select>
+                          )}
 
-                    {!disabled && state.modules.length > 1 && (
-                      <select
-                        value=""
-                        onChange={(e) =>
-                          e.target.value && reparentSpecFeature(state.projectId, f.id, e.target.value)
-                        }
-                        title="Re-parent this feature"
-                        className="shrink-0 cursor-pointer rounded border border-slate-200 bg-white px-1.5 py-0.5 text-[10px] outline-none focus:border-indigo-600"
-                      >
-                        <option value="">Re-parent…</option>
-                        {state.modules
-                          .filter((x) => x.id !== m.id)
-                          .map((x) => (
-                            <option key={x.id} value={x.id}>
-                              {x.name}
-                            </option>
-                          ))}
-                      </select>
-                    )}
+                          {!disabled && (
+                            <>
+                              <button
+                                onClick={() => splitSpecModule(state.projectId, m.id, f.id)}
+                                title="Split into its own module"
+                                className="shrink-0 cursor-pointer text-slate-400 hover:text-indigo-600"
+                              >
+                                <Split className="h-2.5 w-2.5" />
+                              </button>
+                              <button
+                                onClick={() => removeSpecNode(state.projectId, m.id, f.id)}
+                                className="shrink-0 cursor-pointer text-slate-400 hover:text-rose-600"
+                              >
+                                <Trash2 className="h-2.5 w-2.5" />
+                              </button>
+                            </>
+                          )}
+                        </div>
 
-                    {!disabled && (
+                        {open && (
+                          <div className="mt-1.5 space-y-1 pl-6">
+                            {f.capabilities.length === 0 ? (
+                              <p className="text-[10px] text-slate-400">No capabilities yet.</p>
+                            ) : (
+                              f.capabilities.map((c) => (
+                                <div key={c.id} className="flex items-center gap-2">
+                                  <span className="h-1 w-1 shrink-0 rounded-full bg-slate-300" />
+                                  <span className="min-w-0 flex-1 truncate text-[10px] text-slate-600">
+                                    {c.name}
+                                  </span>
+                                  <span className="shrink-0 rounded bg-white px-1 py-0.5 text-[8px] font-bold text-slate-400">
+                                    Capability
+                                  </span>
+                                  {!disabled && (
+                                    <button
+                                      onClick={() =>
+                                        removeSpecNode(state.projectId, m.id, f.id, c.id)
+                                      }
+                                      className="shrink-0 cursor-pointer text-slate-300 hover:text-rose-600"
+                                    >
+                                      <Trash2 className="h-2.5 w-2.5" />
+                                    </button>
+                                  )}
+                                </div>
+                              ))
+                            )}
+
+                            {!disabled && (
+                              <div className="flex items-center gap-1.5 pt-1">
+                                <input
+                                  value={capDraft[f.id] ?? ''}
+                                  onChange={(e) =>
+                                    setCapDraft({ ...capDraft, [f.id]: e.target.value })
+                                  }
+                                  onKeyDown={(e) => {
+                                    const v = (capDraft[f.id] ?? '').trim();
+                                    if (e.key === 'Enter' && v) {
+                                      addSpecCapability(state.projectId, m.id, f.id, v);
+                                      setCapDraft({ ...capDraft, [f.id]: '' });
+                                    }
+                                  }}
+                                  placeholder="New capability"
+                                  className="w-40 rounded border border-slate-200 bg-white px-1.5 py-0.5 text-[10px] outline-none focus:border-indigo-600"
+                                />
+                                <button
+                                  onClick={() => {
+                                    const v = (capDraft[f.id] ?? '').trim();
+                                    if (!v) return;
+                                    addSpecCapability(state.projectId, m.id, f.id, v);
+                                    setCapDraft({ ...capDraft, [f.id]: '' });
+                                  }}
+                                  disabled={!(capDraft[f.id] ?? '').trim()}
+                                  className="cursor-pointer rounded border border-slate-200 px-1.5 py-0.5 text-[9px] font-bold text-slate-600 hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                  Add
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+
+                  {m.features.length === 0 && (
+                    <p className="text-[10px] text-amber-700">
+                      No features yet — a module needs at least one before the map can be finalized.
+                    </p>
+                  )}
+
+                  {!disabled && (
+                    <div className="flex items-center gap-1.5 pt-1">
+                      <input
+                        value={featureDraft[m.id] ?? ''}
+                        onChange={(e) => setFeatureDraft({ ...featureDraft, [m.id]: e.target.value })}
+                        onKeyDown={(e) => {
+                          const v = (featureDraft[m.id] ?? '').trim();
+                          if (e.key === 'Enter' && v) {
+                            addSpecFeature(state.projectId, m.id, v);
+                            setFeatureDraft({ ...featureDraft, [m.id]: '' });
+                          }
+                        }}
+                        placeholder="New feature"
+                        className="w-40 rounded-lg border border-slate-200 bg-slate-50/60 px-2 py-1 text-[11px] outline-none focus:border-indigo-600 focus:bg-white"
+                      />
                       <button
-                        onClick={() => removeSpecNode(state.projectId, m.id, f.id)}
-                        className="shrink-0 cursor-pointer text-slate-400 transition-colors hover:text-rose-600"
-                      >
-                        <Trash2 className="h-2.5 w-2.5" />
-                      </button>
-                    )}
-                  </div>
-                ))}
-
-                {m.features.length === 0 && (
-                  <p className="text-[10px] text-amber-700">
-                    No features yet — a module needs at least one before the map can be finalized.
-                  </p>
-                )}
-
-                {!disabled && (
-                  <div className="flex items-center gap-1.5 pt-1">
-                    <input
-                      value={featureDraft[m.id] ?? ''}
-                      onChange={(e) =>
-                        setFeatureDraft({ ...featureDraft, [m.id]: e.target.value })
-                      }
-                      onKeyDown={(e) => {
-                        const v = (featureDraft[m.id] ?? '').trim();
-                        if (e.key === 'Enter' && v) {
+                        onClick={() => {
+                          const v = (featureDraft[m.id] ?? '').trim();
+                          if (!v) return;
                           addSpecFeature(state.projectId, m.id, v);
                           setFeatureDraft({ ...featureDraft, [m.id]: '' });
-                        }
-                      }}
-                      placeholder="New feature name"
-                      className="w-44 rounded-lg border border-slate-200 bg-slate-50/60 px-2 py-1 text-[11px] outline-none focus:border-indigo-600 focus:bg-white"
-                    />
-                    <button
-                      onClick={() => {
-                        const v = (featureDraft[m.id] ?? '').trim();
-                        if (!v) return;
-                        addSpecFeature(state.projectId, m.id, v);
-                        setFeatureDraft({ ...featureDraft, [m.id]: '' });
-                      }}
-                      disabled={!(featureDraft[m.id] ?? '').trim()}
-                      className="flex cursor-pointer items-center gap-1 rounded-lg border border-slate-200 px-2 py-1 text-[10px] font-bold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      <Plus className="h-2.5 w-2.5" /> Feature
-                    </button>
-                  </div>
-                )}
-              </div>
-            </section>
-          ))}
+                        }}
+                        disabled={!(featureDraft[m.id] ?? '').trim()}
+                        className="flex cursor-pointer items-center gap-1 rounded-lg border border-slate-200 px-2 py-1 text-[10px] font-bold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        <Plus className="h-2.5 w-2.5" /> Feature
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </section>
+            ))}
           </div>
 
-          {/* Dependency rail — always visible beside the tree */}
-          <aside className="h-fit rounded-2xl border border-slate-200 bg-white p-4 xl:sticky xl:top-6">
-            <h3 className="text-sm font-extrabold text-slate-900">Dependencies</h3>
-            <p className="mt-0.5 text-[10px] text-slate-500">
-              These drive story priority scoring in the next stage.
-            </p>
+          {/* Dependency + traceability rail */}
+          <aside className="h-fit space-y-3 xl:sticky xl:top-4">
+            <div className="rounded-2xl border border-slate-200 bg-white p-4">
+              <h3 className="text-sm font-extrabold text-slate-900">Dependencies</h3>
+              <div className="mt-2 space-y-2">
+                {state.modules.filter((m) => m.dependsOn.length > 0).length === 0 ? (
+                  <p className="rounded-xl border border-dashed border-slate-200 px-2 py-3 text-center text-[10px] text-slate-400">
+                    No cross-module dependencies.
+                  </p>
+                ) : (
+                  state.modules
+                    .filter((m) => m.dependsOn.length > 0)
+                    .map((m) => (
+                      <div
+                        key={m.id}
+                        className="rounded-xl border border-slate-200 px-2.5 py-2 text-[10px] leading-relaxed"
+                      >
+                        <b className="text-slate-900">{m.name}</b>
+                        <br />
+                        <span className="text-slate-500">
+                          depends on{' '}
+                          {m.dependsOn
+                            .map((d) => state.modules.find((x) => x.id === d)?.name ?? d)
+                            .join(', ')}
+                        </span>
+                      </div>
+                    ))
+                )}
+              </div>
+            </div>
 
-            <div className="mt-3 space-y-2">
-              {state.modules.filter((m) => m.dependsOn.length > 0).length === 0 ? (
-                <p className="rounded-xl border border-dashed border-slate-200 px-2 py-4 text-center text-[10px] text-slate-400">
-                  No cross-module dependencies yet.
-                </p>
-              ) : (
-                state.modules
-                  .filter((m) => m.dependsOn.length > 0)
-                  .map((m) => (
-                    <div
-                      key={m.id}
-                      className="rounded-xl border border-slate-200 px-2.5 py-2 text-[10px] leading-relaxed"
-                    >
-                      <b className="text-slate-900">{m.name}</b>
+            <div className="rounded-2xl border border-slate-200 bg-white p-4">
+              <h3 className="text-sm font-extrabold text-slate-900">Traceability</h3>
+              <p className="mt-0.5 text-[10px] text-slate-500">
+                Features linked to confirmed requirements.
+              </p>
+              <div className="mt-2 space-y-1.5">
+                {state.modules
+                  .flatMap((m) => m.features.filter((f) => f.requirementIds.length > 0))
+                  .map((f) => (
+                    <div key={f.id} className="text-[10px] leading-relaxed">
+                      <b className="text-slate-800">{f.name}</b>
                       <br />
-                      <span className="text-slate-500">
-                        depends on{' '}
-                        {m.dependsOn
-                          .map((d) => state.modules.find((x) => x.id === d)?.name ?? d)
-                          .join(', ')}
+                      <span className="font-mono text-indigo-600">
+                        {f.requirementIds.join(' · ')}
                       </span>
                     </div>
-                  ))
-              )}
+                  ))}
+              </div>
             </div>
           </aside>
         </div>
       ) : (
-        /* Dependency graph — cross-module edges */
         <section className="space-y-2.5 rounded-2xl border border-slate-200 bg-white p-5">
           {state.modules.map((m) => (
             <div key={m.id} className="flex flex-wrap items-center gap-2">

@@ -69,7 +69,7 @@ const AppContent: React.FC = () => {
       <Header />
       <div className="flex-1 flex overflow-hidden">
         <Sidebar />
-        <main className="flex-1 overflow-y-auto bg-slate-100/60">{renderView()}</main>
+        <main className="flex-1 min-h-0 overflow-y-auto bg-slate-100/60">{renderView()}</main>
       </div>
       <ToastContainer />
     </div>
