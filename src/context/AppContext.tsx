@@ -21,7 +21,14 @@ import {
   AgentUsage,
   PipelinePhase,
 } from '../types';
-import { canAccessNav, canDeprecateAgent, landingNavForRole, scopeForRole } from '../data/rbac';
+import {
+  canAccessNav,
+  canDeprecateAgent,
+  canManageConnector,
+  connectorDeniedReason,
+  landingNavForRole,
+  scopeForRole,
+} from '../data/rbac';
 import {
   INITIAL_USERS,
   INITIAL_TENANTS,
@@ -103,6 +110,7 @@ interface AppContextType {
   createProject: (data: Partial<Project>) => void;
   closeProject: (id: string) => void;
   assignTeamMember: (data: Partial<TeamMember>) => void;
+  setConnectorPlatformAvailability: (id: string, available: boolean) => void;
   toggleConnectorEnabled: (id: string) => void;
   activateConnectorProject: (id: string, endpoint?: string, repo?: string) => void;
   deprecateAgent: (id: string, note: string) => void;
@@ -396,10 +404,69 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     addAuditLog('Assign Team Member', `Member: ${newMember.name}`, `Roles: ${newMember.roles.join(', ')}`, 'Role slots updated');
   };
 
-  const toggleConnectorEnabled = (id: string) => {
+  /**
+   * Top of the connector ladder: whether a connector exists for tenants at all.
+   * Withdrawing availability cascades down — the tenant baseline and every
+   * project activation beneath it are cleared, so no project keeps a live
+   * binding to something the platform has retired.
+   */
+  const setConnectorPlatformAvailability = (id: string, available: boolean) => {
+    if (!canManageConnector(currentRole, 'platform-availability')) {
+      addToast(connectorDeniedReason('platform-availability'), 'error');
+      return;
+    }
+
+    const target = connectors.find((c) => c.id === id);
     setConnectors((prev) =>
       prev.map((c) =>
-        c.id === id ? { ...c, enabledTenant: !c.enabledTenant } : c
+        c.id === id
+          ? available
+            ? { ...c, platformAvailable: true }
+            : {
+                ...c,
+                platformAvailable: false,
+                enabledTenant: false,
+                activatedProject: false,
+                health: '○ Not connected' as const,
+              }
+          : c
+      )
+    );
+
+    addToast(
+      available
+        ? `${target?.name || 'Connector'} is now available to tenants.`
+        : `${target?.name || 'Connector'} withdrawn platform-wide. Tenant and project bindings cleared.`,
+      available ? 'success' : 'info'
+    );
+    addAuditLog(
+      'Set Connector Platform Availability',
+      `Connector: ${target?.name || id}`,
+      `Available: ${available}`,
+      available ? 'Available to tenants' : 'Withdrawn; downstream bindings cleared'
+    );
+  };
+
+  const toggleConnectorEnabled = (id: string) => {
+    if (!canManageConnector(currentRole, 'tenant-baseline')) {
+      addToast(connectorDeniedReason('tenant-baseline'), 'error');
+      return;
+    }
+
+    const target = connectors.find((c) => c.id === id);
+    if (target && !target.platformAvailable) {
+      addToast(`${target.name} is not available on this platform.`, 'error');
+      return;
+    }
+
+    setConnectors((prev) =>
+      prev.map((c) =>
+        c.id === id
+          ? c.enabledTenant
+            ? // Disabling the baseline also drops project activations beneath it.
+              { ...c, enabledTenant: false, activatedProject: false, health: '○ Not connected' as const }
+            : { ...c, enabledTenant: true }
+          : c
       )
     );
     addToast(`Updated connector tenant status.`);
@@ -407,6 +474,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const activateConnectorProject = (id: string, endpoint?: string, repo?: string) => {
+    if (!canManageConnector(currentRole, 'project-activation')) {
+      addToast(connectorDeniedReason('project-activation'), 'error');
+      return;
+    }
+
+    const gate = connectors.find((c) => c.id === id);
+    if (gate && !gate.enabledTenant) {
+      addToast(`${gate.name} is not enabled for this tenant.`, 'error');
+      return;
+    }
+
     setConnectors((prev) =>
       prev.map((c) =>
         c.id === id
@@ -595,6 +673,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         createProject,
         closeProject,
         assignTeamMember,
+        setConnectorPlatformAvailability,
         toggleConnectorEnabled,
         activateConnectorProject,
         deprecateAgent,

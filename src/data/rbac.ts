@@ -51,6 +51,53 @@ export const isGovernanceRole = (role: Role) => GOVERNANCE_ROLES.includes(role);
  */
 export const canDeprecateAgent = (role: Role) => TENANT_ROLES.includes(role);
 
+/**
+ * Connector authority, as a strict ladder. Each tier holds everything below it:
+ *
+ *   platform-availability — decide which connectors exist for tenants at all.
+ *                           Super Admin only; revoking it cascades downward.
+ *   tenant-baseline       — enable an available connector for one tenant.
+ *                           Projects can activate only what is enabled here.
+ *   project-activation    — bind an enabled connector to a project with
+ *                           project credentials.
+ */
+export type ConnectorCapability =
+  | 'platform-availability'
+  | 'tenant-baseline'
+  | 'project-activation';
+
+const CONNECTOR_LADDER: Record<Role, ConnectorCapability[]> = {
+  'Super Admin': ['platform-availability', 'tenant-baseline', 'project-activation'],
+  'Tenant Admin': ['tenant-baseline', 'project-activation'],
+  'Project Admin': ['project-activation'],
+  'Product Manager': [],
+  Architect: [],
+  Designer: [],
+  'Tech Lead': [],
+  Developer: [],
+  'QA Manager': [],
+  'QA Engineer': [],
+  'Release Manager': [],
+};
+
+export const connectorCapabilities = (role: Role): ConnectorCapability[] =>
+  CONNECTOR_LADDER[role] ?? [];
+
+export const canManageConnector = (role: Role, capability: ConnectorCapability): boolean =>
+  connectorCapabilities(role).includes(capability);
+
+/** Human-readable reason a control is unavailable, used in disabled tooltips. */
+export const connectorDeniedReason = (capability: ConnectorCapability): string => {
+  switch (capability) {
+    case 'platform-availability':
+      return 'Platform availability is set by a Super Admin.';
+    case 'tenant-baseline':
+      return 'Tenant enablement is set by a Tenant Admin.';
+    default:
+      return 'You do not have permission to change this.';
+  }
+};
+
 export const isPdlcRole = (role: Role) => PDLC_ROLES.includes(role);
 
 export const canAccessNav = (role: Role, nav: NavView) => NAV_VISIBILITY[nav].includes(role);

@@ -130,6 +130,8 @@ export interface Connector {
   name: string;
   category: ConnectorCategory;
   usedByModules: string[];
+  /** Set by a Super Admin. When false, no tenant may enable this connector. */
+  platformAvailable: boolean;
   enabledTenant: boolean;
   activatedProject: boolean;
   health: '● Connected' | '⚠ Last sync failed' | '○ Not connected';
