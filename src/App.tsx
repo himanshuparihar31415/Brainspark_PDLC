@@ -1,23 +1,67 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { AppProvider, useApp } from './context/AppContext';
 import { Header } from './components/common/Header';
 import { Sidebar } from './components/common/Sidebar';
 import { ToastContainer } from './components/common/Toast';
 
-import { DashboardView } from './components/views/DashboardView';
-import { TenantsView } from './components/views/TenantsView';
-import { ProjectsView } from './components/views/ProjectsView';
-import { TeamView } from './components/views/TeamView';
-import { ConnectorsView } from './components/views/ConnectorsView';
-import { AgentRegistryView } from './components/views/AgentRegistryView';
-import { EvaluationView } from './components/views/EvaluationView';
-import { PromptControlsView } from './components/views/PromptControlsView';
-import { SecurityView } from './components/views/SecurityView';
-import { MyServicesView } from './components/views/MyServicesView';
-import { CommandCentreView } from './components/views/CommandCentreView';
-import { SpecAiView } from './components/views/SpecAiView';
-import { MyTasksView } from './components/views/MyTasksView';
-import { LoginView } from './components/views/LoginView';
+/**
+ * Views load on first navigation rather than at boot. The shell and the login
+ * screen are the only things in the initial bundle; each view — and Spec AI's
+ * whole workspace — arrives as its own chunk when it is actually opened, so a
+ * role never downloads screens it cannot reach.
+ */
+const DashboardView = lazy(() =>
+  import('./components/views/DashboardView').then((m) => ({ default: m.DashboardView }))
+);
+const TenantsView = lazy(() =>
+  import('./components/views/TenantsView').then((m) => ({ default: m.TenantsView }))
+);
+const ProjectsView = lazy(() =>
+  import('./components/views/ProjectsView').then((m) => ({ default: m.ProjectsView }))
+);
+const TeamView = lazy(() =>
+  import('./components/views/TeamView').then((m) => ({ default: m.TeamView }))
+);
+const ConnectorsView = lazy(() =>
+  import('./components/views/ConnectorsView').then((m) => ({ default: m.ConnectorsView }))
+);
+const AgentRegistryView = lazy(() =>
+  import('./components/views/AgentRegistryView').then((m) => ({ default: m.AgentRegistryView }))
+);
+const EvaluationView = lazy(() =>
+  import('./components/views/EvaluationView').then((m) => ({ default: m.EvaluationView }))
+);
+const PromptControlsView = lazy(() =>
+  import('./components/views/PromptControlsView').then((m) => ({ default: m.PromptControlsView }))
+);
+const SecurityView = lazy(() =>
+  import('./components/views/SecurityView').then((m) => ({ default: m.SecurityView }))
+);
+const MyServicesView = lazy(() =>
+  import('./components/views/MyServicesView').then((m) => ({ default: m.MyServicesView }))
+);
+const CommandCentreView = lazy(() =>
+  import('./components/views/CommandCentreView').then((m) => ({ default: m.CommandCentreView }))
+);
+const SpecAiView = lazy(() =>
+  import('./components/views/SpecAiView').then((m) => ({ default: m.SpecAiView }))
+);
+const MyTasksView = lazy(() =>
+  import('./components/views/MyTasksView').then((m) => ({ default: m.MyTasksView }))
+);
+const LoginView = lazy(() =>
+  import('./components/views/LoginView').then((m) => ({ default: m.LoginView }))
+);
+
+/** Shown while a view's chunk is in flight. Deliberately quiet — it is brief. */
+const ViewFallback: React.FC = () => (
+  <div className="flex h-full min-h-[16rem] items-center justify-center p-8">
+    <div className="flex items-center gap-2.5 text-xs text-slate-500">
+      <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-slate-300 border-t-indigo-600" />
+      Loading…
+    </div>
+  </div>
+);
 
 const AppContent: React.FC = () => {
   const { activeNav, isAuthenticated } = useApp();
@@ -58,7 +102,9 @@ const AppContent: React.FC = () => {
   if (!isAuthenticated) {
     return (
       <>
-        <LoginView />
+        <Suspense fallback={<ViewFallback />}>
+          <LoginView />
+        </Suspense>
         <ToastContainer />
       </>
     );
@@ -69,7 +115,13 @@ const AppContent: React.FC = () => {
       <Header />
       <div className="flex-1 flex overflow-hidden">
         <Sidebar />
-        <main className="flex-1 min-h-0 overflow-y-auto bg-slate-100/60">{renderView()}</main>
+        <main className="flex-1 min-h-0 overflow-y-auto bg-slate-100/60">
+          {/* Keyed so switching views remounts the boundary rather than holding
+              the previous screen while the next chunk loads. */}
+          <Suspense key={activeNav} fallback={<ViewFallback />}>
+            {renderView()}
+          </Suspense>
+        </main>
       </div>
       <ToastContainer />
     </div>
