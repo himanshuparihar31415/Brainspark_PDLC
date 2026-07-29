@@ -18,7 +18,7 @@ import {
   UserAccount,
   NavView,
 } from '../types';
-import { canAccessNav, landingNavForRole, scopeForRole } from '../data/rbac';
+import { canAccessNav, canDeprecateAgent, landingNavForRole, scopeForRole } from '../data/rbac';
 import {
   INITIAL_USERS,
   INITIAL_TENANTS,
@@ -118,7 +118,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     type: 'platform',
     tenantName: 'All Tenants',
   });
-  const [activeNav, setActiveNav] = useState<NavView>('Dashboard');
+  const [activeNav, setActiveNavState] = useState<NavView>('Dashboard');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
@@ -149,6 +149,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const removeToast = (id: string) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
+  };
+
+  /**
+   * Guarded navigation. Hiding a sidebar entry is not enough — cross-links from
+   * other views could otherwise land a role on a view it cannot see. Internal
+   * callers (sign-in, role switch) use setActiveNavState directly because
+   * currentRole is still stale in the same render.
+   */
+  const setActiveNav = (nav: NavView) => {
+    if (!canAccessNav(currentRole, nav)) {
+      addToast(`Your ${currentRole} role does not have access to ${nav}.`, 'error');
+      return;
+    }
+    setActiveNavState(nav);
   };
 
   const addAuditLog = (action: string, target: string, input: string, output: string) => {
@@ -199,7 +213,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setCurrentUser(account);
     setCurrentRoleState(role);
     setCurrentScope(scopeForRole(role, account));
-    setActiveNav(landingNavForRole(role));
+    setActiveNavState(landingNavForRole(role));
 
     addToast(`Welcome back, ${account.name.split(' ')[0]} — signed in as ${role}.`);
     addAuditLog(
@@ -222,7 +236,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setCurrentUser(null);
     setCurrentRoleState('Super Admin');
     setCurrentScope({ type: 'platform', tenantName: 'All Tenants' });
-    setActiveNav('Dashboard');
+    setActiveNavState('Dashboard');
   };
 
   /**
@@ -264,7 +278,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     addToast(`Switched role persona to ${newRole}`, 'info');
 
     if (!canAccessNav(newRole, activeNav)) {
-      setActiveNav(landingNavForRole(newRole));
+      setActiveNavState(landingNavForRole(newRole));
     }
   };
 
@@ -384,6 +398,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const deprecateAgent = (id: string, note: string) => {
+    if (!canDeprecateAgent(currentRole)) {
+      addToast(`Deprecation is a tenant-level action — not available to ${currentRole}.`, 'error');
+      return;
+    }
     setAgents((prev) =>
       prev.map((a) =>
         a.id === id ? { ...a, status: 'Deprecated' as const, deprecationNote: note } : a

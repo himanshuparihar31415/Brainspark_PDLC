@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { AgentService } from '../../types';
+import { canAccessNav, canDeprecateAgent } from '../../data/rbac';
 import {
   Cpu,
   AlertTriangle,
@@ -15,7 +16,11 @@ import {
 } from 'lucide-react';
 
 export const AgentRegistryView: React.FC = () => {
-  const { agents, deprecateAgent, setActiveNav } = useApp();
+  const { agents, deprecateAgent, setActiveNav, currentRole } = useApp();
+
+  const canDeprecate = canDeprecateAgent(currentRole);
+  // Version history lives in Prompt Controls, which is tenant-scoped.
+  const canViewVersionHistory = canAccessNav(currentRole, 'Prompt Controls');
 
   const [selectedModule, setSelectedModule] = useState<string>('All');
   const [selectedStatus, setSelectedStatus] = useState<string>('All');
@@ -62,6 +67,16 @@ export const AgentRegistryView: React.FC = () => {
           Every agent-backed capability wired into the platform via API/MCP. Registry status is the runtime gate — only Active services can be invoked.
         </p>
       </div>
+
+      {!canDeprecate && (
+        <div className="flex items-start gap-2.5 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3">
+          <Lock className="w-4 h-4 text-slate-400 shrink-0 mt-px" />
+          <div className="text-xs text-slate-600 leading-relaxed">
+            <span className="font-bold text-slate-800">Read-only.</span> As {currentRole} you can review
+            registry status and held agents, but version deprecation is set on the tenant baseline.
+          </div>
+        </div>
+      )}
 
       {/* Filters bar */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs">
@@ -218,24 +233,32 @@ export const AgentRegistryView: React.FC = () => {
                           >
                             View configuration
                           </button>
-                          <button
-                            onClick={() => {
-                              setActiveNav('Prompt Controls');
-                              setOpenActionId(null);
-                            }}
-                            className="w-full px-3 py-2 hover:bg-slate-50 text-left font-medium"
-                          >
-                            Version history
-                          </button>
-                          <button
-                            onClick={() => {
-                              setDeprecateTarget(a);
-                              setOpenActionId(null);
-                            }}
-                            className="w-full px-3 py-2 hover:bg-amber-50 text-amber-700 text-left font-medium"
-                          >
-                            Deprecate…
-                          </button>
+                          {canViewVersionHistory && (
+                            <button
+                              onClick={() => {
+                                setActiveNav('Prompt Controls');
+                                setOpenActionId(null);
+                              }}
+                              className="w-full px-3 py-2 hover:bg-slate-50 text-left font-medium"
+                            >
+                              Version history
+                            </button>
+                          )}
+                          {canDeprecate ? (
+                            <button
+                              onClick={() => {
+                                setDeprecateTarget(a);
+                                setOpenActionId(null);
+                              }}
+                              className="w-full px-3 py-2 hover:bg-amber-50 text-amber-700 text-left font-medium"
+                            >
+                              Deprecate…
+                            </button>
+                          ) : (
+                            <div className="px-3 py-2 text-[10px] leading-snug text-slate-400 border-t border-slate-100">
+                              Deprecation is a tenant-level action.
+                            </div>
+                          )}
                         </div>
                       )}
                     </td>

@@ -1,9 +1,10 @@
 import React from 'react';
 import { useApp } from '../../context/AppContext';
+import { canAccessNav } from '../../data/rbac';
 import { GitMerge, CheckCircle2, AlertTriangle, Clock, Play, FileCode, Cpu } from 'lucide-react';
 
 export const OrchestrationView: React.FC = () => {
-  const { orchestrationPhases, currentScope, setActiveNav } = useApp();
+  const { orchestrationPhases, currentScope, setActiveNav, currentRole } = useApp();
 
   return (
     <div className="p-6 md:p-8 space-y-6 max-w-7xl mx-auto animate-in fade-in duration-200">
@@ -72,12 +73,14 @@ export const OrchestrationView: React.FC = () => {
                   {phase.blockers.map((b, i) => (
                     <p key={i} className="mt-0.5">{b}</p>
                   ))}
-                  <button
-                    onClick={() => setActiveNav('Evaluation')}
-                    className="mt-2 text-[11px] font-bold text-indigo-600 hover:underline inline-block"
-                  >
-                    Go to Evaluation tab to inspect test suite failure →
-                  </button>
+                  {canAccessNav(currentRole, 'Evaluation') && (
+                    <button
+                      onClick={() => setActiveNav('Evaluation')}
+                      className="mt-2 text-[11px] font-bold text-indigo-600 hover:underline inline-block"
+                    >
+                      Go to Evaluation tab to inspect test suite failure →
+                    </button>
+                  )}
                 </div>
               </div>
             )}

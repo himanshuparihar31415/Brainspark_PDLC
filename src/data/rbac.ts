@@ -16,6 +16,13 @@ export const PDLC_ROLES: Role[] = [
 export const ALL_ROLES: Role[] = [...GOVERNANCE_ROLES, ...PDLC_ROLES];
 
 /**
+ * Roles that own tenant-level governed assets — prompt versions, golden
+ * evaluations, session/API policy. A Project Admin runs a project; it does not
+ * set the baselines the project inherits.
+ */
+export const TENANT_ROLES: Role[] = ['Super Admin', 'Tenant Admin'];
+
+/**
  * Single source of truth for subtractive navigation. The sidebar renders from
  * this map and the role-switch / sign-in logic validates against it, so a role
  * can never land on a view it cannot see.
@@ -26,16 +33,23 @@ export const NAV_VISIBILITY: Record<NavView, Role[]> = {
   Projects: ['Super Admin', 'Tenant Admin'],
   Team: GOVERNANCE_ROLES,
   Connectors: GOVERNANCE_ROLES,
+  // Visible to a Project Admin, but read-only — see canDeprecateAgent.
   'Agent Registry': GOVERNANCE_ROLES,
-  Evaluation: GOVERNANCE_ROLES,
-  'Prompt Controls': GOVERNANCE_ROLES,
-  Security: GOVERNANCE_ROLES,
+  Evaluation: TENANT_ROLES,
+  'Prompt Controls': TENANT_ROLES,
+  Security: TENANT_ROLES,
   'My Services': PDLC_ROLES,
   Orchestration: ['Project Admin', ...PDLC_ROLES],
   'My Tasks': ['Project Admin', ...PDLC_ROLES],
 };
 
 export const isGovernanceRole = (role: Role) => GOVERNANCE_ROLES.includes(role);
+
+/**
+ * A Project Admin can see held agents but cannot retire a version — deprecation
+ * affects every project on the tenant baseline.
+ */
+export const canDeprecateAgent = (role: Role) => TENANT_ROLES.includes(role);
 
 export const isPdlcRole = (role: Role) => PDLC_ROLES.includes(role);
 
