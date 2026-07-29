@@ -59,6 +59,7 @@ import {
 } from '../data/specai';
 import {
   ArchMode,
+  BoardNote,
   ChalkLayer,
   SourceType,
   SpecAiState,
@@ -127,6 +128,10 @@ interface AppContextType {
   addSpecSource: (projectId: string, name: string, type: SourceType) => void;
   removeSpecSource: (projectId: string, sourceId: string) => void;
   resolveFlaggedQuestion: (projectId: string, flagId: string, resolution: string) => void;
+  addBoardNote: (projectId: string, note: Omit<BoardNote, 'id'>) => void;
+  moveBoardNote: (projectId: string, noteId: string, x: number, y: number) => void;
+  removeBoardNote: (projectId: string, noteId: string) => void;
+  promoteNoteToRequirement: (projectId: string, noteId: string) => void;
   startChalkBoard: (projectId: string) => void;
   sendChalkMessage: (projectId: string, text: string) => void;
   applyArchetype: (projectId: string, archetypeId: string) => void;
@@ -252,6 +257,67 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }));
     addToast('Flagged question resolved.');
     addAuditLog('Resolve Flagged Question', `Flag: ${flagId}`, resolution, 'Ambiguity resolved');
+  };
+
+  const addBoardNote = (projectId: string, note: Omit<BoardNote, 'id'>) => {
+    patchSpec(projectId, (s) => ({
+      ...s,
+      boardNotes: [...s.boardNotes, { ...note, id: 'bn-' + Date.now().toString(36) }],
+    }));
+    addToast('Added to chalk board.');
+  };
+
+  /** Free positioning — the board is a rough space, not a structured tree. */
+  const moveBoardNote = (projectId: string, noteId: string, x: number, y: number) => {
+    patchSpec(projectId, (s) => ({
+      ...s,
+      boardNotes: s.boardNotes.map((n) => (n.id === noteId ? { ...n, x, y } : n)),
+    }));
+  };
+
+  const removeBoardNote = (projectId: string, noteId: string) => {
+    patchSpec(projectId, (s) => ({
+      ...s,
+      boardNotes: s.boardNotes.filter((n) => n.id !== noteId),
+    }));
+    addToast('Removed from board.', 'info');
+  };
+
+  /**
+   * A conflict or open question on the board becomes a formal flagged question,
+   * which then gates the stage — the board is where knowledge is rough, the flag
+   * queue is where it has to be settled.
+   */
+  const promoteNoteToRequirement = (projectId: string, noteId: string) => {
+    const note = specAiFor(projectId).boardNotes.find((n) => n.id === noteId);
+    if (!note) return;
+
+    patchSpec(projectId, (s) => {
+      const becomesFlag = note.kind === 'Conflict' || note.kind === 'Open question';
+      return {
+        ...s,
+        boardNotes: s.boardNotes.map((n) =>
+          n.id === noteId ? { ...n, kind: 'Requirement' as const } : n
+        ),
+        flaggedQuestions: becomesFlag
+          ? [
+              ...s.flaggedQuestions,
+              {
+                id: 'flag-' + Date.now().toString(36),
+                question: note.title + ' — ' + note.body,
+                fromSources: note.source,
+                status: 'Open' as const,
+              },
+            ]
+          : s.flaggedQuestions,
+      };
+    });
+
+    addToast(
+      note.kind === 'Conflict' || note.kind === 'Open question'
+        ? 'Promoted to a flagged question — resolve it before locking.'
+        : 'Promoted to a requirement.'
+    );
   };
 
   const startChalkBoard = (projectId: string) => {
@@ -1105,6 +1171,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         addSpecSource,
         removeSpecSource,
         resolveFlaggedQuestion,
+        addBoardNote,
+        moveBoardNote,
+        removeBoardNote,
+        promoteNoteToRequirement,
         startChalkBoard,
         sendChalkMessage,
         applyArchetype,

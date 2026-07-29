@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import { SpecAiState, SpecStageKey } from '../../types/specai';
+import { SpecAiState, SpecStageKey, StoryType } from '../../types/specai';
 import { relativeTime } from '../../data/modules';
 import {
   AlertTriangle,
@@ -11,6 +11,20 @@ import {
   RefreshCw,
   Upload,
 } from 'lucide-react';
+
+const TYPE_STYLE: Record<StoryType, string> = {
+  'User story': 'bg-indigo-50 text-indigo-700',
+  'Technical story': 'bg-blue-50 text-blue-700',
+  'Security story': 'bg-rose-50 text-rose-700',
+  'Testing story': 'bg-emerald-50 text-emerald-700',
+};
+
+const STORY_TYPES: StoryType[] = [
+  'User story',
+  'Technical story',
+  'Security story',
+  'Testing story',
+];
 
 const PRIORITY_STYLE: Record<string, string> = {
   P0: 'border-rose-200 bg-rose-50 text-rose-700',
@@ -27,6 +41,9 @@ export const Stage5Stories: React.FC<{
 }> = ({ state, readOnly, onViewSource }) => {
   const { connectors, reviewStaleStory, exportStoriesToJira } = useApp();
 
+  const [typeFilter, setTypeFilter] = useState<StoryType | 'All'>('All');
+  const [priorityFilter, setPriorityFilter] = useState<string>('All');
+  const [moduleFilter, setModuleFilter] = useState<string>('All');
   const [bulk, setBulk] = useState(true);
   const [assignSprint, setAssignSprint] = useState(false);
   const [mapEpics, setMapEpics] = useState(true);
@@ -44,6 +61,40 @@ export const Stage5Stories: React.FC<{
     );
   }
 
+  const moduleNames = [...new Set(state.stories.map((s) => s.moduleName))];
+
+  const visible = state.stories.filter((s) => {
+    if (typeFilter !== 'All' && s.storyType !== typeFilter) return false;
+    if (priorityFilter !== 'All' && s.priority !== priorityFilter) return false;
+    if (moduleFilter !== 'All' && s.moduleName !== moduleFilter) return false;
+    return true;
+  });
+
+  const countBy = <T,>(pick: (s: (typeof state.stories)[number]) => T, value: T) =>
+    state.stories.filter((s) => pick(s) === value).length;
+
+  /** A filter facet: label, live count, and whether it is the active one. */
+  const Chip: React.FC<{ label: string; count?: number; active: boolean; onClick: () => void }> = ({
+    label,
+    count,
+    active,
+    onClick,
+  }) => (
+    <button
+      onClick={onClick}
+      className={`mb-1.5 mr-1.5 inline-flex cursor-pointer items-center gap-1 rounded-full border px-2 py-1 text-[10px] font-bold transition-colors ${
+        active
+          ? 'border-indigo-600 bg-indigo-600 text-white'
+          : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+      }`}
+    >
+      {label}
+      {count !== undefined && (
+        <span className={active ? 'text-indigo-100' : 'text-slate-400'}>{count}</span>
+      )}
+    </button>
+  );
+
   return (
     <div className="space-y-4">
       {staleCount > 0 && (
@@ -56,9 +107,75 @@ export const Stage5Stories: React.FC<{
         </div>
       )}
 
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[15rem_minmax(0,1fr)]">
+        {/* Filter rail */}
+        <aside className="h-fit rounded-2xl border border-slate-200 bg-white p-4 xl:sticky xl:top-6">
+          <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+            Story type
+          </div>
+          <div className="mt-2">
+            <Chip
+              label="All"
+              count={state.stories.length}
+              active={typeFilter === 'All'}
+              onClick={() => setTypeFilter('All')}
+            />
+            {STORY_TYPES.map((t) => (
+              <Chip
+                key={t}
+                label={t.replace(' story', '')}
+                count={countBy((s) => s.storyType, t)}
+                active={typeFilter === t}
+                onClick={() => setTypeFilter(t)}
+              />
+            ))}
+          </div>
+
+          <div className="mt-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+            Priority
+          </div>
+          <div className="mt-2">
+            <Chip label="All" active={priorityFilter === 'All'} onClick={() => setPriorityFilter('All')} />
+            {(['P0', 'P1', 'P2'] as const).map((p) => (
+              <Chip
+                key={p}
+                label={p}
+                count={countBy((s) => s.priority, p)}
+                active={priorityFilter === p}
+                onClick={() => setPriorityFilter(p)}
+              />
+            ))}
+          </div>
+
+          <div className="mt-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+            Module
+          </div>
+          <div className="mt-2">
+            <Chip label="All" active={moduleFilter === 'All'} onClick={() => setModuleFilter('All')} />
+            {moduleNames.map((m) => (
+              <Chip
+                key={m}
+                label={m}
+                count={countBy((s) => s.moduleName, m)}
+                active={moduleFilter === m}
+                onClick={() => setModuleFilter(m)}
+              />
+            ))}
+          </div>
+
+          <div className="mt-4 border-t border-slate-200 pt-3 text-[10px] text-slate-500">
+            Showing <b className="text-slate-800">{visible.length}</b> of {state.stories.length}
+          </div>
+        </aside>
+
       {/* Story list */}
-      <div className="space-y-3">
-        {state.stories.map((s) => (
+      <div className="min-w-0 space-y-3">
+        {visible.length === 0 && (
+          <p className="rounded-2xl border border-slate-200 bg-white px-4 py-10 text-center text-xs text-slate-500">
+            No stories match this filter.
+          </p>
+        )}
+        {visible.map((s) => (
           <article
             key={s.id}
             className={`rounded-2xl border bg-white p-5 ${
@@ -66,11 +183,14 @@ export const Stage5Stories: React.FC<{
             }`}
           >
             <div className="flex flex-wrap items-start justify-between gap-2">
-              <p className="min-w-0 flex-1 text-xs font-bold leading-relaxed text-slate-900">
-                As a <span className="text-indigo-700">{s.role}</span>, I want{' '}
-                <span className="text-indigo-700">{s.goal}</span>, so that{' '}
-                <span className="text-indigo-700">{s.benefit}</span>
-              </p>
+              <div className="min-w-0 flex-1">
+                <h3 className="text-sm font-extrabold tracking-tight text-slate-900">{s.title}</h3>
+                <p className="mt-1 text-xs leading-relaxed text-slate-700">
+                  As a <span className="font-bold text-indigo-700">{s.role}</span>, I want{' '}
+                  <span className="font-bold text-indigo-700">{s.goal}</span>, so that{' '}
+                  <span className="font-bold text-indigo-700">{s.benefit}</span>
+                </p>
+              </div>
 
               <div className="flex shrink-0 items-center gap-1.5">
                 <span
@@ -79,6 +199,13 @@ export const Stage5Stories: React.FC<{
                   }`}
                 >
                   {s.priority}
+                </span>
+                <span
+                  className={`rounded-md px-1.5 py-0.5 text-[9px] font-bold ${
+                    TYPE_STYLE[s.storyType]
+                  }`}
+                >
+                  {s.storyType.replace(' story', '')}
                 </span>
                 <span className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[9px] font-bold text-slate-600">
                   {s.points} pts
@@ -152,6 +279,7 @@ export const Stage5Stories: React.FC<{
             </div>
           </article>
         ))}
+        </div>
       </div>
 
       {/* Jira export */}

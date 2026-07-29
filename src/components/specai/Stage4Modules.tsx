@@ -145,7 +145,9 @@ export const Stage4Modules: React.FC<{
           No modules yet — generate from the architecture or add one.
         </p>
       ) : view === 'tree' ? (
-        <div className="space-y-3">
+        /* Canvas beside a persistent dependency rail */
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_20rem]">
+          <div className="min-w-0 space-y-3">
           {state.modules.map((m) => (
             <section key={m.id} className="rounded-2xl border border-slate-200 bg-white p-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
@@ -253,6 +255,41 @@ export const Stage4Modules: React.FC<{
               </div>
             </section>
           ))}
+          </div>
+
+          {/* Dependency rail — always visible beside the tree */}
+          <aside className="h-fit rounded-2xl border border-slate-200 bg-white p-4 xl:sticky xl:top-6">
+            <h3 className="text-sm font-extrabold text-slate-900">Dependencies</h3>
+            <p className="mt-0.5 text-[10px] text-slate-500">
+              These drive story priority scoring in the next stage.
+            </p>
+
+            <div className="mt-3 space-y-2">
+              {state.modules.filter((m) => m.dependsOn.length > 0).length === 0 ? (
+                <p className="rounded-xl border border-dashed border-slate-200 px-2 py-4 text-center text-[10px] text-slate-400">
+                  No cross-module dependencies yet.
+                </p>
+              ) : (
+                state.modules
+                  .filter((m) => m.dependsOn.length > 0)
+                  .map((m) => (
+                    <div
+                      key={m.id}
+                      className="rounded-xl border border-slate-200 px-2.5 py-2 text-[10px] leading-relaxed"
+                    >
+                      <b className="text-slate-900">{m.name}</b>
+                      <br />
+                      <span className="text-slate-500">
+                        depends on{' '}
+                        {m.dependsOn
+                          .map((d) => state.modules.find((x) => x.id === d)?.name ?? d)
+                          .join(', ')}
+                      </span>
+                    </div>
+                  ))
+              )}
+            </div>
+          </aside>
         </div>
       ) : (
         /* Dependency graph — cross-module edges */

@@ -88,6 +88,40 @@ export const activeStage = (state: SpecAiState): SpecStageKey => {
   return firstUnlocked?.key ?? 'stories';
 };
 
+/** One-line summary of what is in a stage right now, shown under its rail entry. */
+export const stageDetail = (key: SpecStageKey, state: SpecAiState): string => {
+  switch (key) {
+    case 'knowledge': {
+      const open = state.flaggedQuestions.filter((f) => f.status === 'Open').length;
+      if (open > 0) return `${open} flag${open === 1 ? '' : 's'} open`;
+      return `${state.sources.length} sources · ${state.boardNotes.length} cards`;
+    }
+    case 'understanding': {
+      const filled = state.understanding.filter((s) => s.body.trim() !== '').length;
+      return `${filled}/${state.understanding.length} sections`;
+    }
+    case 'architecture': {
+      if (state.artifacts.length === 0) return 'not generated';
+      const low = state.artifacts.filter((a) => a.confidence === 'low').length;
+      return low > 0
+        ? `${state.artifacts.length} artifacts · ${low} to review`
+        : `${state.artifacts.length} artifacts`;
+    }
+    case 'modules': {
+      if (state.modules.length === 0) return 'no modules';
+      const features = state.modules.reduce((n, m) => n + m.features.length, 0);
+      return `${state.modules.length} modules · ${features} features`;
+    }
+    default: {
+      if (state.stories.length === 0) return 'not generated';
+      const pending = state.stories.filter((s) => !s.exported).length;
+      return pending > 0
+        ? `${state.stories.length} stories · ${pending} to export`
+        : `${state.stories.length} stories exported`;
+    }
+  }
+};
+
 export interface GateCheck {
   ok: boolean;
   /** Why the gate is closed, shown on the disabled control. */

@@ -64,6 +64,46 @@ export interface Archetype {
   description: string;
 }
 
+/**
+ * A knowledge channel in the source strip. Distinct from an individual uploaded
+ * file: a channel is a connected system being drawn on, with its own index
+ * health.
+ */
+export interface KnowledgeChannel {
+  id: string;
+  label: string;
+  /** e.g. "184 items", "16 pages". */
+  detail: string;
+  status: 'Ready' | 'Indexing' | 'Not connected';
+  /** Connector this channel depends on, if any. */
+  connectorId?: string;
+  itemsIndexed: number;
+  lastSync: string;
+}
+
+/**
+ * The chalk board is a spatial discovery surface — rough knowledge placed and
+ * moved freely before any structure is imposed on it.
+ */
+export type NoteKind =
+  | 'Feature idea'
+  | 'Observed flow'
+  | 'Conflict'
+  | 'Technical context'
+  | 'Open question'
+  | 'Requirement';
+
+export interface BoardNote {
+  id: string;
+  kind: NoteKind;
+  title: string;
+  body: string;
+  /** Provenance line, e.g. "Source: Live application". */
+  source: string;
+  x: number;
+  y: number;
+}
+
 // ── Stage 2: Project Understanding
 
 export type UnderstandingKey =
@@ -132,8 +172,14 @@ export interface AcceptanceCriterion {
   then: string;
 }
 
+/** Stories are generated across several lenses, not just end-user behaviour. */
+export type StoryType = 'User story' | 'Technical story' | 'Security story' | 'Testing story';
+
 export interface UserStory {
   id: string;
+  /** Story title, shown above the As-a sentence. */
+  title: string;
+  storyType: StoryType;
   role: string;
   goal: string;
   benefit: string;
@@ -156,6 +202,8 @@ export interface SpecAiState {
   currentStage: SpecStageKey;
   lockedStages: SpecStageKey[];
   sources: SpecSource[];
+  channels: KnowledgeChannel[];
+  boardNotes: BoardNote[];
   flaggedQuestions: FlaggedQuestion[];
   chalkBoard: ChalkBoardState;
   understanding: UnderstandingSection[];

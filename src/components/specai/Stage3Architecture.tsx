@@ -14,6 +14,13 @@ import {
   GitCompare,
 } from 'lucide-react';
 
+/** Node chains rendered for each diagram artifact. */
+const DIAGRAM_FLOW: Record<string, string[]> = {
+  'art-context': ['Investor', 'Mobile App', 'API Gateway', 'Core Banking'],
+  'art-c4': ['App', 'BFF', 'Domain services', 'Ledger adapter'],
+  'art-sequence': ['Device check', 'Challenge', 'Token mint', 'Session + audit'],
+};
+
 const CHANGE_BAND_STYLE: Record<string, string> = {
   '+ New': 'border-emerald-200 bg-emerald-50 text-emerald-700',
   '~ Changed': 'border-amber-200 bg-amber-50 text-amber-800',
@@ -214,11 +221,30 @@ export const Stage3Architecture: React.FC<{
                 </div>
               )}
 
+              {/* Diagram artifacts get a rendered flow, not just their text body. */}
               {selected.group === 'Diagrams' && (
-                <div className="mt-3 flex items-center gap-1.5 text-[10px] text-slate-500">
-                  <Download className="h-3 w-3" />
-                  Diagrams export as SVG or PNG.
-                </div>
+                <>
+                  <div className="mt-3 flex min-h-[11rem] items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50/60 p-5">
+                    <div className="flex flex-wrap items-center justify-center gap-3">
+                      {DIAGRAM_FLOW[selected.id]?.map((node, i, arr) => (
+                        <React.Fragment key={node}>
+                          <div className="rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-[11px] font-semibold text-slate-800 shadow-sm">
+                            {node}
+                          </div>
+                          {i < arr.length - 1 && <span className="text-slate-400">→</span>}
+                        </React.Fragment>
+                      )) ?? (
+                        <span className="text-[11px] text-slate-400">
+                          Diagram renders on generation.
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="mt-2 flex items-center gap-1.5 text-[10px] text-slate-500">
+                    <Download className="h-3 w-3" />
+                    Diagrams export as SVG or PNG.
+                  </div>
+                </>
               )}
 
               {editing ? (

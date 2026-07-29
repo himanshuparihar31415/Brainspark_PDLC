@@ -65,7 +65,7 @@ export const SpecAiView: React.FC = () => {
 
   if (!project) {
     return (
-      <div className="mx-auto max-w-3xl p-6 md:p-8">
+      <div className="p-6 md:p-8">
         <p className="rounded-xl border border-slate-200 bg-white px-4 py-8 text-center text-xs text-slate-500">
           No project is in scope.
         </p>
@@ -74,7 +74,7 @@ export const SpecAiView: React.FC = () => {
   }
 
   return (
-    <div className="mx-auto max-w-7xl animate-in fade-in space-y-5 p-6 duration-200 md:p-8">
+    <div className="animate-in fade-in space-y-4 p-5 duration-200 md:p-6">
       {/* ── Module shell header */}
       <div className="space-y-3">
         <button
@@ -130,7 +130,7 @@ export const SpecAiView: React.FC = () => {
       )}
 
       {/* ── Rail + stage body */}
-      <div className="flex flex-col gap-5 lg:flex-row">
+      <div className="flex flex-col gap-5 lg:flex-row lg:items-start">
         <StageRail state={state} activeKey={viewingStage} onSelect={selectStage} />
 
         <div className="min-w-0 flex-1 space-y-4">

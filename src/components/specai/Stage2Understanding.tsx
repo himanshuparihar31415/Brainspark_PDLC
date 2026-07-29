@@ -24,7 +24,8 @@ export const Stage2Understanding: React.FC<{
   const outstanding = state.openQuestions.filter((q) => q.status === 'Open');
 
   return (
-    <div className="space-y-4">
+    <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.4fr)_22rem]">
+      <div className="min-w-0 space-y-4">
       <div className="flex items-start gap-2 rounded-xl border border-slate-200 bg-slate-50/60 px-4 py-2.5">
         <Info className="mt-px h-3.5 w-3.5 shrink-0 text-slate-400" />
         <span className="text-[11px] text-slate-600">
@@ -136,8 +137,10 @@ export const Stage2Understanding: React.FC<{
           );
         })}
 
+      </div>
+
       {/* Open questions — an action list, not buried prose */}
-      <section className="rounded-2xl border border-slate-200 bg-white p-5">
+      <section className="h-fit rounded-2xl border border-slate-200 bg-white p-5 xl:sticky xl:top-6">
         <h3 className="text-sm font-extrabold text-slate-900">
           Open questions ({outstanding.length})
         </h3>

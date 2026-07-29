@@ -1,4 +1,20 @@
-import { SpecAiState } from '../types/specai';
+import { BoardNote, KnowledgeChannel, SpecAiState } from '../types/specai';
+
+/** Channels a project draws knowledge from, with index health. */
+const incedoChannels = (): KnowledgeChannel[] => [
+  { id: 'ch-jira', label: 'Jira', detail: '184 items', status: 'Ready', connectorId: 'conn-jira', itemsIndexed: 184, lastSync: '12 min ago' },
+  { id: 'ch-confluence', label: 'Confluence', detail: '16 pages', status: 'Ready', connectorId: 'conn-confluence', itemsIndexed: 16, lastSync: '1 hour ago' },
+  { id: 'ch-docs', label: 'Documents', detail: '4 files', status: 'Ready', itemsIndexed: 4, lastSync: 'Just now' },
+  { id: 'ch-meetings', label: 'Meetings', detail: '3 transcripts', status: 'Ready', itemsIndexed: 3, lastSync: '2 days ago' },
+  { id: 'ch-app', label: 'Live app', detail: 'exploring', status: 'Indexing', itemsIndexed: 12, lastSync: 'in progress' },
+  { id: 'ch-code', label: 'Code', detail: '3 repos', status: 'Ready', connectorId: 'conn-github', itemsIndexed: 96, lastSync: '18 min ago' },
+  { id: 'ch-flows', label: 'Flows', detail: '5 captured', status: 'Ready', itemsIndexed: 5, lastSync: '3 hours ago' },
+];
+
+const emptyChannels = (): KnowledgeChannel[] => [
+  { id: 'ch-jira', label: 'Jira', detail: 'not connected', status: 'Not connected', connectorId: 'conn-jira', itemsIndexed: 0, lastSync: 'Never' },
+  { id: 'ch-docs', label: 'Documents', detail: 'none yet', status: 'Not connected', itemsIndexed: 0, lastSync: 'Never' },
+];
 
 const emptyChalkBoard = () => ({
   started: false,
@@ -28,6 +44,15 @@ const mobileBankingV2: SpecAiState = {
     { id: 'src-2', name: 'Retail wealth requirements (raw notes).txt', type: 'TXT' },
     { id: 'src-3', name: 'Legacy mainframe ledger architecture.pdf', type: 'PDF' },
     { id: 'src-4', name: 'Confluence — Mobile Platform Standards', type: 'Confluence' },
+  ],
+  channels: incedoChannels(),
+  boardNotes: [
+    { id: 'bn-1', kind: 'Feature idea', title: 'Biometric login', body: 'FaceID and TouchID for returning users with passcode fallback.', source: 'Source: Product note', x: 24, y: 28 },
+    { id: 'bn-2', kind: 'Observed flow', title: 'Current login journey', body: 'Login → OTP verification → Dashboard. Passcode login only today.', source: 'Source: Live application', x: 268, y: 52 },
+    { id: 'bn-3', kind: 'Conflict', title: 'Launch priority mismatch', body: 'Jira marks biometrics optional. The discovery transcript calls it launch-critical.', source: '2 sources disagree', x: 512, y: 26 },
+    { id: 'bn-4', kind: 'Technical context', title: 'Authentication service', body: 'JWT refresh endpoint exists. Device enrolment is not implemented.', source: 'Source: customer-auth-service', x: 120, y: 236 },
+    { id: 'bn-5', kind: 'Open question', title: 'Fallback behaviour', body: 'Should failed biometric attempts fall back to passcode immediately, or after three retries?', source: 'Needs stakeholder input', x: 404, y: 252 },
+    { id: 'bn-6', kind: 'Requirement', title: 'Idempotent transfers', body: 'Every ledger command carries an idempotency key so a retry can never double-post.', source: 'Accepted via Chalk Board', x: 660, y: 220 },
   ],
   flaggedQuestions: [
     {
@@ -262,6 +287,8 @@ const mobileBankingV2: SpecAiState = {
   stories: [
     {
       id: 'st-1',
+      title: 'Enable biometric login for returning customers',
+      storyType: 'User story',
       role: 'returning investor',
       goal: 'sign in with FaceID',
       benefit: 'I can reach my portfolio without typing a password',
@@ -287,6 +314,8 @@ const mobileBankingV2: SpecAiState = {
     },
     {
       id: 'st-2',
+      title: 'Guarantee idempotent transfers on retry',
+      storyType: 'Technical story',
       role: 'investor',
       goal: 'move money between my accounts without a duplicate ever posting',
       benefit: 'I can trust the transfer even on a flaky connection',
@@ -308,6 +337,8 @@ const mobileBankingV2: SpecAiState = {
     },
     {
       id: 'st-3',
+      title: 'Show holdings with current valuation',
+      storyType: 'User story',
       role: 'investor',
       goal: 'see my holdings and their current value',
       benefit: 'I know where I stand before I trade',
@@ -328,6 +359,8 @@ const mobileBankingV2: SpecAiState = {
     },
     {
       id: 'st-4',
+      title: 'Reject orders outside market hours',
+      storyType: 'User story',
       role: 'investor',
       goal: 'be told clearly when the market is closed',
       benefit: 'I do not think my order was accepted when it was not',
@@ -348,6 +381,8 @@ const mobileBankingV2: SpecAiState = {
     },
     {
       id: 'st-5',
+      title: 'Explain portfolio movement on request',
+      storyType: 'User story',
       role: 'investor',
       goal: 'ask why my portfolio moved today',
       benefit: 'I understand my position without calling an advisor',
@@ -363,6 +398,50 @@ const mobileBankingV2: SpecAiState = {
       moduleName: 'AI Assistant',
       featureName: 'Explain my portfolio',
       linkedArtifactIds: ['art-hld', 'art-adr'],
+      stale: false,
+      exported: false,
+    },
+    {
+      id: 'st-6',
+      title: 'Enforce device binding and revocation',
+      storyType: 'Security story',
+      role: 'security reviewer',
+      goal: 'every biometric enrolment bound to a revocable device record',
+      benefit: 'a lost device can be cut off without a password reset',
+      acceptance: [
+        {
+          given: 'an enrolled device is reported lost',
+          when: 'an operator revokes the binding',
+          then: 'the next biometric attempt from that device is refused and the event is audited',
+        },
+      ],
+      priority: 'P0',
+      points: 8,
+      moduleName: 'Authentication',
+      featureName: 'Passcode fallback & recovery',
+      linkedArtifactIds: ['art-lld', 'art-er'],
+      stale: false,
+      exported: false,
+    },
+    {
+      id: 'st-7',
+      title: 'Validate biometric fallback scenarios',
+      storyType: 'Testing story',
+      role: 'QA engineer',
+      goal: 'coverage across failed, unsupported and revoked biometric paths',
+      benefit: 'the fallback never leaks why authentication failed',
+      acceptance: [
+        {
+          given: 'biometric authentication is unavailable',
+          when: 'the customer attempts to log in',
+          then: 'the configured fallback is presented without exposing sensitive detail',
+        },
+      ],
+      priority: 'P1',
+      points: 5,
+      moduleName: 'Authentication',
+      featureName: 'Biometric quick login',
+      linkedArtifactIds: ['art-sequence', 'art-nfr'],
       stale: false,
       exported: false,
     },
@@ -382,6 +461,12 @@ const cloudCore: SpecAiState = {
   sources: [
     { id: 'cc-src-1', name: 'Mainframe ledger inventory.pdf', type: 'PDF' },
     { id: 'cc-src-2', name: 'Cloud landing zone standards (Confluence)', type: 'Confluence' },
+  ],
+  channels: incedoChannels(),
+  boardNotes: [
+    { id: 'cc-bn-1', kind: 'Technical context', title: 'Mainframe ledger inventory', body: '14 ledgers catalogued; 3 have no documented owner.', source: 'Source: inventory PDF', x: 32, y: 40 },
+    { id: 'cc-bn-2', kind: 'Conflict', title: 'Ledger count mismatch', body: 'Inventory lists 14, the migration brief names 11.', source: '2 sources disagree', x: 320, y: 90 },
+    { id: 'cc-bn-3', kind: 'Open question', title: 'Event ordering', body: 'Is strict ordering required on the settlement stream, or is per-key ordering enough?', source: 'Needs architecture input', x: 120, y: 250 },
   ],
   flaggedQuestions: [
     {
@@ -421,6 +506,8 @@ const acmePortal: SpecAiState = {
   currentStage: 'knowledge',
   lockedStages: [],
   sources: [],
+  channels: emptyChannels(),
+  boardNotes: [] as BoardNote[],
   flaggedQuestions: [],
   chalkBoard: emptyChalkBoard(),
   understanding: [

@@ -1,7 +1,12 @@
 import React from 'react';
 import { SpecAiState, SpecStageKey } from '../../types/specai';
 import { SPEC_STAGES, stageStateFor } from '../../data/specai';
+import { stageDetail } from '../../data/specai';
 import { Check, Circle, Lock } from 'lucide-react';
+
+/** Share of the pipeline that is version-locked. */
+const readiness = (state: SpecAiState): number =>
+  Math.round((state.lockedStages.length / SPEC_STAGES.length) * 100);
 
 /**
  * The pipeline spine. A persistent rail showing where you are, what is locked
@@ -79,6 +84,10 @@ export const StageRail: React.FC<{
                     ? '● Current'
                     : '● Locked out'}
                 </span>
+                {/* What is actually in this stage right now */}
+                <span className="block truncate text-[9px] text-slate-400">
+                  {stageDetail(stage.key, state)}
+                </span>
               </span>
             </button>
 
@@ -91,6 +100,18 @@ export const StageRail: React.FC<{
           </React.Fragment>
         );
       })}
+    </div>
+
+    {/* Readiness — how much of the pipeline is settled */}
+    <div className="mt-4 hidden rounded-xl border border-slate-200 bg-white p-3 lg:block">
+      <strong className="text-[11px] font-extrabold text-slate-900">Workspace readiness</strong>
+      <div className="my-2 h-1.5 overflow-hidden rounded-full bg-slate-100">
+        <div
+          className="h-full rounded-full bg-gradient-to-r from-indigo-600 to-violet-500"
+          style={{ width: `${readiness(state)}%` }}
+        />
+      </div>
+      <small className="text-[10px] text-slate-500">{readiness(state)}% locked</small>
     </div>
   </nav>
 );
