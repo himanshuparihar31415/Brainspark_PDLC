@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import {
   Role,
   ScopeContext,
@@ -48,6 +48,10 @@ import {
   INITIAL_AGENT_USAGE,
 } from '../data/mockData';
 import { INITIAL_PIPELINE } from '../data/pipelineData';
+import {
+  projectCompletionFromPhases,
+  specAiPhaseFromStories,
+} from '../data/completion';
 import { SpecAiSlice, useSpecAiSlice } from './useSpecAi';
 
 export type { NavView };
@@ -163,7 +167,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [tasks, setTasks] = useState<Task[]>(INITIAL_TASKS);
   const [moduleActivity] = useState<ModuleActivity[]>(INITIAL_MODULE_ACTIVITY);
   const [agentUsage] = useState<AgentUsage[]>(INITIAL_AGENT_USAGE);
-  const [pipeline] = useState<PipelinePhase[]>(INITIAL_PIPELINE);
+  const [pipeline, setPipeline] = useState<PipelinePhase[]>(INITIAL_PIPELINE);
   const addToast = (message: string, type: 'success' | 'info' | 'error' = 'success') => {
     const id = 'toast-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4);
     setToasts((prev) => [...prev, { id, message, type }]);
@@ -231,6 +235,59 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     currentUserName: currentUser?.name ?? 'Unknown user',
     connectors,
   });
+
+  /**
+   * Spec AI stories are the source of truth for the Spec AI pipeline card and,
+   * once present, for that project's overall completion. Other module phases
+   * keep their seeded done/total until those workspaces exist.
+   */
+  useEffect(() => {
+    setPipeline((prev) => {
+      let changed = false;
+      const next = prev.map((phase) => {
+        if (phase.module !== 'specai') return phase;
+        const stories =
+          spec.specAi.find((s) => s.projectId === phase.projectId)?.stories ?? [];
+        const derived = specAiPhaseFromStories(stories);
+        if (!derived) return phase;
+        if (
+          phase.done === derived.done &&
+          phase.total === derived.total &&
+          phase.status === derived.status
+        ) {
+          return phase;
+        }
+        changed = true;
+        return {
+          ...phase,
+          done: derived.done,
+          total: derived.total,
+          status: derived.status,
+          daysSinceChange: 0,
+        };
+      });
+      return changed ? next : prev;
+    });
+  }, [spec.specAi]);
+
+  useEffect(() => {
+    setProjects((prev) => {
+      let changed = false;
+      const next = prev.map((project) => {
+        const hasStories = spec.specAi.some(
+          (s) => s.projectId === project.id && s.stories.length > 0
+        );
+        if (!hasStories) return project;
+        const phases = pipeline.filter((p) => p.projectId === project.id);
+        if (phases.length === 0) return project;
+        const completion = projectCompletionFromPhases(phases);
+        if (completion === project.completion) return project;
+        changed = true;
+        return { ...project, completion };
+      });
+      return changed ? next : prev;
+    });
+  }, [pipeline, spec.specAi]);
 
   /**
    * Credential check against the mock directory. The matched account decides the

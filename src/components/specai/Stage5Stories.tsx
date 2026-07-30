@@ -1,6 +1,12 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import { SpecAiState, SpecStageKey, StoryType, UserStory } from '../../types/specai';
+import {
+  SpecAiState,
+  SpecStageKey,
+  StoryDeliveryStatus,
+  StoryType,
+  UserStory,
+} from '../../types/specai';
 import {
   STORY_TRACKS,
   STORY_TRACK_COPY,
@@ -9,6 +15,7 @@ import {
   storyTrackCounts,
   unmappedStoryTypes,
 } from '../../data/specai';
+import { STORY_DELIVERY_STATUSES } from '../../data/completion';
 import { relativeTime } from '../../data/modules';
 import {
   AlertTriangle,
@@ -46,6 +53,14 @@ const PRIORITY_CHIP: Record<string, string> = {
   P2: 'border-slate-200 bg-slate-100 text-slate-600',
 };
 
+const DELIVERY_CHIP: Record<StoryDeliveryStatus, string> = {
+  Draft: 'bg-slate-100 text-slate-600',
+  Exported: 'bg-indigo-50 text-indigo-700',
+  'In progress': 'bg-blue-50 text-blue-700',
+  Done: 'bg-emerald-50 text-emerald-700',
+  Blocked: 'bg-rose-50 text-rose-700',
+};
+
 const JIRA_ISSUE_TYPES = ['Story', 'Task', 'Bug', 'Test', 'Sub-task'];
 
 /**
@@ -63,11 +78,18 @@ export const Stage5Stories: React.FC<{
   track: StoryTrack | 'All';
   onTrackChange: (track: StoryTrack | 'All') => void;
 }> = ({ state, readOnly, onViewSource, track, onTrackChange }) => {
-  const { connectors, reviewStaleStory, exportStoriesToJira, setJiraMapping } = useApp();
+  const {
+    connectors,
+    reviewStaleStory,
+    exportStoriesToJira,
+    setJiraMapping,
+    setStoryDeliveryStatus,
+  } = useApp();
 
   const [typeFilter, setTypeFilter] = useState<StoryType | 'All'>('All');
   const [priorityFilter, setPriorityFilter] = useState('All');
   const [moduleFilter, setModuleFilter] = useState('All');
+  const [deliveryFilter, setDeliveryFilter] = useState<StoryDeliveryStatus | 'All'>('All');
   const [mappingOpen, setMappingOpen] = useState(false);
 
   const jiraReady = Boolean(connectors.find((c) => c.id === 'conn-jira')?.activatedProject);
@@ -90,7 +112,8 @@ export const Stage5Stories: React.FC<{
       (track === 'All' || STORY_TRACK_OF[s.storyType] === track) &&
       (typeFilter === 'All' || s.storyType === typeFilter) &&
       (priorityFilter === 'All' || s.priority === priorityFilter) &&
-      (moduleFilter === 'All' || s.moduleName === moduleFilter)
+      (moduleFilter === 'All' || s.moduleName === moduleFilter) &&
+      (deliveryFilter === 'All' || s.deliveryStatus === deliveryFilter)
   );
 
   /** One section per track, so a flat filter and the split view render the same way. */
@@ -209,6 +232,28 @@ export const Stage5Stories: React.FC<{
                   count={countOf((s) => s.moduleName === m)}
                   active={moduleFilter === m}
                   onClick={() => setModuleFilter(m)}
+                />
+              ))}
+            </div>
+
+            <div className="mt-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+              Delivery
+            </div>
+            <div className="mt-1.5">
+              <Chip
+                label="All"
+                active={deliveryFilter === 'All'}
+                onClick={() => setDeliveryFilter('All')}
+              />
+              {STORY_DELIVERY_STATUSES.filter(
+                (d) => countOf((s) => s.deliveryStatus === d) > 0
+              ).map((d) => (
+                <Chip
+                  key={d}
+                  label={d}
+                  count={countOf((s) => s.deliveryStatus === d)}
+                  active={deliveryFilter === d}
+                  onClick={() => setDeliveryFilter(d)}
                 />
               ))}
             </div>
@@ -344,7 +389,14 @@ export const Stage5Stories: React.FC<{
                     <span className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[9px] font-bold text-slate-600">
                       {s.points} pts
                     </span>
-                    {s.exported && (
+                    <span
+                      className={`rounded-md px-1.5 py-0.5 text-[9px] font-bold ${
+                        DELIVERY_CHIP[s.deliveryStatus]
+                      }`}
+                    >
+                      {s.deliveryStatus}
+                    </span>
+                    {s.exported && s.deliveryStatus !== 'Draft' && (
                       <span className="flex items-center gap-0.5 rounded-md bg-emerald-50 px-1.5 py-0.5 text-[9px] font-bold text-emerald-700">
                         <Check className="h-2.5 w-2.5" /> In Jira
                       </span>
@@ -360,6 +412,29 @@ export const Stage5Stories: React.FC<{
                     <b className="text-indigo-700">{s.benefit}</b>
                   </p>
                 </div>
+
+                {!readOnly && (
+                  <label className="shrink-0 text-[9px] font-bold text-slate-400">
+                    Status
+                    <select
+                      value={s.deliveryStatus}
+                      onChange={(e) =>
+                        setStoryDeliveryStatus(
+                          state.projectId,
+                          s.id,
+                          e.target.value as StoryDeliveryStatus
+                        )
+                      }
+                      className="mt-0.5 block cursor-pointer rounded-lg border border-slate-200 bg-white px-2 py-1 text-[10px] font-bold text-slate-700 outline-none focus:border-indigo-600"
+                    >
+                      {STORY_DELIVERY_STATUSES.map((d) => (
+                        <option key={d} value={d}>
+                          {d}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                )}
               </div>
 
               <div className="mt-2.5 space-y-1.5 rounded-xl border border-slate-200 bg-slate-50/60 p-2.5">
