@@ -39,7 +39,7 @@ export const RightRail: React.FC<{
   ];
 
   return (
-    <aside className="flex min-h-0 w-full shrink-0 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white max-lg:h-96 lg:w-72 xl:w-96">
+    <aside className="flex min-h-0 w-full shrink-0 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white max-lg:h-[30rem] lg:h-full lg:w-72 xl:w-96">
       <div className="flex shrink-0 border-b border-slate-200" role="tablist">
         {tabs.map((t) => (
           <button

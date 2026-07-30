@@ -225,8 +225,12 @@ export const Stage1Knowledge: React.FC<{
         </div>
       </div>
 
-      {/* Below lg the two panels stack and this column scrolls. */}
-      <div className="flex min-h-0 flex-1 flex-col gap-2.5 overflow-y-auto lg:flex-row lg:overflow-visible">
+      {/*
+        Each panel owns its height and its own scroll, so reading the brief never
+        moves the board and a long lane never pushes the rail off screen. Below lg
+        they stack and this column scrolls instead.
+      */}
+      <div className="flex min-h-0 flex-1 flex-col gap-2.5 overflow-y-auto lg:flex-row lg:overflow-hidden">
         <ChalkBoard
           state={state}
           disabled={disabled}

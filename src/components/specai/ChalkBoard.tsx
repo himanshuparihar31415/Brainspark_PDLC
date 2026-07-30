@@ -134,7 +134,7 @@ export const ChalkBoard: React.FC<{
     );
 
   return (
-    <section className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white max-lg:h-[32rem] max-lg:shrink-0">
+    <section className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white max-lg:h-[32rem] max-lg:shrink-0 lg:h-full">
       <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-slate-200 px-3.5 py-2.5">
         <h3 className="text-[12px] font-extrabold tracking-tight text-slate-900">
           Requirement Chalk Board

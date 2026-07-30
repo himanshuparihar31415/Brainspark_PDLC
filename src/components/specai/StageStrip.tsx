@@ -9,7 +9,7 @@ import {
   storyTrackCounts,
   workspaceProgress,
 } from '../../data/specai';
-import { Check, ChevronRight, Lock } from 'lucide-react';
+import { Check, Lock } from 'lucide-react';
 
 /**
  * The pipeline, as a strip across the top. Horizontal because the stages are the
@@ -28,36 +28,38 @@ export const StageStrip: React.FC<{
 
   return (
     <nav
-      className="flex items-center gap-1 overflow-x-auto rounded-xl border border-slate-200 bg-white px-2 py-1.5"
+      className="flex items-stretch gap-1.5 overflow-x-auto"
       aria-label="Spec AI pipeline stages"
     >
-      <span className="mr-1 hidden shrink-0 text-[8.5px] font-bold uppercase tracking-[0.14em] text-slate-400 sm:block">
-        Pipeline
-      </span>
-
-      {SPEC_STAGES.map((stage, idx) => {
+      {SPEC_STAGES.map((stage) => {
         const status = stageStateFor(stage.key, state);
         const isActive = stage.key === activeKey;
         const lockedOut = status === 'Locked out';
 
         return (
-          <React.Fragment key={stage.key}>
-            <button
-              onClick={() => onSelect(stage.key)}
-              disabled={lockedOut}
-              title={
-                lockedOut
-                  ? 'Finish and lock the previous stage to continue.'
-                  : `${stage.title} — ${stageDetail(stage.key, state)}`
-              }
-              className={`flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-1 transition-colors ${
-                isActive
-                  ? 'bg-indigo-50'
-                  : lockedOut
-                  ? 'cursor-not-allowed opacity-50'
-                  : 'cursor-pointer hover:bg-slate-100'
-              }`}
-            >
+          <button
+            key={stage.key}
+            onClick={() => onSelect(stage.key)}
+            disabled={lockedOut}
+            title={
+              lockedOut
+                ? 'Finish and lock the previous stage to continue.'
+                : `${stage.title} — ${stageDetail(stage.key, state)}`
+            }
+            /*
+             * Every stage is its own segment at equal width. Uniform because none
+             * of them is more important than the others until you are standing on
+             * it, and equal segments make progress readable at a glance.
+             */
+            className={`flex min-w-[8.5rem] flex-1 flex-col justify-center gap-1 rounded-xl border px-2.5 py-2 text-left transition-colors ${
+              isActive
+                ? 'border-indigo-300 bg-indigo-50'
+                : lockedOut
+                ? 'cursor-not-allowed border-slate-200 bg-white opacity-55'
+                : 'cursor-pointer border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
+            }`}
+          >
+            <span className="flex items-center gap-1.5">
               <span
                 className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[8px] font-bold ${
                   status === 'Locked'
@@ -79,67 +81,70 @@ export const StageStrip: React.FC<{
               </span>
 
               <span
-                className={`whitespace-nowrap text-[10px] font-bold ${
+                className={`min-w-0 flex-1 truncate text-[10px] font-bold ${
                   isActive ? 'text-indigo-700' : lockedOut ? 'text-slate-400' : 'text-slate-700'
                 }`}
               >
                 {stage.railLabel}
               </span>
+            </span>
 
-              {/* Only the stage in hand spends space on its detail. */}
-              {isActive && (
-                <span className="hidden whitespace-nowrap text-[9px] text-slate-400 lg:inline">
-                  {stageDetail(stage.key, state)}
-                </span>
-              )}
-            </button>
-
-            {/* Story tracks appear only while you are on that stage. */}
-            {stage.key === 'stories' && isActive && (
-              <span className="flex shrink-0 items-center gap-1">
-                {STORY_TRACKS.map((track) => (
-                  <button
-                    key={track}
-                    onClick={() => onSelect('stories', track)}
-                    className={`cursor-pointer whitespace-nowrap rounded-md border px-1.5 py-0.5 text-[9px] font-bold transition-colors ${
-                      activeTrack === track
+            {/* Second line: the story tracks on that stage, its detail otherwise */}
+            {stage.key === 'stories' && isActive ? (
+              <span className="flex items-center gap-1">
+                {STORY_TRACKS.map((t) => (
+                  <span
+                    key={t}
+                    role="button"
+                    tabIndex={0}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onSelect('stories', t);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.stopPropagation();
+                        onSelect('stories', t);
+                      }
+                    }}
+                    className={`cursor-pointer rounded border px-1 py-px text-[8.5px] font-bold ${
+                      activeTrack === t
                         ? 'border-indigo-500 bg-indigo-600 text-white'
-                        : 'border-slate-200 text-slate-500 hover:bg-slate-50'
+                        : 'border-slate-200 bg-white text-slate-500'
                     }`}
                   >
-                    {track === 'Non-technical' ? 'Non-tech' : 'Technical'}
-                    <span
-                      className={`ml-1 ${
-                        activeTrack === track ? 'text-indigo-200' : 'text-slate-400'
-                      }`}
-                    >
-                      {trackCounts[track]}
-                    </span>
-                  </button>
+                    {t === 'Non-technical' ? 'Non-tech' : 'Tech'} {trackCounts[t]}
+                  </span>
                 ))}
               </span>
+            ) : (
+              <span
+                className={`truncate text-[9px] ${
+                  status === 'Locked'
+                    ? 'text-emerald-600'
+                    : isActive
+                    ? 'text-indigo-500'
+                    : 'text-slate-400'
+                }`}
+              >
+                {lockedOut ? 'Locked out' : stageDetail(stage.key, state)}
+              </span>
             )}
-
-            {idx < SPEC_STAGES.length - 1 && (
-              <ChevronRight className="h-3 w-3 shrink-0 text-slate-300" aria-hidden="true" />
-            )}
-          </React.Fragment>
+          </button>
         );
       })}
 
-      {/* How much of the workspace has actually been looked at */}
+      {/* Progress, sized to sit as one more segment rather than crowd a corner */}
       <div
-        className="ml-auto hidden shrink-0 items-center gap-1.5 pl-2 md:flex"
+        className="hidden w-24 shrink-0 flex-col justify-center gap-1 rounded-xl border border-slate-200 bg-white px-2.5 py-2 xl:flex"
         title={`${progress}% of the pipeline reviewed`}
       >
-        <span className="h-1 w-14 overflow-hidden rounded-full bg-slate-100">
+        <span className="text-[9px] font-bold text-slate-500">{progress}% reviewed</span>
+        <span className="h-1 overflow-hidden rounded-full bg-slate-100">
           <span
             className="block h-full rounded-full bg-gradient-to-r from-indigo-600 to-violet-500"
             style={{ width: `${progress}%` }}
           />
-        </span>
-        <span className="whitespace-nowrap text-[9px] font-bold text-slate-400">
-          {progress}% reviewed
         </span>
       </div>
     </nav>

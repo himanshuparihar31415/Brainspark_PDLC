@@ -160,10 +160,6 @@ export const BriefPanel: React.FC<{
         <QuestionQueue state={state} disabled={disabled} />
       </div>
 
-      <p className="mt-3 border-t border-slate-200 pt-2 text-[9.5px] leading-relaxed text-slate-400">
-        This brief is provisional and safe to throw away. Locking the stage seeds it into Project
-        Understanding, which is the version that gets edited and approved.
-      </p>
     </div>
   );
 };

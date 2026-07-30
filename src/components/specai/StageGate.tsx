@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { GateCheck } from '../../data/specai';
-import { AlertTriangle, ArrowRight, Check, Lock, X } from 'lucide-react';
+import { ArrowRight, Check, X } from 'lucide-react';
 
 /**
  * The stage gate, as the primary action in the stage header. Locking is the only
@@ -86,32 +86,5 @@ export const GateButton: React.FC<{
         </div>
       )}
     </>
-  );
-};
-
-/**
- * The one-line explanation that sits under the header: what is holding the gate,
- * or what locking has already settled. Silent when there is nothing to say.
- */
-export const GateNote: React.FC<{
-  check: GateCheck;
-  locked: boolean;
-  readOnly: boolean;
-}> = ({ check, locked, readOnly }) => {
-  if (locked)
-    return (
-      <p className="flex items-center gap-1.5 text-[10.5px] font-semibold text-emerald-700">
-        <Lock className="h-3 w-3 shrink-0" />
-        Version-locked. Downstream stages were generated from this version.
-      </p>
-    );
-
-  if (readOnly || check.ok) return null;
-
-  return (
-    <p className="flex items-start gap-1.5 text-[10.5px] font-semibold text-amber-800">
-      <AlertTriangle className="mt-px h-3 w-3 shrink-0" />
-      {check.reason}
-    </p>
   );
 };

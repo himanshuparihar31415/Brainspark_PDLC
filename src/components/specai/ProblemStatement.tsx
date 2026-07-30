@@ -39,17 +39,14 @@ export const ProblemStatement: React.FC<{
 
   if (!editing) {
     return (
-      <div className="flex flex-wrap items-center gap-2.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2.5">
-        <Target className="h-3.5 w-3.5 shrink-0 text-indigo-600" />
-        <span className="shrink-0 text-[9px] font-bold uppercase tracking-wider text-slate-400">
-          Problem
-        </span>
-        <p
-          title={saved}
-          className="min-w-0 flex-1 truncate text-[11.5px] font-semibold text-slate-800"
-        >
-          {saved}
-        </p>
+      <div className="flex flex-wrap items-start gap-2.5 rounded-xl border-l-4 border-indigo-500 bg-indigo-50/50 px-3.5 py-2.5 ring-1 ring-inset ring-indigo-100">
+        <Target className="mt-0.5 h-3.5 w-3.5 shrink-0 text-indigo-600" />
+        <div className="min-w-0 flex-1">
+          <span className="text-[9px] font-bold uppercase tracking-wider text-indigo-500">
+            Problem
+          </span>
+          <p className="text-[12px] font-semibold leading-snug text-slate-900">{saved}</p>
+        </div>
 
         {!disabled && (
           <button
