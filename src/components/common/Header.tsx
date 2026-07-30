@@ -91,7 +91,9 @@ export const Header: React.FC = () => {
   };
 
   return (
-    <header className="h-16 bg-white border-b border-slate-200 px-4 md:px-6 flex items-center justify-between sticky top-0 z-30 shadow-xs">
+    // shrink-0 rather than sticky: the shell has a definite height now, so the
+    // header is genuinely fixed at the top instead of pretending to be.
+    <header className="h-16 shrink-0 bg-white border-b border-slate-200 px-4 md:px-6 flex items-center justify-between z-30 shadow-xs">
       {/* Left branding & Scope Selector */}
       <div className="flex items-center gap-4 lg:gap-6">
         {/* Nav collapse — pinned open or closed by the user, auto-set on entry */}

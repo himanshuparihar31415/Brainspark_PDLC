@@ -111,11 +111,17 @@ const AppContent: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-100/70 text-slate-800 flex flex-col font-sans antialiased">
+    /*
+     * h-screen, not min-h-screen. With a floor rather than a fixed height the
+     * shell grows to fit its content, so `main`'s overflow never engages and any
+     * scroll region inside a view is inert — the page scrolls instead. A definite
+     * height here is what makes `h-full` resolve anywhere below it.
+     */
+    <div className="flex h-screen flex-col overflow-hidden bg-slate-100/70 font-sans text-slate-800 antialiased">
       <Header />
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex min-h-0 flex-1 overflow-hidden">
         <Sidebar />
-        <main className="flex-1 min-h-0 overflow-y-auto bg-slate-100/60">
+        <main className="min-h-0 flex-1 overflow-y-auto bg-slate-100/60">
           {/* Keyed so switching views remounts the boundary rather than holding
               the previous screen while the next chunk loads. */}
           <Suspense key={activeNav} fallback={<ViewFallback />}>

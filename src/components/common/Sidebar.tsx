@@ -62,7 +62,7 @@ export const Sidebar: React.FC = () => {
         navCollapsed ? 'w-14' : 'w-64'
       }`}
     >
-      <div className="py-4">
+      <div className="min-h-0 flex-1 overflow-y-auto py-4">
         {!navCollapsed && (
           <div className="px-5 mb-3 flex items-center justify-between">
             <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
@@ -113,7 +113,11 @@ export const Sidebar: React.FC = () => {
       </div>
 
       {/* Footer */}
-      <div className={`border-t border-slate-800/80 bg-slate-950/40 ${navCollapsed ? 'p-2' : 'p-4'}`}>
+      <div
+        className={`shrink-0 border-t border-slate-800/80 bg-slate-950/40 ${
+          navCollapsed ? 'p-2' : 'p-4'
+        }`}
+      >
         {navCollapsed ? null : (
         <div className="flex items-center justify-between text-xs text-slate-400">
           <button className="flex items-center gap-1.5 hover:text-white transition-colors">
