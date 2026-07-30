@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { ArtifactStatus, SpecAiState } from '../../types/specai';
 import { ARTIFACT_GROUP_ORDER } from '../../data/specai';
+import { DiagramRenderer } from './DiagramRenderer';
 import {
   AlertTriangle,
   Check,
@@ -297,7 +298,16 @@ export const Stage3Artifacts: React.FC<{
               </div>
             )}
 
-            {selected.diagramFlow && (
+            {selected.flowDiagram && (
+              <>
+                <DiagramRenderer diagram={selected.flowDiagram} />
+                <div className="mt-2 flex items-center gap-1.5 text-[10px] text-slate-500">
+                  <Download className="h-3 w-3" />
+                  Interactive diagram — pan, zoom, and explore. Export as SVG or PNG.
+                </div>
+              </>
+            )}
+            {!selected.flowDiagram && selected.diagramFlow && (
               <>
                 <div className="mt-3 flex min-h-[10rem] items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50/60 p-5">
                   <div className="flex flex-wrap items-center justify-center gap-2.5">
