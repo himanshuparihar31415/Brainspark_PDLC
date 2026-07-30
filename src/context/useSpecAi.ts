@@ -26,7 +26,6 @@ import {
   SPEC_STAGES,
   UNDERSTANDING_COPY,
   canLockStage,
-  isStageReachable,
   seedUnderstandingFromBrief,
   stageDef,
   stageIndex,
@@ -865,10 +864,6 @@ export const useSpecAiSlice = ({
   };
 
   const goToSpecStage = (projectId: string, stage: SpecStageKey) => {
-    if (!isStageReachable(stage, specAiFor(projectId))) {
-      addToast('Finish and lock the previous stage to continue.', 'error');
-      return;
-    }
     patch(projectId, (s) => ({ ...s, currentStage: stage }));
   };
 

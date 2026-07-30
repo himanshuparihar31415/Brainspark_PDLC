@@ -62,11 +62,8 @@ export const SpecAiView: React.FC = () => {
   const fills = viewing === 'knowledge';
 
   const select = (key: SpecStageKey, nextTrack?: StoryTrack) => {
-    if (stageStateFor(key, state) === 'Locked out') {
-      goToSpecStage(state.projectId, key); // surfaces the gating message
-      return;
-    }
     setViewing(key);
+    goToSpecStage(state.projectId, key);
     if (key === 'stories') setTrack(nextTrack ?? 'All');
   };
 

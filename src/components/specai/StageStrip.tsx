@@ -9,7 +9,7 @@ import {
   storyTrackCounts,
   workspaceProgress,
 } from '../../data/specai';
-import { Check, Lock } from 'lucide-react';
+import { Check } from 'lucide-react';
 
 /**
  * The pipeline, as a strip across the top. Horizontal because the stages are the
@@ -34,16 +34,15 @@ export const StageStrip: React.FC<{
       {SPEC_STAGES.map((stage) => {
         const status = stageStateFor(stage.key, state);
         const isActive = stage.key === activeKey;
-        const lockedOut = status === 'Locked out';
+        const ahead = status === 'Ahead';
 
         return (
           <button
             key={stage.key}
             onClick={() => onSelect(stage.key)}
-            disabled={lockedOut}
             title={
-              lockedOut
-                ? 'Finish and lock the previous stage to continue.'
+              ahead
+                ? `${stage.title} — nothing upstream is locked yet, so this is provisional`
                 : `${stage.title} — ${stageDetail(stage.key, state)}`
             }
             /*
@@ -51,12 +50,12 @@ export const StageStrip: React.FC<{
              * of them is more important than the others until you are standing on
              * it, and equal segments make progress readable at a glance.
              */
-            className={`flex min-w-[8.5rem] flex-1 flex-col justify-center gap-1 rounded-xl border px-2.5 py-2 text-left transition-colors ${
+            className={`flex min-w-[8.5rem] flex-1 cursor-pointer flex-col justify-center gap-1 rounded-xl border px-2.5 py-2 text-left transition-colors ${
               isActive
                 ? 'border-indigo-300 bg-indigo-50'
-                : lockedOut
-                ? 'cursor-not-allowed border-slate-200 bg-white opacity-55'
-                : 'cursor-pointer border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
+                : ahead
+                ? 'border-dashed border-slate-200 bg-white text-slate-400 hover:border-slate-300 hover:bg-slate-50'
+                : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
             }`}
           >
             <span className="flex items-center gap-1.5">
@@ -66,23 +65,17 @@ export const StageStrip: React.FC<{
                     ? 'bg-emerald-500 text-white'
                     : isActive
                     ? 'bg-indigo-600 text-white'
-                    : status === 'Current'
-                    ? 'bg-slate-700 text-white'
-                    : 'bg-slate-200 text-slate-400'
+                    : ahead
+                    ? 'bg-slate-200 text-slate-500'
+                    : 'bg-slate-700 text-white'
                 }`}
               >
-                {status === 'Locked' ? (
-                  <Check className="h-2.5 w-2.5" />
-                ) : lockedOut ? (
-                  <Lock className="h-2 w-2" />
-                ) : (
-                  stage.index
-                )}
+                {status === 'Locked' ? <Check className="h-2.5 w-2.5" /> : stage.index}
               </span>
 
               <span
                 className={`min-w-0 flex-1 truncate text-[10px] font-bold ${
-                  isActive ? 'text-indigo-700' : lockedOut ? 'text-slate-400' : 'text-slate-700'
+                  isActive ? 'text-indigo-700' : ahead ? 'text-slate-500' : 'text-slate-700'
                 }`}
               >
                 {stage.railLabel}
@@ -127,7 +120,7 @@ export const StageStrip: React.FC<{
                     : 'text-slate-400'
                 }`}
               >
-                {lockedOut ? 'Locked out' : stageDetail(stage.key, state)}
+                {ahead ? 'not locked yet' : stageDetail(stage.key, state)}
               </span>
             )}
           </button>

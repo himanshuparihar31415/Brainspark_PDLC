@@ -12,8 +12,12 @@ export type SpecStageKey =
   | 'modules'
   | 'stories';
 
-/** Where a stage sits relative to the user's progress. */
-export type SpecStageState = 'Locked' | 'Current' | 'Locked out';
+/**
+ * Where a stage sits relative to your progress. `Ahead` means nothing upstream has
+ * been locked yet, so what you see there is provisional — it does not mean you
+ * cannot look. Reading ahead is how you find out what the earlier stages owe you.
+ */
+export type SpecStageState = 'Locked' | 'Current' | 'Ahead';
 
 // ─────────────────────── Stage 1: Knowledge & Chalk Board ───────────────────────
 

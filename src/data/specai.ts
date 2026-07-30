@@ -82,17 +82,15 @@ export const stageDef = (key: SpecStageKey): SpecStageDef =>
 export const stageIndex = (key: SpecStageKey): number => stageDef(key).index;
 
 /**
- * A stage is reachable only when every stage before it is locked. That is the
- * whole gating rule — everything else follows from it.
+ * Locking gates generation, not navigation. Every stage is reachable at any time —
+ * what a lock buys you is a version the next stage was generated from, so a stage
+ * you reach early is simply empty or provisional rather than forbidden.
  */
 export const stageStateFor = (key: SpecStageKey, state: SpecAiState): SpecStageState => {
   if (state.lockedStages.includes(key)) return 'Locked';
   const previous = SPEC_STAGES.filter((s) => s.index < stageIndex(key));
-  return previous.every((s) => state.lockedStages.includes(s.key)) ? 'Current' : 'Locked out';
+  return previous.every((s) => state.lockedStages.includes(s.key)) ? 'Current' : 'Ahead';
 };
-
-export const isStageReachable = (key: SpecStageKey, state: SpecAiState): boolean =>
-  stageStateFor(key, state) !== 'Locked out';
 
 export const activeStage = (state: SpecAiState): SpecStageKey =>
   SPEC_STAGES.find((s) => !state.lockedStages.includes(s.key))?.key ?? 'stories';
@@ -491,6 +489,17 @@ export interface GateCheck {
 }
 
 export const canLockStage = (key: SpecStageKey, state: SpecAiState): GateCheck => {
+  /*
+   * Navigation is free but locking is ordered. A lock says "the next stage was
+   * generated from this version", which is a claim you cannot make while an
+   * earlier stage is still moving underneath it.
+   */
+  const unlockedBefore = SPEC_STAGES.filter(
+    (s) => s.index < stageIndex(key) && !state.lockedStages.includes(s.key)
+  );
+  if (unlockedBefore.length > 0)
+    return { ok: false, reason: `Lock ${unlockedBefore[0].railLabel} first.` };
+
   switch (key) {
     case 'knowledge': {
       const openConflicts = state.cards.filter(
