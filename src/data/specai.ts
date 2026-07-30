@@ -145,20 +145,26 @@ export const CARD_TYPES: Record<CardType, CardTypeMeta> = {
   },
 };
 
-/** Avatar glyph and tint for a knowledge source, keyed by what it came from. */
-export const SOURCE_BADGE: Record<SourceType, { glyph: string; tint: string }> = {
-  Jira: { glyph: 'J', tint: 'bg-blue-100 text-blue-700' },
-  Confluence: { glyph: 'C', tint: 'bg-sky-100 text-sky-700' },
-  DOCX: { glyph: 'D', tint: 'bg-indigo-100 text-indigo-700' },
-  PDF: { glyph: 'P', tint: 'bg-rose-100 text-rose-700' },
-  TXT: { glyph: 'T', tint: 'bg-slate-200 text-slate-600' },
-  URL: { glyph: '↗', tint: 'bg-slate-200 text-slate-600' },
-  Transcript: { glyph: 'M', tint: 'bg-violet-100 text-violet-700' },
-  App: { glyph: 'A', tint: 'bg-emerald-100 text-emerald-700' },
-  Repository: { glyph: '</>', tint: 'bg-slate-800 text-white' },
-  Image: { glyph: '▣', tint: 'bg-amber-100 text-amber-700' },
-  Audio: { glyph: '♪', tint: 'bg-fuchsia-100 text-fuchsia-700' },
+/**
+ * Tint per kind of source. The glyph is the first letter of the source's own
+ * name rather than a per-type symbol, so "Architecture files" reads as A instead
+ * of inheriting whatever letter its file format happened to map to.
+ */
+export const SOURCE_BADGE: Record<SourceType, { tint: string }> = {
+  Jira: { tint: 'bg-blue-100 text-blue-700' },
+  Confluence: { tint: 'bg-sky-100 text-sky-700' },
+  DOCX: { tint: 'bg-indigo-100 text-indigo-700' },
+  PDF: { tint: 'bg-rose-100 text-rose-700' },
+  TXT: { tint: 'bg-slate-200 text-slate-600' },
+  URL: { tint: 'bg-slate-200 text-slate-600' },
+  Transcript: { tint: 'bg-violet-100 text-violet-700' },
+  App: { tint: 'bg-emerald-100 text-emerald-700' },
+  Repository: { tint: 'bg-slate-800 text-white' },
+  Image: { tint: 'bg-amber-100 text-amber-700' },
+  Audio: { tint: 'bg-fuchsia-100 text-fuchsia-700' },
 };
+
+export const sourceGlyph = (name: string): string => name.trim().charAt(0).toUpperCase() || '?';
 
 /** File extensions the intake picker accepts, and what each becomes. */
 export const SOURCE_TYPE_FOR_FILE = (filename: string): SourceType => {
@@ -399,7 +405,7 @@ export interface Readiness {
  * whether the board is safe to build an understanding from.
  */
 export const knowledgeReadiness = (state: SpecAiState): Readiness => {
-  const sourcesReady = state.channels.filter((c) => c.status === 'Ready').length;
+  const sourcesReady = state.sources.filter((c) => c.ingest === 'Indexed').length;
   const conflicts = state.cards.filter((c) => c.type === 'Disagreement');
   const conflictsOpen = conflicts.filter((c) => c.state === 'Flagged').length;
   const conflictsResolved = conflicts.length - conflictsOpen;
@@ -414,7 +420,7 @@ export const knowledgeReadiness = (state: SpecAiState): Readiness => {
     (c) => c.type === 'Requirement seed' && c.state !== 'Superseded'
   ).length;
 
-  const coverage = state.channels.length === 0 ? 0 : sourcesReady / state.channels.length;
+  const coverage = state.sources.length === 0 ? 0 : sourcesReady / state.sources.length;
   const seedScore = Math.min(1, confirmedSeeds / 8);
   const penalty = conflictsOpen * 0.08 + openQuestions * 0.03;
 
@@ -424,7 +430,7 @@ export const knowledgeReadiness = (state: SpecAiState): Readiness => {
   );
 
   const parts = [
-    `${sourcesReady} source${sourcesReady === 1 ? '' : 's'} ready`,
+    `${sourcesReady} of ${state.sources.length} sources indexed`,
     `${conflictsResolved} conflict${conflictsResolved === 1 ? '' : 's'} resolved`,
     `${openQuestions} open question${openQuestions === 1 ? '' : 's'}`,
     `${confirmedSeeds} confirmed requirement seed${confirmedSeeds === 1 ? '' : 's'}`,

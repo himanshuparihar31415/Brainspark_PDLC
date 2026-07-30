@@ -2,7 +2,6 @@ import {
   BoardCard,
   BriefBandKey,
   BriefLine,
-  KnowledgeChannel,
   QuestionTrack,
   SourceType,
   SpecQuestion,
@@ -24,7 +23,6 @@ import {
 export interface SynthesisInput {
   problemStatement: string;
   sources: SpecSource[];
-  channels: KnowledgeChannel[];
   /** Existing board cards, so a flag is never raised twice. */
   cards: BoardCard[];
   /** Anything already settled with the agent. Becomes the decided band. */
@@ -188,14 +186,18 @@ const FINDINGS: {
 const nextId = (prefix: string, n: number) => `${prefix}-${n}`;
 
 export const synthesize = (input: SynthesisInput): SynthesisResult => {
-  const { problemStatement, sources, channels, cards, settled, version, pmName, architectName } =
-    input;
+  const { problemStatement, sources, cards, settled, version, pmName, architectName } = input;
 
   const indexed = sources.filter((s) => s.ingest === 'Indexed');
   const failed = sources.filter((s) => s.ingest === 'Failed');
   const of = (type: SourceType) => indexed.filter((s) => s.type === type);
   const has = (type: SourceType) => of(type).length > 0;
-  const channelReady = (id: string) => channels.find((c) => c.id === id)?.status === 'Ready';
+  /* Coverage is asked of the sources themselves. Absence is a finding, so these
+     are deliberately easy to fail: if nothing describes contracts, say so. */
+  const covers = (pattern: RegExp, types: SourceType[]) =>
+    indexed.some((x) => types.includes(x.type) || pattern.test(x.name));
+  const coversContracts = covers(/api|openapi|swagger|contract|endpoint/i, ['Repository']);
+  const coversDesign = covers(/design|flow|figma|wireframe|mockup|screen/i, ['Image']);
 
   const statement = problemStatement.trim();
   const topics = TOPICS.filter((t) => t.match.test(statement));
@@ -358,7 +360,7 @@ export const synthesize = (input: SynthesisInput): SynthesisResult => {
 
   // ── What I can't tell yet ──────────────────────────────────────────────────
 
-  if (!channelReady('ch-apis'))
+  if (!coversContracts)
     bands.cannotTell.push(
       line(
         'What the contracts look like — no API specification is connected, so every interface below is inferred.',
@@ -367,7 +369,7 @@ export const synthesize = (input: SynthesisInput): SynthesisResult => {
       )
     );
 
-  if (!channelReady('ch-flows'))
+  if (!coversDesign)
     bands.cannotTell.push(
       line(
         'What the intended experience is — no design or flow source is connected.',
@@ -469,7 +471,7 @@ export const synthesize = (input: SynthesisInput): SynthesisResult => {
       )
     );
 
-  if (channelReady('ch-apis'))
+  if (coversContracts)
     questions.push(
       question(
         'Architecture',
@@ -610,7 +612,7 @@ export const synthesize = (input: SynthesisInput): SynthesisResult => {
       generatedFrom: {
         problemStatement: statement,
         sourceIds: indexed.map((s) => s.id),
-        channelIds: channels.filter((c) => c.status === 'Ready').map((c) => c.id),
+
       },
       bands,
       stale: false,

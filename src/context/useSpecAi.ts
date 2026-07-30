@@ -184,7 +184,6 @@ export const useSpecAiSlice = ({
       const result = synthesize({
         problemStatement: current.problemStatement,
         sources: current.sources,
-        channels: current.channels,
         cards: current.cards,
         settled: current.questions.filter((q) => q.status !== 'Open'),
         version: (current.brief?.version ?? 0) + 1,

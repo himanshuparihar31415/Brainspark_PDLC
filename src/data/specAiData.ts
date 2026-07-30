@@ -1,117 +1,11 @@
 import { DEFAULT_LANES } from './specai';
 import {
   BoardCard,
-  KnowledgeChannel,
   SpecAiState,
   SpecQuestion,
   UnderstandingBrief,
   UnderstandingSection,
 } from '../types/specai';
-
-/**
- * The eight knowledge domains in the context strip. Live App is deliberately
- * Partial — guided exploration is scoped in the first release.
- */
-const finEdgeChannels = (): KnowledgeChannel[] => [
-  {
-    id: 'ch-jira',
-    label: 'Jira',
-    detail: '184 items',
-    status: 'Ready',
-    connectorId: 'conn-jira',
-    itemsIndexed: 184,
-    lastSync: '12 minutes ago',
-    scope: 'Project FMB2 · Epics, Stories, Bugs · releases 2.0 and 2.1',
-  },
-  {
-    id: 'ch-confluence',
-    label: 'Confluence',
-    detail: '16 pages',
-    status: 'Ready',
-    connectorId: 'conn-confluence',
-    itemsIndexed: 16,
-    lastSync: '1 hour ago',
-    scope: 'MOB space · Product, Architecture, Security labels',
-  },
-  {
-    id: 'ch-docs',
-    label: 'Documents',
-    detail: '4 files',
-    status: 'Ready',
-    itemsIndexed: 4,
-    lastSync: 'Just now',
-    scope: 'Project uploads',
-  },
-  {
-    id: 'ch-meetings',
-    label: 'Meetings',
-    detail: '3 transcripts',
-    status: 'Ready',
-    itemsIndexed: 3,
-    lastSync: '2 days ago',
-    scope: 'Zoom transcript and product workshops',
-  },
-  {
-    id: 'ch-app',
-    label: 'Live App',
-    detail: 'exploring',
-    status: 'Partial',
-    itemsIndexed: 12,
-    lastSync: 'in progress',
-    scope: 'Test environment · Login and Profile flows explored',
-  },
-  {
-    id: 'ch-code',
-    label: 'Code',
-    detail: '3 repos',
-    status: 'Ready',
-    connectorId: 'conn-github',
-    itemsIndexed: 96,
-    lastSync: '18 minutes ago',
-    scope: 'mobile-app, auth-service, notification-service',
-  },
-  {
-    id: 'ch-apis',
-    label: 'APIs',
-    detail: '27 endpoints',
-    status: 'Ready',
-    itemsIndexed: 27,
-    lastSync: '18 minutes ago',
-    scope: 'Auth and customer-profile OpenAPI specs',
-  },
-  {
-    id: 'ch-flows',
-    label: 'Flows',
-    detail: '5 captured',
-    status: 'Ready',
-    connectorId: 'conn-figma',
-    itemsIndexed: 5,
-    lastSync: '3 hours ago',
-    scope: 'Imported Figma and observed app journeys',
-  },
-];
-
-const emptyChannels = (): KnowledgeChannel[] => [
-  {
-    id: 'ch-jira',
-    label: 'Jira',
-    detail: 'not connected',
-    status: 'Not connected',
-    connectorId: 'conn-jira',
-    itemsIndexed: 0,
-    lastSync: 'Never',
-    scope: '—',
-  },
-  {
-    id: 'ch-docs',
-    label: 'Documents',
-    detail: 'none yet',
-    status: 'Not connected',
-    itemsIndexed: 0,
-    lastSync: 'Never',
-    scope: '—',
-  },
-];
 
 /**
  * What the sources actually say about this problem. Five pieces, not forty — the
@@ -122,7 +16,7 @@ const emptyChannels = (): KnowledgeChannel[] => [
 const finEdgeCards: BoardCard[] = [
   {
     id: 'card-obs-login',
-    sourceId: 'src-app',
+    sourceId: 'src-arch',
     laneId: 'lane-current',
     type: 'Context',
     state: 'Confirmed',
@@ -141,7 +35,7 @@ const finEdgeCards: BoardCard[] = [
   },
   {
     id: 'card-con-token',
-    sourceId: 'src-repo',
+    sourceId: 'src-arch',
     laneId: 'lane-constraints',
     type: 'Context',
     state: 'Confirmed',
@@ -161,7 +55,7 @@ const finEdgeCards: BoardCard[] = [
   },
   {
     id: 'card-con-oauth',
-    sourceId: 'src-standards',
+    sourceId: 'src-confluence',
     laneId: 'lane-constraints',
     type: 'Context',
     state: 'Confirmed',
@@ -179,7 +73,7 @@ const finEdgeCards: BoardCard[] = [
   },
   {
     id: 'card-dec-fallback',
-    sourceId: 'src-call',
+    sourceId: 'src-zoom',
     laneId: 'lane-decisions',
     type: 'Context',
     state: 'Confirmed',
@@ -205,9 +99,9 @@ const finEdgeCards: BoardCard[] = [
     evidenceClass: 'Source fact',
     conflict: {
       claimA: 'Biometric login is planned for Phase 2 and marked P1.',
-      claimASource: 'MBV2 Jira · FMB2-142',
+      claimASource: 'Jira',
       claimB: 'Biometric login is required for the Q4 2026 launch.',
-      claimBSource: 'Product discovery call · 18 Jul 2026',
+      claimBSource: 'Zoom Scripts',
       observedState: 'The test application does not support biometric authentication at all.',
     },
     relations: [],
@@ -298,12 +192,11 @@ const finEdgeUnderstanding: UnderstandingSection[] = [
 const finEdgeBrief: UnderstandingBrief = {
   version: 1,
   summary:
-    'This project exists because returning customers abandon login when a PIN is demanded every single time. The goal is biometric login for customers who have already onboarded, without weakening device security or breaking the shared OAuth gateway.\n\nI read 7 sources against that — the Jira project, platform standards, the PRD, the discovery call, the test application, the auth service repository, and the legacy architecture document — and put 5 pieces of context on the board. The rest repeats the problem statement, corroborates something already there, or does not bear on it, so it stayed in the source.\n\nWhat is firm: four things are stated outright by a source — the PIN-then-OTP journey, the fifteen-minute token expiry shared with web, the mandatory central gateway, and the three-strikes fallback agreed in security review. Three more have been settled with me. Those are safe to build on.\n\nWhat is not firm: three things are my assumptions rather than anything a source states, and there is one place where your sources actively disagree — Jira phases biometrics into 2.1 while the discovery call treats it as needed at launch. That disagreement is on the board and holds the stage gate.\n\nThe architecture questions matter most. An unanswered “where does this live?” propagates into every artifact generated after this stage, so it is cheapest to settle here. Four are still open.',
+    'This project exists because returning customers abandon login when a PIN is demanded every single time. The goal is biometric login for customers who have already onboarded, without weakening device security or breaking the shared OAuth gateway.\n\nI read 4 sources against that — Jira, Confluence, the architecture files, and the Zoom scripts — and put 5 pieces of context on the board. The rest repeats the problem statement, corroborates something already there, or does not bear on it, so it stayed in the source.\n\nWhat is firm: four things are stated outright by a source — the PIN-then-OTP journey, the fifteen-minute token expiry shared with web, the mandatory central gateway, and the three-strikes fallback agreed in security review. Three more have been settled with me. Those are safe to build on.\n\nWhat is not firm: three things are my assumptions rather than anything a source states, and there is one place where your sources actively disagree — Jira phases biometrics into 2.1 while the discovery call treats it as needed at launch. That disagreement is on the board and holds the stage gate.\n\nThe architecture questions matter most. An unanswered “where does this live?” propagates into every artifact generated after this stage, so it is cheapest to settle here. Four are still open.',
   generatedFrom: {
     problemStatement:
       'Returning customers abandon login because a PIN is demanded every single time. We want biometric login for customers who have already onboarded, without weakening device security or breaking the shared OAuth gateway.',
-    sourceIds: ['src-jira', 'src-standards', 'src-prd', 'src-call', 'src-app', 'src-repo', 'src-legacy'],
-    channelIds: ['ch-jira', 'ch-confluence', 'ch-docs', 'ch-meetings', 'ch-code', 'ch-apis', 'ch-flows'],
+    sourceIds: ['src-jira', 'src-confluence', 'src-arch', 'src-zoom'],
   },
   bands: {
     understood: [
@@ -319,35 +212,35 @@ const finEdgeBrief: UnderstandingBrief = {
         text: 'The backlog already tracks work in this area (184 selected items), so this is not starting from nothing.',
         evidenceClass: 'Source fact',
         sourceIds: ['src-jira'],
-        sourceSummary: 'MBV2 Jira',
+        sourceSummary: 'Jira',
       },
       {
         id: 'brief-v1-3',
         text: 'Stakeholders described the intent directly in a recorded conversation, so the motivation is first-hand rather than relayed.',
         evidenceClass: 'Source fact',
-        sourceIds: ['src-call'],
-        sourceSummary: 'Product discovery call',
+        sourceIds: ['src-zoom'],
+        sourceSummary: 'Zoom Scripts',
       },
       {
         id: 'brief-v1-4',
         text: 'The current journey has been observed in the running application: PIN, then OTP on an unrecognised device, then the dashboard.',
         evidenceClass: 'Source fact',
-        sourceIds: ['src-app'],
-        sourceSummary: 'Test application',
+        sourceIds: ['src-arch'],
+        sourceSummary: 'Architecture files',
       },
       {
         id: 'brief-v1-5',
         text: 'The existing implementation is indexed (customer-auth-service), so current structure is fact and not assumption — including a 15-minute access-token expiry shared with the web channel.',
         evidenceClass: 'Source fact',
-        sourceIds: ['src-repo'],
-        sourceSummary: 'customer-auth-service',
+        sourceIds: ['src-arch'],
+        sourceSummary: 'Architecture files',
       },
       {
         id: 'brief-v1-6',
         text: 'Platform standards are indexed and binding: every customer-facing channel federates through the central OAuth gateway, so no new identity provider is available to you.',
         evidenceClass: 'Source fact',
-        sourceIds: ['src-standards'],
-        sourceSummary: 'Platform Standards',
+        sourceIds: ['src-confluence'],
+        sourceSummary: 'Confluence',
       },
     ],
     decided: [
@@ -381,22 +274,22 @@ const finEdgeBrief: UnderstandingBrief = {
         id: 'brief-v1-7',
         text: 'Priority looks contested: the backlog phases biometric login into 2.1 while the conversation treats it as launch-critical. I am reading the conversation as more current.',
         evidenceClass: 'AI assumption',
-        sourceIds: ['src-jira', 'src-call'],
-        sourceSummary: 'MBV2 Jira · Product discovery call',
+        sourceIds: ['src-jira', 'src-zoom'],
+        sourceSummary: 'Jira · Zoom Scripts',
       },
       {
         id: 'brief-v1-8',
         text: 'Nothing states the target design, so I am assuming this extends customer-auth-service rather than introducing a separate enrolment service.',
         evidenceClass: 'AI assumption',
-        sourceIds: ['src-repo'],
-        sourceSummary: 'customer-auth-service',
+        sourceIds: ['src-arch'],
+        sourceSummary: 'Architecture files',
       },
       {
         id: 'brief-v1-9',
         text: 'Device registration appears to be a precondition for biometrics, but that is my reading of the device-bound rule in the standards page rather than anything stated.',
         evidenceClass: 'AI assumption',
-        sourceIds: ['src-standards', 'src-app'],
-        sourceSummary: 'Platform Standards · Test application',
+        sourceIds: ['src-confluence', 'src-arch'],
+        sourceSummary: 'Confluence · Architecture files',
       },
     ],
     cannotTell: [
@@ -424,7 +317,7 @@ const finEdgeBrief: UnderstandingBrief = {
     ],
   },
   stale: true,
-  staleReason: '2 sources arrived after this reading — including one that failed to ingest.',
+  staleReason: 'The architecture files were re-indexed after this reading.',
 };
 
 /**
@@ -523,75 +416,31 @@ const finEdge: SpecAiState = {
   problemStatement:
     'Returning customers abandon login because a PIN is demanded every single time. We want biometric login for customers who have already onboarded, without weakening device security or breaking the shared OAuth gateway.',
   sources: [
+    { id: 'src-jira', name: 'Jira', type: 'Jira', detail: '184 items', ingest: 'Indexed' },
     {
-      id: 'src-jira',
-      name: 'MBV2 Jira',
-      type: 'Jira',
-      detail: '184 selected items',
-      ingest: 'Indexed',
-    },
-    {
-      id: 'src-standards',
-      name: 'Platform Standards',
+      id: 'src-confluence',
+      name: 'Confluence',
       type: 'Confluence',
-      detail: 'Confluence · 16 pages',
+      detail: '16 pages',
       ingest: 'Indexed',
     },
     {
-      id: 'src-prd',
-      name: 'Mobile Banking PRD',
-      type: 'DOCX',
-      detail: 'DOCX · indexed',
-      ingest: 'Indexed',
-    },
-    {
-      id: 'src-call',
-      name: 'Product discovery call',
-      type: 'Transcript',
-      detail: 'Zoom transcript',
-      ingest: 'Indexed',
-    },
-    {
-      id: 'src-app',
-      name: 'Test application',
-      type: 'App',
-      detail: '12 screens explored',
-      ingest: 'Indexed',
-    },
-    {
-      id: 'src-repo',
-      name: 'customer-auth-service',
-      type: 'Repository',
-      detail: 'Repository · indexed',
-      ingest: 'Indexed',
-    },
-    {
-      id: 'src-legacy',
-      name: 'Legacy authentication architecture',
+      id: 'src-arch',
+      name: 'Architecture files',
       type: 'PDF',
-      detail: 'PDF · 24 pages',
+      detail: '4 files',
       ingest: 'Indexed',
     },
     {
-      id: 'src-wireframes',
-      name: 'Login wireframes (photo of whiteboard)',
-      type: 'Image',
-      detail: 'Image · 3 screens',
+      id: 'src-zoom',
+      name: 'Zoom Scripts',
+      type: 'Transcript',
+      detail: '3 transcripts',
       ingest: 'Indexed',
-      ingestNote: 'Text extracted from image',
-    },
-    {
-      id: 'src-standup',
-      name: 'Security stand-up recording',
-      type: 'Audio',
-      detail: 'Audio · 22 minutes',
-      ingest: 'Failed',
-      ingestNote: 'no speech track found',
     },
   ],
   brief: finEdgeBrief,
   questions: finEdgeQuestions,
-  channels: finEdgeChannels(),
   lanes: DEFAULT_LANES,
   cards: finEdgeCards,
   understanding: finEdgeUnderstanding,
@@ -703,7 +552,6 @@ const blank: SpecAiState = {
   problemStatement: '',
   sources: [],
   questions: [],
-  channels: emptyChannels(),
   lanes: DEFAULT_LANES,
   cards: [],
   understanding: (

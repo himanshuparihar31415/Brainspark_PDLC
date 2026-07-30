@@ -1,5 +1,5 @@
 import React from 'react';
-import { KnowledgeChannel, SpecAiState } from '../../types/specai';
+import { SpecSource, SpecAiState } from '../../types/specai';
 import { Check, Cloud, CloudOff, Loader2, RefreshCw } from 'lucide-react';
 
 /**
@@ -7,10 +7,11 @@ import { Check, Cloud, CloudOff, Loader2, RefreshCw } from 'lucide-react';
  * background state is always visible without competing with the workspace.
  */
 export const StatusBar: React.FC<{ state: SpecAiState }> = ({ state }) => {
-  const indexing: KnowledgeChannel[] = state.channels.filter(
-    (c) => c.status === 'Indexing' || c.status === 'Partial'
+  const indexing: SpecSource[] = state.sources.filter(
+    (s) => s.ingest === 'Parsing' || s.ingest === 'Queued'
   );
-  const lastSync = state.channels.find((c) => c.status === 'Ready')?.lastSync;
+  const failed = state.sources.filter((s) => s.ingest === 'Failed');
+  const indexed = state.sources.filter((s) => s.ingest === 'Indexed').length;
 
   return (
     <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 border-t border-slate-200 bg-white/80 px-5 py-2 text-[10px] backdrop-blur">
@@ -39,14 +40,21 @@ export const StatusBar: React.FC<{ state: SpecAiState }> = ({ state }) => {
         {indexing.length > 0 ? (
           <>
             <Loader2 className="h-3 w-3 animate-spin text-amber-600" />
-            <span className="text-amber-700">
-              Indexing {indexing[0].label}: {indexing[0].itemsIndexed} items
+            <span className="text-amber-700">Indexing {indexing[0].name}…</span>
+          </>
+        ) : failed.length > 0 ? (
+          <>
+            <CloudOff className="h-3 w-3 text-rose-600" />
+            <span className="text-rose-700">
+              {failed.length} source{failed.length === 1 ? '' : 's'} could not be read
             </span>
           </>
         ) : (
           <>
             <Cloud className="h-3 w-3 text-slate-400" />
-            <span className="text-slate-500">Knowledge index ready</span>
+            <span className="text-slate-500">
+              {indexed} source{indexed === 1 ? '' : 's'} indexed
+            </span>
           </>
         )}
       </span>
@@ -61,11 +69,13 @@ export const StatusBar: React.FC<{ state: SpecAiState }> = ({ state }) => {
         </span>
       )}
 
-      {/* Sync */}
-      {lastSync && (
+      {/* Brief freshness — the one background fact that changes what you should do */}
+      {state.brief && (
         <span className="ml-auto flex items-center gap-1.5 text-slate-400">
           <RefreshCw className="h-3 w-3" />
-          Sources synced {lastSync}
+          {state.brief.stale
+            ? 'Brief is out of date'
+            : `Brief v${state.brief.version} up to date`}
         </span>
       )}
     </div>

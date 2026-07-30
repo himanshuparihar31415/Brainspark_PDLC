@@ -48,24 +48,6 @@ export interface SpecSource {
 }
 
 /**
- * A knowledge domain in the context strip. Distinct from an individual file: a
- * channel is a connected system being drawn on, with its own index health.
- */
-export interface KnowledgeChannel {
-  id: string;
-  label: string;
-  /** e.g. "184 issues", "27 endpoints". */
-  detail: string;
-  status: 'Ready' | 'Partial' | 'Indexing' | 'Not connected';
-  /** Connector this channel depends on, if any. */
-  connectorId?: string;
-  itemsIndexed: number;
-  lastSync: string;
-  /** What the channel is scoped to, shown in the inspector. */
-  scope: string;
-}
-
-/**
  * What a card is. Nothing here is picked from a menu except a note — a card is a
  * piece of context that came from a source, and it names that source instead of
  * wearing a label.
@@ -210,7 +192,7 @@ export interface UnderstandingBrief {
    */
   summary: string;
   /** The exact inputs this reading was produced from. */
-  generatedFrom: { problemStatement: string; sourceIds: string[]; channelIds: string[] };
+  generatedFrom: { problemStatement: string; sourceIds: string[] };
   bands: Record<BriefBandKey, BriefLine[]>;
   /** Set when a source arrived or the problem statement changed after generation. */
   stale: boolean;
@@ -391,7 +373,6 @@ export interface SpecAiState {
   /** The high-level ask. What synthesis is aimed at, so a reading is targeted. */
   problemStatement: string;
   sources: SpecSource[];
-  channels: KnowledgeChannel[];
   /**
    * The provisional reading of everything brought in. Disposable and freely
    * regenerated — Stage 2's Project Understanding is the owned, lockable version,

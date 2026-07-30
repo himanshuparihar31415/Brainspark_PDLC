@@ -1,7 +1,13 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { BoardCard, SpecAiState } from '../../types/specai';
-import { CARD_TYPES, SOURCE_BADGE, cardSources, indexedSources } from '../../data/specai';
+import {
+  CARD_TYPES,
+  SOURCE_BADGE,
+  cardSources,
+  indexedSources,
+  sourceGlyph,
+} from '../../data/specai';
 import { FileCheck, GitBranch, Pencil, Plus, Trash2, X } from 'lucide-react';
 
 /** A single card. Leads with where it came from, then what it says. */
@@ -46,7 +52,7 @@ const Card: React.FC<{
           <span
             className={`flex h-4 w-4 shrink-0 items-center justify-center rounded font-mono text-[7px] font-bold ${badge.tint}`}
           >
-            {badge.glyph}
+            {sourceGlyph(direct.name)}
           </span>
         ) : card.type === 'Disagreement' ? (
           <GitBranch className="h-3.5 w-3.5 shrink-0 text-rose-500" />
@@ -156,8 +162,9 @@ export const ChalkBoard: React.FC<{
       </div>
 
       {/* Lanes */}
-      <div className="min-h-0 flex-1 overflow-x-auto bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:16px_16px]">
-        <div className="flex h-full min-w-max gap-2.5 p-2.5">
+      <div className="min-h-0 flex-1 overflow-auto bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:16px_16px]">
+        {/* items-start so a lane is only as tall as what is in it */}
+        <div className="flex min-w-max items-start gap-2.5 p-2.5">
           {state.lanes.map((lane) => {
             const cards = state.cards.filter((c) => c.laneId === lane.id);
 
@@ -190,9 +197,9 @@ export const ChalkBoard: React.FC<{
                   </span>
                 </header>
 
-                <div className="min-h-0 flex-1 space-y-2 overflow-y-auto p-2">
+                <div className="space-y-2 p-2">
                   {cards.length === 0 ? (
-                    <p className="px-1 py-6 text-center text-[9.5px] leading-relaxed text-slate-400">
+                    <p className="px-1 py-3 text-center text-[9.5px] leading-relaxed text-slate-400">
                       Nothing here yet.
                     </p>
                   ) : (
