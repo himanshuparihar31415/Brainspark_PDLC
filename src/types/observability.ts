@@ -116,6 +116,15 @@ export interface ObservabilityRun {
   acceptanceStatus?: AcceptanceStatus;
   payloadPolicy: PayloadPolicy;
   errorSummary?: string;
+  /** Client IP observed at trigger — anomaly / geo signals. */
+  clientIp?: string;
+  /** True when the run hit a provider or connector rate limit. */
+  rateLimited?: boolean;
+  /** Accepted business units produced (stories, tests, etc.) for unit economics. */
+  artifactUnits?: number;
+  artifactUnitLabel?: 'user_story' | 'test_case' | 'design' | 'pr' | 'other';
+  /** Sensitive-data markers detected on this run (PII / PHI codes). */
+  sensitiveMarkers?: string[];
 }
 
 // ────────────────────────── Level 2: agent executions ──────────────────────────
@@ -212,6 +221,11 @@ export interface ObservabilityEvent {
   wasCached?: boolean;
   /** Provider-level retries inside this one logical call — not a workflow retry. */
   retryCount?: number;
+  /**
+   * Which model tier answered: 0 = primary, 1 = fallback_1, 2 = fallback_2.
+   * Null/undefined means not applicable (non-LLM event).
+   */
+  fallbackTier?: 0 | 1 | 2;
 
   // ── Tool calls ──
   toolSlug?: string;
@@ -276,4 +290,31 @@ export interface RankedRisk {
   owner: string;
   /** Run this drills into, when the risk traces to a specific one. */
   runId?: string;
+}
+
+/** Who opened L5 evidence — the access-audit trail for observability payloads. */
+export interface EvidenceAccessLog {
+  id: string;
+  viewedAt: string;
+  viewerUserId: string;
+  viewerName: string;
+  viewerRole: string;
+  observabilityRunId: string;
+  eventId: string;
+  clientIp: string;
+  action: 'view_payload' | 'export_evidence' | 'open_timeline';
+}
+
+/** One answer card in the ops cockpit — maps a platform question to a reading. */
+export interface OpsAnswer {
+  id: string;
+  domain: 'reliability' | 'tenant' | 'drift' | 'security' | 'trends' | 'debug';
+  question: string;
+  answer: string;
+  detail: string;
+  state: SloState;
+  /** Optional drill target. */
+  runId?: string;
+  moduleName?: string;
+  tenantId?: string;
 }

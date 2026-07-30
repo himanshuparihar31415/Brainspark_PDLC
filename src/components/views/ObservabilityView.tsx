@@ -102,7 +102,8 @@ export const ObservabilityView: React.FC = () => {
               PDLC Observability
             </h1>
             <p className="mt-1 text-xs text-slate-500">
-              What the AI did, what it cost, how reliably it ran, and whether it is improving.
+              Reliability, tenant economics, agent drift, security audit, and trends — each card is
+              one query against scoped execution data, with drill-down to the run timeline.
             </p>
           </div>
 
