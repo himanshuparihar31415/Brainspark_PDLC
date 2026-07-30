@@ -1,40 +1,117 @@
 @import "tailwindcss";
 
 /*
- * iOS-inspired light glass theme.
- * Remap indigo → system blue so existing utility classes pick up the accent
- * without rewriting every view. Status greens/ambers/roses stay semantic.
+ * Apple product–aligned light theme (HIG system colors + San Francisco stack).
+ * Existing Tailwind slate/indigo utilities remapped so screens pick this up
+ * without rewriting every class. Status scales track system green / red / orange.
  */
 @theme {
+  /* San Francisco on Apple; system UI elsewhere (closest available match). */
   --font-sans:
-    -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI",
-    system-ui, "Helvetica Neue", Helvetica, Arial, sans-serif;
+    "SF Pro Text", "SF Pro Display", -apple-system, BlinkMacSystemFont, "Helvetica Neue",
+    Helvetica, "Segoe UI", system-ui, ui-sans-serif, sans-serif;
 
-  /* iOS system blue ramp (replaces default indigo / purple) */
-  --color-indigo-50: #eff6ff;
-  --color-indigo-100: #dbeafe;
-  --color-indigo-200: #bfdbfe;
-  --color-indigo-300: #93c5fd;
-  --color-indigo-400: #60a5fa;
-  --color-indigo-500: #3b82f6;
+  /* System Blue — primary accent (was indigo) */
+  --color-indigo-50: #f0f7ff;
+  --color-indigo-100: #e5f1ff;
+  --color-indigo-200: #cce4ff;
+  --color-indigo-300: #99c9ff;
+  --color-indigo-400: #66adff;
+  --color-indigo-500: #3392ff;
   --color-indigo-600: #007aff;
-  --color-indigo-700: #0062cc;
-  --color-indigo-800: #004999;
-  --color-indigo-900: #003366;
-  --color-indigo-950: #001a33;
+  --color-indigo-700: #0066d6;
+  --color-indigo-800: #0055b3;
+  --color-indigo-900: #003d80;
+  --color-indigo-950: #00264d;
 
-  /* Cooler iOS-adjacent neutrals */
-  --color-slate-50: #f5f7fa;
-  --color-slate-100: #eef1f6;
-  --color-slate-200: #e1e5eb;
-  --color-slate-300: #c5ccd6;
-  --color-slate-400: #8e99a8;
-  --color-slate-500: #6b7585;
-  --color-slate-600: #545e6e;
-  --color-slate-700: #3d4654;
-  --color-slate-800: #2a313c;
-  --color-slate-900: #1c222b;
-  --color-slate-950: #11151c;
+  /* System Gray → Label palette (was slate) */
+  --color-slate-50: #f9f9fb;
+  --color-slate-100: #f2f2f7;
+  --color-slate-200: #e5e5ea;
+  --color-slate-300: #d1d1d6;
+  --color-slate-400: #aeaeb2;
+  --color-slate-500: #8e8e93;
+  --color-slate-600: #636366;
+  --color-slate-700: #48484a;
+  --color-slate-800: #3a3a3c;
+  --color-slate-900: #1c1c1e;
+  --color-slate-950: #000000;
+
+  /* System Green */
+  --color-emerald-50: #eafaf0;
+  --color-emerald-100: #d4f5e2;
+  --color-emerald-200: #a8ebc5;
+  --color-emerald-300: #6fd99a;
+  --color-emerald-400: #4cd964;
+  --color-emerald-500: #34c759;
+  --color-emerald-600: #30b350;
+  --color-emerald-700: #248a3d;
+  --color-emerald-800: #1b6b30;
+  --color-emerald-900: #145226;
+  --color-emerald-950: #0b2e15;
+
+  /* System Red */
+  --color-rose-50: #fff1f0;
+  --color-rose-100: #ffe3e1;
+  --color-rose-200: #ffc9c5;
+  --color-rose-300: #ff9f99;
+  --color-rose-400: #ff6961;
+  --color-rose-500: #ff453a;
+  --color-rose-600: #ff3b30;
+  --color-rose-700: #d70015;
+  --color-rose-800: #b00012;
+  --color-rose-900: #8a000e;
+  --color-rose-950: #520008;
+
+  /* System Orange / Yellow territory for warnings */
+  --color-amber-50: #fff8eb;
+  --color-amber-100: #ffefd1;
+  --color-amber-200: #ffd999;
+  --color-amber-300: #ffc04d;
+  --color-amber-400: #ffb340;
+  --color-amber-500: #ff9f0a;
+  --color-amber-600: #ff9500;
+  --color-amber-700: #cc7700;
+  --color-amber-800: #995900;
+  --color-amber-900: #664000;
+  --color-amber-950: #332000;
+
+  --color-orange-50: #fff5eb;
+  --color-orange-100: #ffe8d1;
+  --color-orange-200: #ffd0a3;
+  --color-orange-300: #ffb366;
+  --color-orange-400: #ff9f0a;
+  --color-orange-500: #ff9500;
+  --color-orange-600: #f58200;
+  --color-orange-700: #cc6a00;
+  --color-orange-800: #995000;
+  --color-orange-900: #663500;
+  --color-orange-950: #331a00;
+
+  /* System Teal / Sky for secondary blue accents */
+  --color-sky-50: #eef9ff;
+  --color-sky-100: #d9f2ff;
+  --color-sky-200: #b3e5ff;
+  --color-sky-300: #80d4ff;
+  --color-sky-400: #64d2ff;
+  --color-sky-500: #5ac8fa;
+  --color-sky-600: #32ade6;
+  --color-sky-700: #248aef;
+  --color-sky-800: #0a7ea4;
+  --color-sky-900: #065a78;
+  --color-sky-950: #033648;
+
+  --color-blue-50: #f0f7ff;
+  --color-blue-100: #e5f1ff;
+  --color-blue-200: #cce4ff;
+  --color-blue-300: #99c9ff;
+  --color-blue-400: #66adff;
+  --color-blue-500: #3392ff;
+  --color-blue-600: #007aff;
+  --color-blue-700: #0066d6;
+  --color-blue-800: #0055b3;
+  --color-blue-900: #003d80;
+  --color-blue-950: #00264d;
 }
 
 @layer base {
@@ -47,50 +124,70 @@
   body {
     margin: 0;
     font-family: var(--font-sans);
-    color: var(--color-slate-800);
-    background-color: #e8eef6;
+    font-size: 15px;
+    line-height: 1.47059;
+    letter-spacing: -0.022em;
+    font-weight: 400;
+    color: #1c1c1e; /* label */
+    /* System grouped background + soft Apple-like wash */
+    background-color: #f2f2f7;
     background-image:
-      radial-gradient(ellipse 90% 60% at 10% -10%, rgba(0, 122, 255, 0.14), transparent 55%),
-      radial-gradient(ellipse 70% 50% at 95% 5%, rgba(90, 200, 250, 0.18), transparent 50%),
-      radial-gradient(ellipse 60% 40% at 50% 110%, rgba(0, 122, 255, 0.08), transparent 55%),
-      linear-gradient(180deg, #f4f7fb 0%, #e8eef6 45%, #eef2f7 100%);
+      radial-gradient(ellipse 80% 50% at 0% 0%, rgba(0, 122, 255, 0.08), transparent 55%),
+      radial-gradient(ellipse 60% 40% at 100% 0%, rgba(90, 200, 250, 0.1), transparent 50%),
+      linear-gradient(180deg, #f9f9fb 0%, #f2f2f7 55%, #ebebf0 100%);
     background-attachment: fixed;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Apple-like type hierarchy defaults */
+  h1,
+  h2,
+  h3,
+  h4 {
+    letter-spacing: -0.025em;
+    font-weight: 700;
+    color: #1c1c1e;
   }
 }
 
 @layer utilities {
+  /* Vibrancy-style glass (macOS / iOS translucent materials) */
   .glass {
-    background: rgba(255, 255, 255, 0.55);
-    backdrop-filter: blur(24px) saturate(180%);
-    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    background: rgba(255, 255, 255, 0.62);
+    backdrop-filter: blur(40px) saturate(180%);
+    -webkit-backdrop-filter: blur(40px) saturate(180%);
     border: 1px solid rgba(255, 255, 255, 0.55);
     box-shadow:
-      0 1px 0 rgba(255, 255, 255, 0.7) inset,
-      0 8px 32px rgba(28, 34, 43, 0.06);
+      0 0.5px 0 rgba(255, 255, 255, 0.8) inset,
+      0 1px 3px rgba(0, 0, 0, 0.04),
+      0 8px 24px rgba(0, 0, 0, 0.04);
   }
 
   .glass-panel {
-    background: rgba(255, 255, 255, 0.72);
-    backdrop-filter: blur(28px) saturate(180%);
-    -webkit-backdrop-filter: blur(28px) saturate(180%);
-    border: 1px solid rgba(255, 255, 255, 0.65);
+    background: rgba(255, 255, 255, 0.78);
+    backdrop-filter: blur(50px) saturate(190%);
+    -webkit-backdrop-filter: blur(50px) saturate(190%);
+    border: 1px solid rgba(255, 255, 255, 0.7);
     box-shadow:
-      0 1px 0 rgba(255, 255, 255, 0.85) inset,
-      0 4px 24px rgba(28, 34, 43, 0.05);
+      0 0.5px 0 rgba(255, 255, 255, 0.9) inset,
+      0 2px 8px rgba(0, 0, 0, 0.04),
+      0 12px 32px rgba(0, 0, 0, 0.04);
   }
 
   .glass-strong {
-    background: rgba(255, 255, 255, 0.82);
-    backdrop-filter: blur(40px) saturate(190%);
-    -webkit-backdrop-filter: blur(40px) saturate(190%);
-    border: 1px solid rgba(255, 255, 255, 0.7);
+    background: rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(60px) saturate(200%);
+    -webkit-backdrop-filter: blur(60px) saturate(200%);
+    border: 1px solid rgba(255, 255, 255, 0.75);
     box-shadow:
-      0 1px 0 rgba(255, 255, 255, 0.9) inset,
-      0 12px 40px rgba(28, 34, 43, 0.08);
+      0 0.5px 0 rgba(255, 255, 255, 0.95) inset,
+      0 4px 16px rgba(0, 0, 0, 0.06),
+      0 16px 48px rgba(0, 0, 0, 0.06);
   }
 
+  /* Separator — Apple hairline */
   .ios-hairline {
     border-color: rgba(60, 60, 67, 0.12);
   }
@@ -98,5 +195,16 @@
   .ios-mesh {
     background-color: transparent;
     background-image: none;
+  }
+
+  /* Semantic Apple label helpers */
+  .text-label {
+    color: #1c1c1e;
+  }
+  .text-secondary-label {
+    color: rgba(60, 60, 67, 0.6);
+  }
+  .text-tertiary-label {
+    color: rgba(60, 60, 67, 0.3);
   }
 }
