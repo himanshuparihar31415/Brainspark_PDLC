@@ -60,15 +60,15 @@ const CapabilityCard: React.FC<{ capability: Capability }> = ({ capability }) =>
 
   return (
     <div
-      className={`relative flex items-center gap-3 rounded-2xl border border-white/50 bg-white/15 px-3.5 py-3 backdrop-blur-md ${
+      className={`relative flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.06] px-3.5 py-3 backdrop-blur-sm ${
         isLeft ? 'flex-row text-right' : 'flex-row-reverse text-left'
       }`}
     >
       <div className="min-w-0">
-        <div className="text-xs font-bold text-slate-900">{name}</div>
-        <div className="mt-0.5 text-[11px] leading-snug text-slate-600">{description}</div>
+        <div className="text-xs font-bold text-white">{name}</div>
+        <div className="mt-0.5 text-[11px] leading-snug text-slate-400">{description}</div>
       </div>
-      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-white/60 bg-white/50 text-indigo-600">
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/[0.08] text-slate-300">
         <Icon className="h-4 w-4" />
       </div>
     </div>
@@ -97,7 +97,7 @@ const HubSpokes: React.FC = () => (
         y1="50"
         x2={x}
         y2={y}
-        stroke="rgba(0,122,255,0.28)"
+        stroke="rgba(148,163,184,0.45)"
         strokeWidth="0.4"
         strokeDasharray="1.2 1.6"
         vectorEffect="non-scaling-stroke"
@@ -199,27 +199,27 @@ export const LoginView: React.FC = () => {
   return (
     <div className="min-h-screen font-sans antialiased lg:flex">
       {/* ---------- Left: brand & platform story ---------- */}
-      <div className="relative flex flex-col overflow-hidden px-8 py-10 lg:w-[58%] lg:px-14 lg:py-12">
-        {/* Soft iOS mesh — complements global body gradient */}
-        <div className="pointer-events-none absolute -top-24 -left-16 h-80 w-80 rounded-full bg-indigo-400/20 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-32 left-1/2 h-96 w-[42rem] -translate-x-1/2 rounded-full bg-sky-300/25 blur-3xl" />
+      <div className="relative flex flex-col overflow-hidden bg-[#0b2148] px-8 py-10 lg:w-[58%] lg:px-14 lg:py-12">
+        {/* Ambient glow */}
+        <div className="pointer-events-none absolute -bottom-32 left-1/2 h-96 w-[42rem] -translate-x-1/2 rounded-full bg-blue-500/10 blur-3xl" />
+        <div className="pointer-events-none absolute -top-24 -left-16 h-72 w-72 rounded-full bg-indigo-500/10 blur-3xl" />
 
         <div className="relative flex flex-1 flex-col">
-          <Wordmark className="text-3xl text-slate-900" />
+          <Wordmark className="text-3xl text-white" />
 
-          <div className="mt-5 inline-flex w-fit items-center gap-2 rounded-full border border-white/60 bg-white/50 px-4 py-1.5 backdrop-blur-md">
-            <span className="h-1.5 w-1.5 rounded-full bg-indigo-600" />
-            <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-600">
+          <div className="mt-5 inline-flex w-fit items-center gap-2 rounded-full border border-white/15 bg-white/[0.06] px-4 py-1.5">
+            <span className="h-1.5 w-1.5 rounded-full bg-orange-500" />
+            <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-200">
               Brainspark · AI-Native PDLC Platform
             </span>
           </div>
 
-          <h1 className="mt-7 max-w-xl text-4xl font-extrabold leading-[1.15] tracking-tight text-slate-900 lg:text-5xl">
+          <h1 className="mt-7 max-w-xl text-4xl font-extrabold leading-[1.15] tracking-tight text-white lg:text-5xl">
             One governed lifecycle,{' '}
-            <span className="text-indigo-600">from intake to production.</span>
+            <span className="text-orange-500">from intake to production.</span>
           </h1>
 
-          <p className="mt-5 max-w-md text-sm leading-relaxed text-slate-600">
+          <p className="mt-5 max-w-md text-sm leading-relaxed text-slate-300">
             Brainspark carries every artifact through the right stage — with the right context and the right human
             approval — from requirements to release.
           </p>
@@ -237,8 +237,8 @@ export const LoginView: React.FC = () => {
               </div>
 
               {/* Center hub */}
-              <div className="glass-strong flex h-20 w-20 items-center justify-center rounded-full shadow-xl shadow-indigo-600/15 lg:h-24 lg:w-24">
-                <Brain className="h-9 w-9 text-indigo-600 lg:h-11 lg:w-11" />
+              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white shadow-2xl shadow-blue-950/50 lg:h-24 lg:w-24">
+                <Brain className="h-9 w-9 text-[#0b2148] lg:h-11 lg:w-11" />
               </div>
 
               {/* Right column */}
@@ -251,20 +251,20 @@ export const LoginView: React.FC = () => {
           </div>
 
           {/* Trust markers */}
-          <div className="ios-hairline mt-12 max-w-2xl border-t pt-5">
+          <div className="mt-12 max-w-2xl border-t border-white/10 pt-5">
             <div className="flex flex-wrap items-center gap-x-7 gap-y-3">
               {TRUST_MARKERS.map(({ label, icon: Icon }) => (
                 <div key={label} className="flex items-center gap-2">
-                  <Icon className="h-3.5 w-3.5 text-indigo-600" />
-                  <span className="text-[11px] font-medium text-slate-600">{label}</span>
+                  <Icon className="h-3.5 w-3.5 text-orange-500" />
+                  <span className="text-[11px] font-medium text-slate-300">{label}</span>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="mt-8 flex flex-wrap items-center justify-between gap-3 text-[11px] text-slate-500">
+          <div className="mt-8 flex flex-wrap items-center justify-between gap-3 text-[11px] text-slate-400">
             <span>© Copyright 2026 Brainspark · Incedo Labs</span>
-            <a href="#" className="hover:text-indigo-600">
+            <a href="#" className="hover:text-slate-200">
               Terms &amp; Conditions
             </a>
           </div>
@@ -272,16 +272,16 @@ export const LoginView: React.FC = () => {
       </div>
 
       {/* ---------- Right: sign-in card ---------- */}
-      <div className="relative flex flex-1 items-center justify-center px-6 py-14">
-        <div className="glass-strong w-full max-w-sm rounded-3xl p-8 shadow-2xl shadow-indigo-600/10">
+      <div className="relative flex flex-1 items-center justify-center bg-gradient-to-br from-slate-50 via-white to-orange-50/40 px-6 py-14">
+        <div className="w-full max-w-sm rounded-2xl border border-slate-200/80 bg-white p-8 shadow-2xl shadow-slate-900/[0.07]">
           <div className="text-center">
-            <Wordmark className="text-2xl text-slate-900" />
+            <Wordmark className="text-2xl text-[#0b2148]" />
             <div className="mt-1 text-[10px] font-medium tracking-wide text-slate-400">
               AI-Native PDLC Operating System
             </div>
           </div>
 
-          <h2 className="mt-7 text-center text-2xl font-bold tracking-tight text-slate-900">
+          <h2 className="mt-7 text-center text-2xl font-bold tracking-tight text-[#0b2148]">
             {mode === 'signup' ? 'Request access' : 'Welcome back'}
           </h2>
           <p className="mt-1 text-center text-xs text-slate-500">
@@ -404,7 +404,7 @@ export const LoginView: React.FC = () => {
           )}
 
           <div className="mt-7 border-t border-slate-200 pt-5">
-            <p className="text-center text-xs font-bold text-slate-900">
+            <p className="text-center text-xs font-bold text-[#0b2148]">
               {mode === 'signup' ? 'Already have an account?' : "Don't have an account?"}
             </p>
             <button
