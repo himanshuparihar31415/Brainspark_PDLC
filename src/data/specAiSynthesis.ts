@@ -113,6 +113,8 @@ const TOPICS: {
 const FINDINGS: {
   topic: string;
   from: SourceType;
+  /** Which lane this belongs in once it reaches the board. */
+  lane: string;
   says: string;
   detail: string;
   excerpt: string;
@@ -120,6 +122,7 @@ const FINDINGS: {
   {
     topic: 'auth',
     from: 'App',
+    lane: 'lane-current',
     says: 'Every session starts with a PIN, and a new device also needs an OTP.',
     detail: 'No biometric path exists in the running application today.',
     excerpt: 'Screens observed: Login → OTP verification → Dashboard.',
@@ -127,6 +130,7 @@ const FINDINGS: {
   {
     topic: 'auth',
     from: 'Repository',
+    lane: 'lane-constraints',
     says: 'Session tokens have a fixed expiry that other channels share.',
     detail: 'Changing it here changes it everywhere that reads the same configuration.',
     excerpt: 'security.jwt.access-token-ttl: 15m',
@@ -134,6 +138,7 @@ const FINDINGS: {
   {
     topic: 'auth',
     from: 'Confluence',
+    lane: 'lane-constraints',
     says: 'Every customer-facing channel must federate through the central identity gateway.',
     detail: 'No new identity provider is available to this project.',
     excerpt: 'All customer-facing channels must federate through the central OAuth gateway.',
@@ -141,6 +146,7 @@ const FINDINGS: {
   {
     topic: 'auth',
     from: 'Transcript',
+    lane: 'lane-decisions',
     says: 'Repeated authentication failures fall back to the existing method and raise a security event.',
     detail: 'The failure sequence is logged, not just the final outcome.',
     excerpt: 'Agreed: three strikes, then PIN. Log the failure sequence.',
@@ -148,6 +154,7 @@ const FINDINGS: {
   {
     topic: 'payments',
     from: 'Repository',
+    lane: 'lane-current',
     says: 'Payment submission is already idempotent on a client-supplied key.',
     detail: 'A retry with the same key will not double-charge.',
     excerpt: 'Idempotency-Key header required on POST /payments',
@@ -155,6 +162,7 @@ const FINDINGS: {
   {
     topic: 'payments',
     from: 'Confluence',
+    lane: 'lane-constraints',
     says: 'Settlement is reconciled nightly against the ledger, not in real time.',
     detail: 'Anything expecting immediate confirmation will need a different path.',
     excerpt: 'Nightly reconciliation window: 23:00–01:00 IST.',
@@ -162,6 +170,7 @@ const FINDINGS: {
   {
     topic: 'notify',
     from: 'Repository',
+    lane: 'lane-current',
     says: 'Delivery is fire-and-forget, with no receipt returned to the sender.',
     detail: 'Anything needing confirmation of delivery does not exist yet.',
     excerpt: 'notification-service publishes to queue; no ack channel.',
@@ -169,6 +178,7 @@ const FINDINGS: {
   {
     topic: 'data',
     from: 'Repository',
+    lane: 'lane-constraints',
     says: 'The old and new record shapes would have to coexist during any migration.',
     detail: 'Nothing supports a hard cutover.',
     excerpt: 'schema_version column read by three services.',
@@ -506,7 +516,7 @@ export const synthesize = (input: SynthesisInput): SynthesisResult => {
 
     boardCards.push({
       sourceId: backing.id,
-      laneId: 'lane-current',
+      laneId: f.lane,
       type: 'Context',
       state: 'Confirmed',
       title: f.says,

@@ -136,14 +136,8 @@ export interface BoardCard {
   id: string;
   /** The source this came from. Absent on notes you wrote yourself. */
   sourceId?: string;
-  /** Retained as the grouping key even though the board positions freely. */
+  /** Which lane it sits in. This is the card's only position on the board. */
   laneId: string;
-  /**
-   * Position on the chalk board, in canvas pixels. Absent on cards the AI just
-   * created — the board lays those out in the first free slot.
-   */
-  x?: number;
-  y?: number;
   type: CardType;
   state: CardState;
   title: string;

@@ -123,8 +123,6 @@ const finEdgeCards: BoardCard[] = [
   {
     id: 'card-obs-login',
     sourceId: 'src-app',
-    x: 24,
-    y: 24,
     laneId: 'lane-current',
     type: 'Context',
     state: 'Confirmed',
@@ -144,9 +142,7 @@ const finEdgeCards: BoardCard[] = [
   {
     id: 'card-con-token',
     sourceId: 'src-repo',
-    x: 272,
-    y: 40,
-    laneId: 'lane-current',
+    laneId: 'lane-constraints',
     type: 'Context',
     state: 'Confirmed',
     title: 'Access tokens expire after 15 minutes, and web shares the same setting.',
@@ -166,9 +162,7 @@ const finEdgeCards: BoardCard[] = [
   {
     id: 'card-con-oauth',
     sourceId: 'src-standards',
-    x: 520,
-    y: 24,
-    laneId: 'lane-current',
+    laneId: 'lane-constraints',
     type: 'Context',
     state: 'Confirmed',
     title: 'Every customer-facing channel must federate through the central OAuth gateway.',
@@ -186,8 +180,6 @@ const finEdgeCards: BoardCard[] = [
   {
     id: 'card-dec-fallback',
     sourceId: 'src-call',
-    x: 24,
-    y: 264,
     laneId: 'lane-decisions',
     type: 'Context',
     state: 'Confirmed',
@@ -205,8 +197,6 @@ const finEdgeCards: BoardCard[] = [
   },
   {
     id: 'card-conflict-priority',
-    x: 272,
-    y: 288,
     laneId: 'lane-decisions',
     type: 'Disagreement',
     state: 'Flagged',
@@ -226,8 +216,6 @@ const finEdgeCards: BoardCard[] = [
   },
   {
     id: 'card-seed-bio',
-    x: 520,
-    y: 268,
     laneId: 'lane-proposed',
     type: 'Requirement seed',
     state: 'Requirement seed',

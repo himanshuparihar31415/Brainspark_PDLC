@@ -74,7 +74,7 @@ export const KnowledgeSources: React.FC<{
         <h3 className="text-[12px] font-extrabold tracking-tight text-slate-900">
           Knowledge sources
         </h3>
-        <p className="mt-0.5 text-[10px] text-slate-500">Drag context onto the board.</p>
+        <p className="mt-0.5 text-[10px] text-slate-500">What the brief is built from.</p>
       </div>
 
       <div
@@ -109,20 +109,13 @@ export const KnowledgeSources: React.FC<{
             return (
               <div
                 key={s.id}
-                draggable={!disabled && readable}
-                onDragStart={(e) => {
-                  e.dataTransfer.setData('text/source', s.id);
-                  e.dataTransfer.effectAllowed = 'copy';
-                }}
                 title={
                   readable
-                    ? disabled
-                      ? s.name
-                      : `${s.name} — drag onto the board`
+                    ? s.name
                     : `${s.name} — ${ingest.label}${s.ingestNote ? `: ${s.ingestNote}` : ''}`
                 }
                 className={`group flex items-center gap-2.5 rounded-lg px-2 py-2 transition-colors hover:bg-slate-50 ${
-                  !readable ? 'opacity-70' : disabled ? '' : 'cursor-grab active:cursor-grabbing'
+                  readable ? '' : 'opacity-70'
                 }`}
               >
                 <span

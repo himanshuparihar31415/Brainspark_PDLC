@@ -2,6 +2,7 @@ import { Role } from '../types';
 import {
   Archetype,
   ArtifactGroup,
+  BoardCard,
   BriefBandKey,
   CardState,
   CardType,
@@ -345,12 +346,39 @@ export const COPILOT_SUGGESTIONS: CopilotSuggestion[] = [
   { label: 'Compare sources', actionId: 'conflicts', asks: 'Do these sources agree?' },
 ];
 
+/**
+ * Lanes group by what a piece of context tells you, not by which source it came
+ * from — the source is already printed on every card, so grouping by it again
+ * would say the same thing twice.
+ */
 export const DEFAULT_LANES = [
-  { id: 'lane-inputs', name: 'Inputs' },
-  { id: 'lane-current', name: 'Current State' },
-  { id: 'lane-proposed', name: 'Proposed Change' },
-  { id: 'lane-decisions', name: 'Open Decisions' },
+  { id: 'lane-current', name: 'How it works today' },
+  { id: 'lane-constraints', name: 'What we must work within' },
+  { id: 'lane-decisions', name: 'Decided, and disagreed' },
+  { id: 'lane-proposed', name: 'What we’re proposing' },
 ];
+
+/**
+ * Every source a card can be traced back to. A card that came straight off a
+ * source names it; a disagreement names both sides; a seed or a note follows its
+ * relations to whatever the claim actually rests on.
+ */
+export const cardSources = (card: BoardCard, state: SpecAiState): string[] => {
+  if (card.sourceId) {
+    const direct = state.sources.find((s) => s.id === card.sourceId);
+    if (direct) return [direct.name];
+  }
+
+  if (card.conflict) return [card.conflict.claimASource, card.conflict.claimBSource];
+
+  const viaRelations = card.relations
+    .map((r) => state.cards.find((c) => c.id === r.toCardId))
+    .filter((c): c is BoardCard => Boolean(c))
+    .map((c) => state.sources.find((s) => s.id === c.sourceId)?.name)
+    .filter((n): n is string => Boolean(n));
+
+  return [...new Set(viaRelations)];
+};
 
 // ───────────────────────────── Readiness & gates ─────────────────────────────
 

@@ -1,21 +1,110 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { BoardCard, SpecAiState } from '../../types/specai';
-import { CARD_TYPES, SOURCE_BADGE, indexedSources } from '../../data/specai';
+import { CARD_TYPES, SOURCE_BADGE, cardSources, indexedSources } from '../../data/specai';
 import { FileCheck, GitBranch, Pencil, Plus, Trash2, X } from 'lucide-react';
 
-/** Card footprint on the canvas, in pixels. Drives both layout and canvas size. */
-const CARD_W = 224;
-const ROW_H = 232;
-const COL_W = 248;
+/** A single card. Leads with where it came from, then what it says. */
+const Card: React.FC<{
+  card: BoardCard;
+  state: SpecAiState;
+  selected: boolean;
+  disabled: boolean;
+  onToggle: () => void;
+  onOpen: () => void;
+}> = ({ card, state, selected, disabled, onToggle, onOpen }) => {
+  const meta = CARD_TYPES[card.type];
+  const sources = cardSources(card, state);
+  const direct = state.sources.find((s) => s.id === card.sourceId);
+  const badge = direct ? SOURCE_BADGE[direct.type] : undefined;
 
-type Placed = { card: BoardCard; x: number; y: number };
+  /* Silence means sourced. Only a guess wears a mark. */
+  const isGuess =
+    card.evidenceClass === 'AI assumption' || card.evidenceClass === 'Inferred interpretation';
+
+  return (
+    <article
+      draggable={!disabled}
+      onDragStart={(e) => {
+        e.dataTransfer.setData('text/card', card.id);
+        e.dataTransfer.effectAllowed = 'move';
+      }}
+      onClick={onToggle}
+      onDoubleClick={onOpen}
+      title={
+        sources.length
+          ? `From ${sources.join(' and ')} · click to select · double-click to open`
+          : 'Click to select · double-click to open'
+      }
+      className={`rounded-xl border-2 bg-white p-2.5 transition-shadow ${meta.border} ${
+        selected ? 'ring-2 ring-indigo-500 ring-offset-1' : ''
+      } ${disabled ? 'cursor-pointer' : 'cursor-grab active:cursor-grabbing'} hover:shadow-md`}
+    >
+      {/* Where this came from */}
+      <div className="flex items-center gap-1.5">
+        {badge ? (
+          <span
+            className={`flex h-4 w-4 shrink-0 items-center justify-center rounded font-mono text-[7px] font-bold ${badge.tint}`}
+          >
+            {badge.glyph}
+          </span>
+        ) : card.type === 'Disagreement' ? (
+          <GitBranch className="h-3.5 w-3.5 shrink-0 text-rose-500" />
+        ) : card.type === 'Requirement seed' ? (
+          <FileCheck className="h-3.5 w-3.5 shrink-0 text-violet-500" />
+        ) : (
+          <Pencil className="h-3.5 w-3.5 shrink-0 text-indigo-500" />
+        )}
+
+        <span className="min-w-0 flex-1 truncate text-[9.5px] font-bold text-slate-500">
+          {sources.length > 0
+            ? sources.join(' ↔ ')
+            : card.type === 'Note'
+            ? (card.author ?? 'Your note')
+            : 'No source'}
+        </span>
+
+        {isGuess && (
+          <span
+            title={`${card.evidenceClass} — not something a source said`}
+            className="shrink-0 rounded bg-amber-100 px-1 py-0.5 text-[8px] font-bold text-amber-800"
+          >
+            guess
+          </span>
+        )}
+      </div>
+
+      {/* What it says */}
+      <p className="mt-1.5 text-[11.5px] font-semibold leading-snug text-slate-900">{card.title}</p>
+
+      {card.type === 'Disagreement' && card.conflict && (
+        <div className="mt-1.5 space-y-1 border-t border-rose-100 pt-1.5">
+          <p className="text-[10px] leading-snug text-slate-600">
+            <span className="font-bold text-slate-400">{card.conflict.claimASource}: </span>
+            {card.conflict.claimA}
+          </p>
+          <p className="text-[10px] leading-snug text-slate-600">
+            <span className="font-bold text-slate-400">{card.conflict.claimBSource}: </span>
+            {card.conflict.claimB}
+          </p>
+        </div>
+      )}
+
+      {/* A seed rests on other cards, so it says how much it rests on */}
+      {card.type === 'Requirement seed' && card.relations.length > 0 && (
+        <p className="mt-1.5 border-t border-violet-100 pt-1.5 text-[9.5px] text-slate-400">
+          Rests on {card.relations.length} {card.relations.length === 1 ? 'piece' : 'pieces'} of
+          context
+        </p>
+      )}
+    </article>
+  );
+};
 
 /**
- * The Requirement Chalk Board — a rough discovery space rather than a document.
- * Cards sit wherever you put them, carry one of eight constrained types, and
- * advance through a visible lifecycle. Position is presentational; the lane a
- * card belongs to is what grouping and downstream stages read.
+ * The Requirement Chalk Board. Pieces of context from your sources, grouped by
+ * what they tell you. A card's lane is its only position — drag it to another
+ * lane to say it belongs somewhere else.
  */
 export const ChalkBoard: React.FC<{
   state: SpecAiState;
@@ -25,43 +114,11 @@ export const ChalkBoard: React.FC<{
   onInspect: (cardId: string) => void;
   onOpenConflict: (cardId: string) => void;
 }> = ({ state, disabled, selectedIds, onSelectionChange, onInspect, onOpenConflict }) => {
-  const { runBoardAction, updateCard, addCard, currentUser, addToast } = useApp();
+  const { runBoardAction, moveCardToLane, addCard, currentUser, addToast } = useApp();
 
-  const canvasRef = useRef<HTMLDivElement>(null);
-  const [drag, setDrag] = useState<{
-    id: string;
-    offX: number;
-    offY: number;
-    startX: number;
-    startY: number;
-    moved: boolean;
-  } | null>(null);
-  /** Live position while dragging, so the card follows the pointer without a commit per frame. */
-  const [ghost, setGhost] = useState<{ x: number; y: number } | null>(null);
-  const [composing, setComposing] = useState<{ x: number; y: number } | null>(null);
+  const [composing, setComposing] = useState<string | null>(null);
   const [draft, setDraft] = useState({ title: '', body: '' });
-
-  /** Cards the AI just created have no position yet; they land below the arrangement. */
-  const placed: Placed[] = useMemo(() => {
-    const anchored = state.cards.filter((c) => c.x !== undefined && c.y !== undefined);
-    const loose = state.cards.filter((c) => c.x === undefined || c.y === undefined);
-    const baseY = anchored.length ? Math.max(...anchored.map((c) => c.y as number)) + ROW_H : 24;
-
-    return [
-      ...anchored.map((c) => ({ card: c, x: c.x as number, y: c.y as number })),
-      ...loose.map((c, i) => ({
-        card: c,
-        x: 24 + (i % 4) * COL_W,
-        y: baseY + Math.floor(i / 4) * ROW_H,
-      })),
-    ];
-  }, [state.cards]);
-
-  /** The canvas grows to hold the arrangement, and to hold a card mid-drag. */
-  const extent = [...placed.map(({ x, y }) => ({ x, y })), ...(ghost ? [ghost] : [])].reduce(
-    (acc, p) => ({ w: Math.max(acc.w, p.x + CARD_W + 32), h: Math.max(acc.h, p.y + ROW_H) }),
-    { w: 1040, h: 640 }
-  );
+  const [over, setOver] = useState<string | null>(null);
 
   const selected = state.cards.filter((c) => selectedIds.includes(c.id));
 
@@ -70,42 +127,13 @@ export const ChalkBoard: React.FC<{
       selectedIds.includes(id) ? selectedIds.filter((x) => x !== id) : [...selectedIds, id]
     );
 
-  /** Pointer position translated into canvas coordinates. */
-  const canvasPoint = (e: { clientX: number; clientY: number }) => {
-    const box = canvasRef.current?.getBoundingClientRect();
-    return box ? { x: e.clientX - box.left, y: e.clientY - box.top } : { x: 24, y: 24 };
-  };
-
-  const onPointerMove = (e: React.PointerEvent) => {
-    if (!drag) return;
-    const p = canvasPoint(e);
-    setGhost({ x: Math.max(0, p.x - drag.offX), y: Math.max(0, p.y - drag.offY) });
-
-    // A few pixels of slop, so selecting a card never nudges it out of place.
-    if (!drag.moved && Math.hypot(p.x - drag.startX, p.y - drag.startY) > 4) {
-      setDrag({ ...drag, moved: true });
-    }
-  };
-
-  const onPointerUp = () => {
-    if (!drag) return;
-    if (drag.moved && ghost) {
-      updateCard(state.projectId, drag.id, { x: Math.round(ghost.x), y: Math.round(ghost.y) });
-    } else {
-      toggle(drag.id);
-    }
-    setDrag(null);
-    setGhost(null);
-  };
-
   return (
     <section className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white max-lg:h-[32rem] max-lg:shrink-0">
-      {/* Board header */}
       <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-slate-200 px-3.5 py-2.5">
         <h3 className="text-[12px] font-extrabold tracking-tight text-slate-900">
           Requirement Chalk Board
         </h3>
-        <span className="text-[10px] text-slate-400">· rough discovery space</span>
+        <span className="text-[10px] text-slate-400">· what your sources say about this</span>
 
         <div className="ml-auto flex items-center gap-1.5">
           {selectedIds.length > 0 && (
@@ -113,11 +141,10 @@ export const ChalkBoard: React.FC<{
               {selectedIds.length} selected
             </span>
           )}
-
           <button
             onClick={() => {
               setDraft({ title: '', body: '' });
-              setComposing({ x: 24 + (state.cards.length % 4) * COL_W, y: extent.h - ROW_H + 24 });
+              setComposing('lane-proposed');
             }}
             disabled={disabled}
             title="Something you know that no source records"
@@ -128,122 +155,79 @@ export const ChalkBoard: React.FC<{
         </div>
       </div>
 
-      {/* Canvas */}
-      <div className="min-h-0 flex-1 overflow-auto bg-slate-50/40">
-        <div
-          ref={canvasRef}
-          onPointerMove={onPointerMove}
-          onPointerUp={onPointerUp}
-          onPointerLeave={onPointerUp}
-          style={{ width: extent.w, height: extent.h }}
-          className="relative bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:16px_16px]"
-        >
-          {state.cards.length === 0 && (
-            <p className="absolute left-1/2 top-16 w-72 -translate-x-1/2 text-center text-[11px] leading-relaxed text-slate-400">
-              Nothing on the board yet. Drag a knowledge source across, or add a card to capture
-              what you already know.
-            </p>
-          )}
-
-          {placed.map(({ card, x, y }) => {
-            const meta = CARD_TYPES[card.type];
-            const isSelected = selectedIds.includes(card.id);
-            const isDragging = drag?.id === card.id;
-            const pos = isDragging && ghost ? ghost : { x, y };
-
-            const source = state.sources.find((sc) => sc.id === card.sourceId);
-            const badge = source ? SOURCE_BADGE[source.type] : undefined;
-            /* Silence means sourced. Only a guess wears a mark. */
-            const isGuess =
-              card.evidenceClass === 'AI assumption' ||
-              card.evidenceClass === 'Inferred interpretation';
+      {/* Lanes */}
+      <div className="min-h-0 flex-1 overflow-x-auto bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:16px_16px]">
+        <div className="flex h-full min-w-max gap-2.5 p-2.5">
+          {state.lanes.map((lane) => {
+            const cards = state.cards.filter((c) => c.laneId === lane.id);
 
             return (
-              <article
-                key={card.id}
-                onPointerDown={(e) => {
+              <section
+                key={lane.id}
+                onDragOver={(e) => {
                   if (disabled) return;
-                  e.currentTarget.setPointerCapture?.(e.pointerId);
-                  const p = canvasPoint(e);
-                  setDrag({
-                    id: card.id,
-                    offX: p.x - x,
-                    offY: p.y - y,
-                    startX: p.x,
-                    startY: p.y,
-                    moved: false,
-                  });
-                  setGhost({ x, y });
+                  e.preventDefault();
+                  setOver(lane.id);
                 }}
-                onClick={() => disabled && toggle(card.id)}
-                onDoubleClick={() =>
-                  card.type === 'Disagreement' ? onOpenConflict(card.id) : onInspect(card.id)
-                }
-                title="Drag to move · click to select · double-click to open"
-                style={{ left: pos.x, top: pos.y, width: CARD_W }}
-                className={`absolute select-none rounded-xl border-2 bg-white p-2.5 shadow-sm transition-shadow ${
-                  meta.border
-                } ${isSelected ? 'ring-2 ring-indigo-500 ring-offset-1' : ''} ${
-                  isDragging ? 'z-10 shadow-xl' : 'hover:shadow-md'
-                } ${disabled ? 'cursor-pointer' : 'cursor-grab active:cursor-grabbing'}`}
+                onDragLeave={() => setOver((l) => (l === lane.id ? null : l))}
+                onDrop={(e) => {
+                  setOver(null);
+                  const cardId = e.dataTransfer.getData('text/card');
+                  if (cardId && !disabled) moveCardToLane(state.projectId, cardId, lane.id);
+                }}
+                className={`flex w-64 shrink-0 flex-col rounded-xl border transition-colors ${
+                  over === lane.id
+                    ? 'border-indigo-400 bg-indigo-50/70'
+                    : 'border-slate-200 bg-white/70'
+                }`}
               >
-                {/* Where this came from */}
-                <div className="flex items-center gap-1.5">
-                  {badge ? (
-                    <span
-                      className={`flex h-4 w-4 shrink-0 items-center justify-center rounded font-mono text-[7px] font-bold ${badge.tint}`}
-                    >
-                      {badge.glyph}
-                    </span>
-                  ) : card.type === 'Disagreement' ? (
-                    <GitBranch className="h-3.5 w-3.5 shrink-0 text-rose-500" />
-                  ) : card.type === 'Requirement seed' ? (
-                    <FileCheck className="h-3.5 w-3.5 shrink-0 text-violet-500" />
-                  ) : (
-                    <Pencil className="h-3.5 w-3.5 shrink-0 text-indigo-500" />
-                  )}
-
-                  <span className="min-w-0 flex-1 truncate text-[9.5px] font-bold text-slate-500">
-                    {source?.name ??
-                      (card.type === 'Disagreement'
-                        ? 'Two sources'
-                        : card.type === 'Requirement seed'
-                        ? 'Requirement seed'
-                        : (card.author ?? 'Your note'))}
+                <header className="flex shrink-0 items-center justify-between gap-2 border-b border-slate-200 px-2.5 py-2">
+                  <h4 className="min-w-0 truncate text-[10.5px] font-extrabold text-slate-700">
+                    {lane.name}
+                  </h4>
+                  <span className="shrink-0 rounded bg-slate-100 px-1.5 py-0.5 text-[9px] font-bold text-slate-500">
+                    {cards.length}
                   </span>
+                </header>
 
-                  {isGuess && (
-                    <span
-                      title={`${card.evidenceClass} — not something a source said`}
-                      className="shrink-0 rounded bg-amber-100 px-1 py-0.5 text-[8px] font-bold text-amber-800"
-                    >
-                      guess
-                    </span>
+                <div className="min-h-0 flex-1 space-y-2 overflow-y-auto p-2">
+                  {cards.length === 0 ? (
+                    <p className="px-1 py-6 text-center text-[9.5px] leading-relaxed text-slate-400">
+                      Nothing here yet.
+                    </p>
+                  ) : (
+                    cards.map((card) => (
+                      <Card
+                        key={card.id}
+                        card={card}
+                        state={state}
+                        disabled={disabled}
+                        selected={selectedIds.includes(card.id)}
+                        onToggle={() => toggle(card.id)}
+                        onOpen={() =>
+                          card.type === 'Disagreement'
+                            ? onOpenConflict(card.id)
+                            : onInspect(card.id)
+                        }
+                      />
+                    ))
                   )}
                 </div>
 
-                {/* What it says */}
-                <p className="mt-1.5 text-[11.5px] font-semibold leading-snug text-slate-900">
-                  {card.title}
-                </p>
-
-                {card.type === 'Disagreement' && card.conflict && (
-                  <div className="mt-1.5 space-y-1 border-t border-rose-100 pt-1.5">
-                    <p className="text-[10px] leading-snug text-slate-600">
-                      <span className="font-bold text-slate-400">
-                        {card.conflict.claimASource}:{' '}
-                      </span>
-                      {card.conflict.claimA}
-                    </p>
-                    <p className="text-[10px] leading-snug text-slate-600">
-                      <span className="font-bold text-slate-400">
-                        {card.conflict.claimBSource}:{' '}
-                      </span>
-                      {card.conflict.claimB}
-                    </p>
+                {!disabled && (
+                  <div className="shrink-0 border-t border-slate-200 p-1.5">
+                    <button
+                      onClick={() => {
+                        setDraft({ title: '', body: '' });
+                        setComposing(lane.id);
+                      }}
+                      className="flex w-full cursor-pointer items-center justify-center gap-1 rounded-lg py-1 text-[9.5px] font-bold text-slate-400 hover:bg-slate-50 hover:text-slate-700"
+                    >
+                      <Plus className="h-2.5 w-2.5" /> Note
+                    </button>
                   </div>
                 )}
-              </article>
+              </section>
             );
           })}
         </div>
@@ -257,16 +241,14 @@ export const ChalkBoard: React.FC<{
         </span>
       </div>
 
-      {/* Selection bar — direct manipulation, kept out of the way until it applies */}
       {selectedIds.length > 0 && (
         <div className="flex shrink-0 flex-wrap items-center gap-2 border-t border-slate-200 bg-white px-3.5 py-2">
           <span className="min-w-0 flex-1 truncate text-[10.5px] text-slate-500">
-            {selected
-              .map((c) => state.sources.find((sc) => sc.id === c.sourceId)?.name ?? 'your note')
-              .join(' · ')}
+            {[...new Set(selected.flatMap((c) => cardSources(c, state)))].join(' · ') ||
+              'your notes'}
           </span>
 
-          <div className="ml-auto flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5">
             <button
               onClick={() => {
                 runBoardAction(state.projectId, 'draft', selectedIds);
@@ -311,7 +293,11 @@ export const ChalkBoard: React.FC<{
           >
             <h3 className="text-sm font-extrabold text-slate-900">Add a note</h3>
             <p className="mt-1 text-[11px] text-slate-500">
-              For something you know that none of your sources record.
+              For something you know that none of your sources record. It goes into{' '}
+              <b className="text-slate-700">
+                {state.lanes.find((l) => l.id === composing)?.name ?? 'the board'}
+              </b>
+              .
             </p>
 
             <input
@@ -343,9 +329,7 @@ export const ChalkBoard: React.FC<{
                     return;
                   }
                   addCard(state.projectId, {
-                    x: composing.x,
-                    y: composing.y,
-                    laneId: 'lane-proposed',
+                    laneId: composing,
                     type: 'Note',
                     state: 'Confirmed',
                     title: draft.title.trim(),

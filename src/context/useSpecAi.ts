@@ -510,7 +510,7 @@ export const useSpecAiSlice = ({
             ...s.cards,
             {
               id: nid('card'),
-              laneId: selected[0]?.laneId ?? 'lane-inputs',
+              laneId: selected[0]?.laneId ?? 'lane-proposed',
               type: 'Note',
               state: 'Interpreted',
               title: `Summary of ${selected.length} cards`,
