@@ -714,7 +714,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   );
 };
 
-export const useApp = () => {
+/*
+ * The return type is annotated rather than inferred. Left to inference it
+ * silently resolved to `any`, which switched off type checking in every
+ * component that consumes context — a whole-app blind spot that the compiler
+ * reported as success.
+ */
+export const useApp = (): AppContextType => {
   const context = useContext(AppContext);
   if (!context) {
     throw new Error('useApp must be used within an AppProvider');

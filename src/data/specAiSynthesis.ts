@@ -36,8 +36,8 @@ export interface SynthesisInput {
 export interface SynthesisResult {
   brief: UnderstandingBrief;
   questions: SpecQuestion[];
-  /** Cards to append to the board. Positionless — the board lays them out. */
-  flagCards: Omit<BoardCard, 'id'>[];
+  /** Pieces of context for the board. Positionless — the board lays them out. */
+  boardCards: Omit<BoardCard, 'id'>[];
 }
 
 /** Subject areas the statement can be about, and what each one forces you to decide. */
@@ -95,6 +95,81 @@ const TOPICS: {
       'What is the rollback position once records have been rewritten?',
     ],
     product: ['What historical range has to be available on day one?'],
+  },
+];
+
+/**
+ * What each kind of source can tell you about a topic. A finding only reaches the
+ * board when its topic matches the problem statement AND that kind of source is
+ * indexed — so a source with nothing to say about your problem puts nothing on the
+ * board, and an unmatched topic puts nothing there at all.
+ *
+ * This is the filter. Without it retrieval dumps every passage that vaguely
+ * matches and leaves the reader to sort it out, which is worse than nothing
+ * because it looks like the work was done.
+ */
+const FINDINGS: {
+  topic: string;
+  from: SourceType;
+  says: string;
+  detail: string;
+  excerpt: string;
+}[] = [
+  {
+    topic: 'auth',
+    from: 'App',
+    says: 'Every session starts with a PIN, and a new device also needs an OTP.',
+    detail: 'No biometric path exists in the running application today.',
+    excerpt: 'Screens observed: Login → OTP verification → Dashboard.',
+  },
+  {
+    topic: 'auth',
+    from: 'Repository',
+    says: 'Session tokens have a fixed expiry that other channels share.',
+    detail: 'Changing it here changes it everywhere that reads the same configuration.',
+    excerpt: 'security.jwt.access-token-ttl: 15m',
+  },
+  {
+    topic: 'auth',
+    from: 'Confluence',
+    says: 'Every customer-facing channel must federate through the central identity gateway.',
+    detail: 'No new identity provider is available to this project.',
+    excerpt: 'All customer-facing channels must federate through the central OAuth gateway.',
+  },
+  {
+    topic: 'auth',
+    from: 'Transcript',
+    says: 'Repeated authentication failures fall back to the existing method and raise a security event.',
+    detail: 'The failure sequence is logged, not just the final outcome.',
+    excerpt: 'Agreed: three strikes, then PIN. Log the failure sequence.',
+  },
+  {
+    topic: 'payments',
+    from: 'Repository',
+    says: 'Payment submission is already idempotent on a client-supplied key.',
+    detail: 'A retry with the same key will not double-charge.',
+    excerpt: 'Idempotency-Key header required on POST /payments',
+  },
+  {
+    topic: 'payments',
+    from: 'Confluence',
+    says: 'Settlement is reconciled nightly against the ledger, not in real time.',
+    detail: 'Anything expecting immediate confirmation will need a different path.',
+    excerpt: 'Nightly reconciliation window: 23:00–01:00 IST.',
+  },
+  {
+    topic: 'notify',
+    from: 'Repository',
+    says: 'Delivery is fire-and-forget, with no receipt returned to the sender.',
+    detail: 'Anything needing confirmation of delivery does not exist yet.',
+    excerpt: 'notification-service publishes to queue; no ack channel.',
+  },
+  {
+    topic: 'data',
+    from: 'Repository',
+    says: 'The old and new record shapes would have to coexist during any migration.',
+    detail: 'Nothing supports a hard cutover.',
+    excerpt: 'schema_version column read by three services.',
   },
 ];
 
@@ -401,20 +476,50 @@ export const synthesize = (input: SynthesisInput): SynthesisResult => {
     )
   );
 
-  // ── Flag cards ─────────────────────────────────────────────────────────────
+  // ── Cards for the board ─────────────────────────────────────────
 
-  const flagCards: Omit<BoardCard, 'id'>[] = [];
-  const titleExists = (t: string) => cards.some((c) => c.title.toLowerCase() === t.toLowerCase());
+  const boardCards: Omit<BoardCard, 'id'>[] = [];
+  const alreadyOnBoard = (t: string) =>
+    cards.some((c) => c.title.toLowerCase() === t.toLowerCase());
 
-  const conflictTitle = `Contested priority for ${subject}`;
-  if (has('Jira') && has('Transcript') && !titleExists(conflictTitle))
-    flagCards.push({
+  const topicKeys = topics.map((t) => t.key);
+  for (const f of FINDINGS) {
+    if (!topicKeys.includes(f.topic)) continue;
+
+    const backing = of(f.from)[0];
+    if (!backing || alreadyOnBoard(f.says)) continue;
+
+    boardCards.push({
+      sourceId: backing.id,
+      laneId: 'lane-current',
+      type: 'Context',
+      state: 'Confirmed',
+      title: f.says,
+      content: f.detail,
+      evidenceClass: 'Source fact',
+      provenance: {
+        system: backing.type,
+        itemId: backing.name,
+        indexedAt: 'this reading',
+        excerpt: f.excerpt,
+      },
+      relations: [],
+      aiCreated: true,
+      rationale: `Read from ${backing.name} because it bears on the problem statement.`,
+    });
+  }
+
+  /* A disagreement is not a piece of context — it is a decision you have to make,
+     so it gets its own card carrying both versions. */
+  const disagreement = `Two sources disagree on when ${subject} is needed.`;
+  if (has('Jira') && has('Transcript') && !alreadyOnBoard(disagreement))
+    boardCards.push({
       laneId: 'lane-decisions',
-      type: 'Conflict',
+      type: 'Disagreement',
       state: 'Flagged',
-      title: conflictTitle,
-      content: 'The backlog and the recorded conversations do not agree on when this is needed.',
-      evidenceClass: 'Inferred interpretation',
+      title: disagreement,
+      content: 'One phases it into a later release. The other treats it as needed now.',
+      evidenceClass: 'Source fact',
       conflict: {
         claimA: `The backlog phases ${subject} into a later release.`,
         claimASource: of('Jira')[0].name,
@@ -429,25 +534,18 @@ export const synthesize = (input: SynthesisInput): SynthesisResult => {
       rationale: `Synthesis v${version}: compared backlog phasing against transcript language.`,
     });
 
-  for (const f of failed) {
-    const t = `${f.name} could not be read`;
-    if (titleExists(t)) continue;
-    flagCards.push({
-      laneId: 'lane-inputs',
-      type: 'Question',
-      state: 'Flagged',
-      title: t,
-      content: `Ingestion failed${
-        f.ingestNote ? `: ${f.ingestNote}` : ''
-      }. Re-upload it or accept that this reading has a hole where it should be.`,
-      evidenceClass: 'Source fact',
-      owner: pmName,
-      dueState: 'Blocks a complete reading',
-      relations: [],
-      aiCreated: true,
-      rationale: `Synthesis v${version}: source present but not indexed.`,
-    });
-  }
+  /* A source that failed to ingest becomes a question, not a card — there is no
+     context to put on the board, only something you need to deal with. */
+  for (const f of failed)
+    questions.push(
+      question(
+        'Product',
+        `Can ${f.name} be re-supplied in a readable form?`,
+        `It failed to ingest${
+          f.ingestNote ? ` (${f.ingestNote})` : ''
+        }, so nothing it covers reached this reading.`
+      )
+    );
 
   return {
     brief: {
@@ -461,6 +559,6 @@ export const synthesize = (input: SynthesisInput): SynthesisResult => {
       stale: false,
     },
     questions,
-    flagCards,
+    boardCards,
   };
 };

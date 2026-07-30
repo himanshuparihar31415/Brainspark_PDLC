@@ -100,68 +100,40 @@ export const activeStage = (state: SpecAiState): SpecStageKey =>
 
 export interface CardTypeMeta {
   /**
-   * Board-facing name. The union member is the stable key; this is what the chalk
-   * board prints, so a card reads as what a person would call it.
+   * Used in the inspector and the Stage 2 source map. Never printed on the board —
+   * a card names its source there, not what kind of thing it is.
    */
   label: string;
   /** Lucide icon name resolved by the board component. */
-  icon: 'file' | 'eye' | 'spark' | 'question' | 'split' | 'lock' | 'check' | 'file-check';
-  /** Tailwind classes for the card border and its type chip. */
+  icon: 'file' | 'split' | 'pencil' | 'file-check';
+  /** Tailwind classes for the card border and its chip in the inspector. */
   border: string;
   chip: string;
-  /** Fields the type requires, shown in the inspector. */
+  /** Fields the kind requires, shown in the inspector. */
   requiredFields: string[];
 }
 
 export const CARD_TYPES: Record<CardType, CardTypeMeta> = {
-  Evidence: {
-    label: 'Evidence',
+  Context: {
+    label: 'From a source',
     icon: 'file',
     border: 'border-slate-300',
     chip: 'bg-slate-100 text-slate-700',
-    requiredFields: ['Title', 'Excerpt', 'Source', 'Timestamp'],
+    requiredFields: ['What it says', 'Source', 'Excerpt'],
   },
-  Observation: {
-    label: 'Observed flow',
-    icon: 'eye',
-    border: 'border-emerald-400',
-    chip: 'bg-emerald-50 text-emerald-700',
-    requiredFields: ['Observed behavior', 'Screen or flow', 'Environment'],
-  },
-  Idea: {
-    label: 'Feature idea',
-    icon: 'spark',
-    border: 'border-indigo-400',
-    chip: 'bg-indigo-50 text-indigo-700',
-    requiredFields: ['Idea', 'Rationale', 'Author'],
-  },
-  Question: {
-    label: 'Open question',
-    icon: 'question',
-    border: 'border-amber-400',
-    chip: 'bg-amber-50 text-amber-800',
-    requiredFields: ['Question', 'Owner', 'Due state'],
-  },
-  Conflict: {
-    label: 'Conflict',
+  Disagreement: {
+    label: 'Sources disagree',
     icon: 'split',
     border: 'border-rose-400',
     chip: 'bg-rose-50 text-rose-700',
-    requiredFields: ['Conflicting claims', 'Sources', 'Decision state'],
+    requiredFields: ['Both versions', 'Both sources', 'Decision'],
   },
-  Constraint: {
-    label: 'Technical context',
-    icon: 'lock',
-    border: 'border-blue-400',
-    chip: 'bg-blue-50 text-blue-700',
-    requiredFields: ['Constraint', 'Source', 'Impacted areas'],
-  },
-  Decision: {
-    label: 'Decision',
-    icon: 'check',
-    border: 'border-teal-400',
-    chip: 'bg-teal-50 text-teal-700',
-    requiredFields: ['Decision', 'Decider', 'Rationale', 'Date'],
+  Note: {
+    label: 'Your note',
+    icon: 'pencil',
+    border: 'border-indigo-400',
+    chip: 'bg-indigo-50 text-indigo-700',
+    requiredFields: ['What you know', 'Author'],
   },
   'Requirement seed': {
     label: 'Requirement seed',
@@ -170,27 +142,6 @@ export const CARD_TYPES: Record<CardType, CardTypeMeta> = {
     chip: 'bg-violet-100 text-violet-700',
     requiredFields: ['Actor', 'Need', 'Value', 'Scope', 'Evidence', 'Status'],
   },
-};
-
-/**
- * The line the chalk board prints at the foot of a card. A conflict says how many
- * sources disagree, a question says who it is waiting on, and anything sourced
- * names its source — so the card's standing is readable without opening it.
- */
-export const cardFooter = (card: {
-  type: CardType;
-  provenance?: { system: string; itemId?: string };
-  conflict?: unknown;
-  owner?: string;
-  dueState?: string;
-  author?: string;
-  evidenceClass: EvidenceClass;
-}): string => {
-  if (card.type === 'Conflict') return '2 sources disagree';
-  if (card.type === 'Question') return card.dueState ?? 'Needs stakeholder input';
-  if (card.provenance) return `Source: ${card.provenance.itemId ?? card.provenance.system}`;
-  if (card.author) return `Added by ${card.author}`;
-  return card.evidenceClass;
 };
 
 /** Avatar glyph and tint for a knowledge source, keyed by what it came from. */
@@ -369,23 +320,6 @@ export const RELATION_KINDS: RelationKind[] = [
   'Supersedes',
 ];
 
-/** Selection-scoped AI actions. Every one operates on the current selection. */
-export interface BoardAction {
-  id: string;
-  label: string;
-  /** Minimum cards the action needs. */
-  minSelection: number;
-}
-
-export const BOARD_ACTIONS: BoardAction[] = [
-  { id: 'summarize', label: 'Summarize', minSelection: 1 },
-  { id: 'group', label: 'Group', minSelection: 2 },
-  { id: 'gaps', label: 'Find gaps', minSelection: 1 },
-  { id: 'conflicts', label: 'Find conflicts', minSelection: 2 },
-  { id: 'draft', label: 'Draft requirement', minSelection: 1 },
-  { id: 'remove', label: 'Remove', minSelection: 1 },
-];
-
 /**
  * Copilot prompt chips. Each one is a board action wearing a question, so the
  * conversational surface and the direct-manipulation surface can never drift:
@@ -433,7 +367,7 @@ export interface Readiness {
  */
 export const knowledgeReadiness = (state: SpecAiState): Readiness => {
   const sourcesReady = state.channels.filter((c) => c.status === 'Ready').length;
-  const conflicts = state.cards.filter((c) => c.type === 'Conflict');
+  const conflicts = state.cards.filter((c) => c.type === 'Disagreement');
   const conflictsOpen = conflicts.filter((c) => c.state === 'Flagged').length;
   const conflictsResolved = conflicts.length - conflictsOpen;
   /*
@@ -441,11 +375,8 @@ export const knowledgeReadiness = (state: SpecAiState): Readiness => {
    * unresolved as one on the board — promoted ones are skipped so they are not
    * counted twice.
    */
-  const openQuestions =
-    state.cards.filter(
-      (c) => c.type === 'Question' && c.state !== 'Confirmed' && c.state !== 'Superseded'
-    ).length +
-    state.questions.filter((q) => q.status === 'Open' && !q.cardId).length;
+  // Questions live in the rail now, so this is simply what is still unanswered.
+  const openQuestions = state.questions.filter((q) => q.status === 'Open').length;
   const confirmedSeeds = state.cards.filter(
     (c) => c.type === 'Requirement seed' && c.state !== 'Superseded'
   ).length;
@@ -524,7 +455,7 @@ export const canLockStage = (key: SpecStageKey, state: SpecAiState): GateCheck =
   switch (key) {
     case 'knowledge': {
       const openConflicts = state.cards.filter(
-        (c) => c.type === 'Conflict' && c.state === 'Flagged'
+        (c) => c.type === 'Disagreement' && c.state === 'Flagged'
       );
       if (openConflicts.length > 0) {
         const influenced = state.cards.filter(

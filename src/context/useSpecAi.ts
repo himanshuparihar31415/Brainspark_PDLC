@@ -193,7 +193,7 @@ export const useSpecAiSlice = ({
 
       /* Ids are minted here, not inside the updater — a state updater has to be
          pure, and React may call it more than once. */
-      const newCards = result.flagCards.map((c) => ({ ...c, id: nid('card') }));
+      const newCards = result.boardCards.map((c) => ({ ...c, id: nid('card') }));
 
       patch(projectId, (s) => {
         /* Carry forward anything already settled, matched on the question text. */
@@ -234,17 +234,17 @@ export const useSpecAiSlice = ({
         };
       });
 
-      const flags = result.flagCards.length;
+      const placed = result.boardCards.length;
       addToast(
-        `Reading v${result.brief.version} ready — ${result.questions.length} questions${
-          flags > 0 ? `, ${flags} flagged on the board` : ''
-        }.`
+        `Read ${current.sources.filter((x) => x.ingest === 'Indexed').length} sources — ${placed} ${
+          placed === 1 ? 'piece' : 'pieces'
+        } on the board, ${result.questions.length} questions.`
       );
       addAuditLog(
         'Synthesize Understanding',
         `Project: ${projectId}`,
         `${current.sources.filter((s) => s.ingest === 'Indexed').length} indexed sources`,
-        `Brief v${result.brief.version}, ${result.questions.length} questions, ${flags} flags`
+        `Brief v${result.brief.version}, ${result.questions.length} questions, ${placed} board cards`
       );
     }, 900);
   };
@@ -271,38 +271,6 @@ export const useSpecAiSlice = ({
         answer ?? '—',
         `Status: ${status}`
       );
-  };
-
-  /** Push a question onto the board so it can carry relations and evidence. */
-  const promoteQuestionToBoard = (projectId: string, questionId: string) => {
-    const state = specAiFor(projectId);
-    const q = state.questions.find((x) => x.id === questionId);
-    if (!q || q.cardId) return;
-
-    const cardId = nid('card');
-    patch(projectId, (s) => ({
-      ...s,
-      cards: [
-        ...s.cards,
-        {
-          id: cardId,
-          laneId: 'lane-decisions',
-          type: 'Question',
-          state: 'Flagged',
-          title: q.text,
-          content: q.rationale,
-          evidenceClass: 'AI assumption',
-          owner: q.owner,
-          dueState:
-            q.track === 'Architecture' ? 'Blocks the knowledge gate' : 'Needed before lock',
-          relations: [],
-          aiCreated: true,
-          rationale: `Promoted from the ${q.track.toLowerCase()} question queue.`,
-        },
-      ],
-      questions: s.questions.map((x) => (x.id === questionId ? { ...x, cardId } : x)),
-    }));
-    addToast('Question added to the board.');
   };
 
   // ── Board: cards, lanes, lifecycle, relations ───────────────────────────────
@@ -452,27 +420,23 @@ export const useSpecAiSlice = ({
       }
 
       case 'gaps': {
+        /* Questions live in the rail, so a gap becomes a question rather than
+           another card competing for space on the board. */
         patch(projectId, (s) => ({
           ...s,
-          cards: [
-            ...s.cards,
+          questions: [
+            ...s.questions,
             {
-              id: nid('card'),
-              laneId: 'lane-decisions',
-              type: 'Question',
-              state: 'Flagged',
-              title: 'What happens when the selected paths disagree?',
-              content: `No source in the ${selected.length} selected cards covers this. Resolve, assign, or record it as an explicit assumption.`,
-              evidenceClass: 'AI assumption',
+              id: nid('q'),
+              track: 'Product',
+              text: 'What happens where the selected pieces disagree?',
+              rationale: `No source among the ${selected.length} selected cards covers this.`,
               owner: currentUserName,
-              dueState: 'Needed before understanding lock',
-              relations: cardIds.map((id) => ({ toCardId: id, kind: 'Refines' as RelationKind })),
-              aiCreated: true,
-              rationale: `Gap analysis across ${selected.length} selected cards found no covering source.`,
+              status: 'Open',
             },
           ],
         }));
-        addToast('1 gap raised as a question card. Nothing was invented.');
+        addToast('1 gap raised as a question. Nothing was invented.');
         return;
       }
 
@@ -486,7 +450,7 @@ export const useSpecAiSlice = ({
             {
               id: nid('card'),
               laneId: 'lane-decisions',
-              type: 'Conflict',
+              type: 'Disagreement',
               state: 'Flagged',
               title: `Possible conflict: ${a.title}`,
               content: 'Two selected cards make claims that cannot both hold.',
@@ -520,7 +484,7 @@ export const useSpecAiSlice = ({
             {
               id: nid('card'),
               laneId: selected[0]?.laneId ?? 'lane-inputs',
-              type: 'Idea',
+              type: 'Note',
               state: 'Interpreted',
               title: `Summary of ${selected.length} cards`,
               content: selected.map((c) => c.title).join(' · '),
@@ -579,7 +543,7 @@ export const useSpecAiSlice = ({
         {
           id: nid('card'),
           laneId: 'lane-proposed',
-          type: 'Idea',
+          type: 'Note',
           state: 'Interpreted',
           title: archetype.name,
           content: archetype.description,
@@ -940,7 +904,6 @@ export const useSpecAiSlice = ({
     setProblemStatement,
     synthesizeUnderstanding,
     answerQuestion,
-    promoteQuestionToBoard,
     addCard,
     updateCard,
     moveCardToLane,

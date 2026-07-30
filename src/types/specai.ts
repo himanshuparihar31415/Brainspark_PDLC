@@ -66,18 +66,15 @@ export interface KnowledgeChannel {
 }
 
 /**
- * The eight constrained card types. Constraining the vocabulary is what keeps the
- * board a working surface rather than an unstructured whiteboard.
+ * What a card is. Nothing here is picked from a menu except a note — a card is a
+ * piece of context that came from a source, and it names that source instead of
+ * wearing a label.
+ *
+ * `Disagreement` exists because two sources saying different things is a decision
+ * you have to make, not a piece of context. `Requirement seed` is what the stage
+ * produces.
  */
-export type CardType =
-  | 'Evidence'
-  | 'Observation'
-  | 'Idea'
-  | 'Question'
-  | 'Conflict'
-  | 'Constraint'
-  | 'Decision'
-  | 'Requirement seed';
+export type CardType = 'Context' | 'Disagreement' | 'Note' | 'Requirement seed';
 
 /**
  * The visible content lifecycle. Every card sits at exactly one state, and the
@@ -137,6 +134,8 @@ export interface BoardLane {
 
 export interface BoardCard {
   id: string;
+  /** The source this came from. Absent on notes you wrote yourself. */
+  sourceId?: string;
   /** Retained as the grouping key even though the board positions freely. */
   laneId: string;
   /**

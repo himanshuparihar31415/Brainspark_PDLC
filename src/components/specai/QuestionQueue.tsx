@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { QuestionStatus, SpecAiState } from '../../types/specai';
 import { QUESTION_STATUS_CHIP, QUESTION_TRACKS, QUESTION_TRACK_COPY } from '../../data/specai';
-import { AlertTriangle, ArrowUpRight, Check, HelpCircle, RotateCcw } from 'lucide-react';
+import { AlertTriangle, Check, HelpCircle, RotateCcw } from 'lucide-react';
 
 /**
  * Everything the reading could not settle, split by who has to settle it.
@@ -16,7 +16,7 @@ export const QuestionQueue: React.FC<{
   state: SpecAiState;
   disabled: boolean;
 }> = ({ state, disabled }) => {
-  const { answerQuestion, promoteQuestionToBoard } = useApp();
+  const { answerQuestion } = useApp();
 
   const [answering, setAnswering] = useState<string | null>(null);
   const [draft, setDraft] = useState('');
@@ -142,15 +142,6 @@ export const QuestionQueue: React.FC<{
                           >
                             Defer
                           </button>
-                          {!q.cardId && (
-                            <button
-                              onClick={() => promoteQuestionToBoard(state.projectId, q.id)}
-                              title="Put it on the board so it can carry evidence and relations"
-                              className="flex cursor-pointer items-center gap-0.5 rounded border border-slate-200 px-1.5 py-0.5 text-[9.5px] font-bold text-slate-600 hover:bg-slate-50"
-                            >
-                              <ArrowUpRight className="h-2.5 w-2.5" /> Board
-                            </button>
-                          )}
                         </>
                       )}
                     </div>

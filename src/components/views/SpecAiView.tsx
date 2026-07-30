@@ -116,8 +116,8 @@ export const SpecAiView: React.FC = () => {
                   disabled={isLocked || selected.length < 2}
                   title={
                     selected.length < 2
-                      ? 'Select at least two cards — conflicts are found between claims you point at.'
-                      : 'Compare the selected claims against each other'
+                      ? 'Select at least two cards — a disagreement is between two things you point at.'
+                      : 'Check whether the selected cards agree'
                   }
                   className={`rounded-lg border px-3.5 py-2 text-xs font-bold transition-colors ${
                     isLocked || selected.length < 2
@@ -126,7 +126,7 @@ export const SpecAiView: React.FC = () => {
                   }`}
                 >
                   <GitBranch className="mr-1.5 inline h-3.5 w-3.5" />
-                  Find conflicts
+                  Compare sources
                 </button>
               )}
 

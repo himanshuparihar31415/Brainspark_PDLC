@@ -114,63 +114,23 @@ const emptyChannels = (): KnowledgeChannel[] => [
 ];
 
 /**
- * The board mid-discovery: evidence and observations captured, one conflict still
- * flagged, and a requirement seed already confirmed off the back of linked cards.
- * The open conflict is what holds the stage gate.
+ * What the sources actually say about this problem. Five pieces, not forty — the
+ * workshop request restates the problem statement, the Jira ticket is folded into
+ * the disagreement it causes, and the enrolment question lives in the question
+ * queue. None of those earn space here.
  */
 const finEdgeCards: BoardCard[] = [
   {
-    id: 'card-ev-workshop',
+    id: 'card-obs-login',
+    sourceId: 'src-app',
     x: 24,
     y: 24,
-    laneId: 'lane-inputs',
-    type: 'Evidence',
-    state: 'Captured',
-    title: 'Biometric login requested for returning users',
-    content:
-      'Stakeholders asked for one-tap login for customers who have already been through onboarding.',
-    evidenceClass: 'Source fact',
-    provenance: {
-      system: 'Meetings',
-      itemId: 'Zoom workshop · 18 Jul 2026',
-      deepLink: 'https://zoom.example/rec/FMB2-workshop-18jul',
-      indexedAt: '2026-07-19 09:14',
-      excerpt:
-        '“If they have already onboarded, asking for a PIN every single time is the thing people complain about most.”',
-    },
-    relations: [{ toCardId: 'card-seed-bio', kind: 'Supports' }],
-    aiCreated: false,
-  },
-  {
-    id: 'card-ev-jira',
-    x: 24,
-    y: 264,
-    laneId: 'lane-inputs',
-    type: 'Evidence',
-    state: 'Captured',
-    title: 'FMB2-142: Add biometric login',
-    content: 'Backlog item exists and is currently marked priority P1, targeted at Phase 2.',
-    evidenceClass: 'Source fact',
-    provenance: {
-      system: 'Jira',
-      itemId: 'FMB2-142',
-      deepLink: 'https://jira.example/browse/FMB2-142',
-      indexedAt: '2026-07-29 23:31',
-      excerpt: 'Priority: P1 · Fix Version: 2.1 · Epic: Authentication modernization',
-    },
-    relations: [{ toCardId: 'card-conflict-priority', kind: 'Contradicts' }],
-    aiCreated: false,
-  },
-  {
-    id: 'card-obs-login',
-    x: 272,
-    y: 40,
     laneId: 'lane-current',
-    type: 'Observation',
+    type: 'Context',
     state: 'Confirmed',
-    title: 'PIN login followed by OTP on new device',
+    title: 'Every session starts with a PIN, and a new device also needs an OTP.',
     content:
-      'Every session starts with a PIN. A new device additionally requires an OTP before reaching the dashboard.',
+      'Observed end to end: Login → OTP verification → Dashboard. The OTP expires after 120 seconds. There is no biometric path in the running app.',
     evidenceClass: 'Source fact',
     provenance: {
       system: 'Live App',
@@ -183,14 +143,15 @@ const finEdgeCards: BoardCard[] = [
   },
   {
     id: 'card-con-token',
+    sourceId: 'src-repo',
     x: 272,
-    y: 288,
+    y: 40,
     laneId: 'lane-current',
-    type: 'Constraint',
+    type: 'Context',
     state: 'Confirmed',
-    title: 'JWT access token expires in 15 minutes',
+    title: 'Access tokens expire after 15 minutes, and web shares the same setting.',
     content:
-      'Session length is set in auth-service configuration and is shared with the web channel.',
+      'Set in auth-service configuration. Changing it for mobile would change it for the web channel too.',
     evidenceClass: 'Source fact',
     provenance: {
       system: 'Code',
@@ -204,13 +165,14 @@ const finEdgeCards: BoardCard[] = [
   },
   {
     id: 'card-con-oauth',
-    x: 150,
-    y: 520,
+    sourceId: 'src-standards',
+    x: 520,
+    y: 24,
     laneId: 'lane-current',
-    type: 'Constraint',
+    type: 'Context',
     state: 'Confirmed',
-    title: 'Use the existing OAuth gateway',
-    content: 'All channels authenticate through the shared gateway; no new identity provider.',
+    title: 'Every customer-facing channel must federate through the central OAuth gateway.',
+    content: 'No new identity provider is available to this project.',
     evidenceClass: 'Source fact',
     provenance: {
       system: 'Confluence',
@@ -222,73 +184,16 @@ const finEdgeCards: BoardCard[] = [
     aiCreated: false,
   },
   {
-    id: 'card-idea-faceid',
-    x: 768,
-    y: 44,
-    laneId: 'lane-proposed',
-    type: 'Idea',
-    state: 'Interpreted',
-    title: 'Use Face ID / Touch ID after device registration',
-    content:
-      'Once a device is registered, offer platform biometrics in place of the PIN for that device only.',
-    evidenceClass: 'Inferred interpretation',
-    author: 'Maya Kapoor',
-    confidence: 0.84,
-    rationale:
-      'Derived from the workshop request plus the observed login flow; registration is implied by the device-bound rule in the standards page.',
-    relations: [{ toCardId: 'card-seed-bio', kind: 'Refines' }],
-    aiCreated: true,
-  },
-  {
-    id: 'card-conflict-priority',
-    x: 520,
-    y: 24,
-    laneId: 'lane-decisions',
-    type: 'Conflict',
-    state: 'Flagged',
-    title: 'Biometric login release priority',
-    content: 'The workshop treats biometrics as launch-critical; Jira has it as P1 for Phase 2.',
-    evidenceClass: 'Source fact',
-    conflict: {
-      claimA: 'Biometric login is planned for Phase 2 and marked P1.',
-      claimASource: 'Jira FMB2-142',
-      claimB: 'Biometric login is required for the Q4 2026 launch.',
-      claimBSource: 'Zoom workshop · 18 Jul 2026',
-      observedState: 'The test application does not currently support biometric authentication.',
-    },
-    relations: [],
-    aiCreated: true,
-    rationale:
-      'Detected by comparing the priority field on FMB2-142 against launch language in the workshop transcript.',
-  },
-  {
-    id: 'card-q-enrollment',
-    x: 768,
-    y: 292,
-    laneId: 'lane-decisions',
-    type: 'Question',
-    state: 'Flagged',
-    title: 'Is device registration required before first biometric use?',
-    content:
-      'Nothing in the sources states whether a customer can enable biometrics on an unregistered device.',
-    evidenceClass: 'AI assumption',
-    owner: 'Arjun Mehta',
-    dueState: 'Needed before HLD sign-off',
-    relations: [],
-    aiCreated: true,
-    rationale: 'Raised as a gap: no source covers the enrolment precondition.',
-  },
-  {
     id: 'card-dec-fallback',
-    x: 420,
-    y: 540,
+    sourceId: 'src-call',
+    x: 24,
+    y: 264,
     laneId: 'lane-decisions',
-    type: 'Decision',
+    type: 'Context',
     state: 'Confirmed',
-    title: 'Fallback to PIN after three biometric failures',
-    content: 'Three consecutive failures fall back to PIN and raise a security event.',
-    evidenceClass: 'User decision',
-    author: 'Security review',
+    title: 'Three failed biometric attempts fall back to PIN and raise a security event.',
+    content: 'Agreed in the security review. The failure sequence is logged, not just the outcome.',
+    evidenceClass: 'Source fact',
     provenance: {
       system: 'Meetings',
       itemId: 'Security review · 24 Jul 2026',
@@ -297,6 +202,27 @@ const finEdgeCards: BoardCard[] = [
     },
     relations: [{ toCardId: 'card-seed-bio', kind: 'Supports' }],
     aiCreated: false,
+  },
+  {
+    id: 'card-conflict-priority',
+    x: 272,
+    y: 288,
+    laneId: 'lane-decisions',
+    type: 'Disagreement',
+    state: 'Flagged',
+    title: 'Two sources disagree on when biometric login is needed.',
+    content: 'The backlog phases it into 2.1. The discovery call treats it as needed at launch.',
+    evidenceClass: 'Source fact',
+    conflict: {
+      claimA: 'Biometric login is planned for Phase 2 and marked P1.',
+      claimASource: 'MBV2 Jira · FMB2-142',
+      claimB: 'Biometric login is required for the Q4 2026 launch.',
+      claimBSource: 'Product discovery call · 18 Jul 2026',
+      observedState: 'The test application does not support biometric authentication at all.',
+    },
+    relations: [],
+    aiCreated: true,
+    rationale: 'Compared the priority field on FMB2-142 against launch language in the call.',
   },
   {
     id: 'card-seed-bio',
@@ -311,7 +237,6 @@ const finEdgeCards: BoardCard[] = [
     evidenceClass: 'User decision',
     confidence: 0.91,
     relations: [
-      { toCardId: 'card-ev-workshop', kind: 'Supports' },
       { toCardId: 'card-dec-fallback', kind: 'Supports' },
       { toCardId: 'card-con-token', kind: 'Depends on' },
     ],
@@ -324,13 +249,13 @@ const finEdgeUnderstanding: UnderstandingSection[] = [
     key: 'objective',
     body: 'Reduce login friction for returning retail-banking customers while preserving device and account security.',
     versions: 3,
-    supportingCardIds: ['card-ev-workshop', 'card-obs-login'],
+    supportingCardIds: ['card-obs-login'],
   },
   {
     key: 'primaryUsers',
     body: 'Existing retail customer · newly registered customer · customer-support agent · fraud analyst.',
     versions: 2,
-    supportingCardIds: ['card-ev-workshop'],
+    supportingCardIds: [],
   },
   {
     key: 'currentState',
@@ -342,7 +267,7 @@ const finEdgeUnderstanding: UnderstandingSection[] = [
     key: 'proposedState',
     body: 'Registered customers may use device biometrics, with PIN fallback and risk-based step-up authentication.',
     versions: 4,
-    supportingCardIds: ['card-idea-faceid', 'card-seed-bio', 'card-dec-fallback'],
+    supportingCardIds: ['card-seed-bio', 'card-dec-fallback'],
   },
   {
     key: 'inScope',
@@ -366,13 +291,13 @@ const finEdgeUnderstanding: UnderstandingSection[] = [
     key: 'assumptions',
     body: 'Device biometric enrollment is managed by the operating system; no biometric template is stored by FinEdge.',
     versions: 1,
-    supportingCardIds: ['card-q-enrollment'],
+    supportingCardIds: [],
   },
   {
     key: 'openQuestions',
     body: 'Maximum registered devices per customer · policy for rooted or jailbroken devices · offline behavior.',
     versions: 1,
-    supportingCardIds: ['card-q-enrollment'],
+    supportingCardIds: [],
   },
 ];
 
@@ -519,6 +444,14 @@ const finEdgeQuestions: SpecQuestion[] = [
     owner: 'Maya Kapoor',
     status: 'Answered',
     answer: 'The biometric option is hidden and PIN remains available. No degraded messaging.',
+  },
+  {
+    id: 'q-v1-9',
+    track: 'Architecture',
+    text: 'Must a device be registered before biometrics can be enabled on it?',
+    rationale: 'No source states the enrolment precondition either way.',
+    owner: 'Arjun Mehta',
+    status: 'Open',
   },
   {
     id: 'q-v1-4',
@@ -692,14 +625,8 @@ const finEdge: SpecAiState = {
           then: 'biometric login is not offered',
         },
       ],
-      evidenceCardIds: [
-        'card-ev-workshop',
-        'card-ev-jira',
-        'card-obs-login',
-        'card-con-token',
-        'card-dec-fallback',
-      ],
-      evidenceSummary: '5 board cards · 2 Jira issues · 1 meeting transcript · 1 code constraint',
+      evidenceCardIds: ['card-obs-login', 'card-con-token', 'card-dec-fallback'],
+      evidenceSummary: '3 board cards · 1 Jira issue · 1 meeting transcript · 1 code constraint',
       confidence: 0.91,
       owner: 'Maya Kapoor',
     },

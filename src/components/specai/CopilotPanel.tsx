@@ -1,7 +1,7 @@
 import React, { useMemo, useRef, useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { BoardCard, SpecAiState } from '../../types/specai';
-import { CARD_TYPES, COPILOT_SUGGESTIONS } from '../../data/specai';
+import { COPILOT_SUGGESTIONS } from '../../data/specai';
 import { ArrowUp } from 'lucide-react';
 
 interface Turn {
@@ -18,17 +18,17 @@ const opener = (state: SpecAiState): string => {
   if (state.cards.length === 0)
     return 'The board is empty. Drag a knowledge source across and I will read it with you.';
 
-  const conflicts = state.cards.filter((c) => c.type === 'Conflict' && c.state === 'Flagged').length;
-  const questions = state.cards.filter(
-    (c) => c.type === 'Question' && c.state !== 'Confirmed' && c.state !== 'Superseded'
+  const conflicts = state.cards.filter(
+    (c) => c.type === 'Disagreement' && c.state === 'Flagged'
   ).length;
+  const questions = state.questions.filter((q) => q.status === 'Open').length;
 
   if (conflicts === 0 && questions === 0)
-    return 'Nothing on this board contradicts itself and no decisions are outstanding. Select cards to ask a grounded question.';
+    return 'Your sources agree and nothing is outstanding. Select cards to ask a grounded question.';
 
   const found = [
-    conflicts > 0 && `${conflicts} likely conflict${conflicts === 1 ? '' : 's'}`,
-    questions > 0 && `${questions} missing decision${questions === 1 ? '' : 's'}`,
+    conflicts > 0 && `${conflicts} place${conflicts === 1 ? '' : 's'} where your sources disagree`,
+    questions > 0 && `${questions} open question${questions === 1 ? '' : 's'}`,
   ]
     .filter(Boolean)
     .join(' and ');
@@ -45,14 +45,10 @@ const groundedReply = (selected: BoardCard[]): string => {
   if (selected.length === 0)
     return 'Nothing is selected. Point me at the cards you want me to reason over — I answer only from what you select, so every answer keeps its source.';
 
-  const types = [...new Set(selected.map((c) => CARD_TYPES[c.type].label))].join(', ');
-  const conflicts = selected.filter((c) => c.type === 'Conflict');
-  const questions = selected.filter((c) => c.type === 'Question');
+  const conflicts = selected.filter((c) => c.type === 'Disagreement');
   const assumptions = selected.filter((c) => c.evidenceClass === 'AI assumption');
 
-  const lines = [
-    `Reading ${selected.length} card${selected.length === 1 ? '' : 's'} — ${types}.`,
-  ];
+  const lines = [`Reading ${selected.length} card${selected.length === 1 ? '' : 's'}.`];
 
   if (conflicts.length > 0) {
     const c = conflicts[0];
@@ -60,10 +56,6 @@ const groundedReply = (selected: BoardCard[]): string => {
       `The unresolved decision is “${c.title}”: ${c.conflict?.claimASource ?? 'one source'} and ${
         c.conflict?.claimBSource ?? 'another'
       } disagree. I will not draft over it until it is settled.`
-    );
-  } else if (questions.length > 0) {
-    lines.push(
-      `“${questions[0].title}” is still open, owned by ${questions[0].owner ?? 'nobody yet'}.`
     );
   } else {
     lines.push('Nothing here contradicts anything else, so this is safe to promote.');
