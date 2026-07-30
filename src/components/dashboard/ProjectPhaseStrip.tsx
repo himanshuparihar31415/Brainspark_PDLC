@@ -86,9 +86,9 @@ export const ProjectPhaseStrip: React.FC<ProjectPhaseStripProps> = ({
       : 'border-rose-200 bg-rose-50 text-rose-900';
 
   return (
-    <div className="space-y-5 border-t border-slate-200 pt-6">
+    <div className="ios-hairline space-y-5 border-t pt-6">
       {/* Health headline */}
-      <div className={`flex items-center gap-2.5 rounded-xl border px-4 py-3 ${toneCls}`}>
+      <div className={`flex items-center gap-2.5 rounded-2xl border px-4 py-3 backdrop-blur-md ${toneCls}`}>
         {health.tone === 'good' ? (
           <CheckCircle2 className="h-4 w-4 shrink-0" />
         ) : (

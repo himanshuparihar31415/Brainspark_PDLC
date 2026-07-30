@@ -16,7 +16,7 @@ export const StatusBar: React.FC<{ state: SpecAiState }> = ({ state }) => {
   const storyRollup = workspaceStoryCompletion(state.modules, state.stories);
 
   return (
-    <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 border-t border-slate-200 bg-white/80 px-5 py-2 text-[10px] backdrop-blur">
+    <div className="glass flex flex-wrap items-center gap-x-5 gap-y-1.5 border-t border-white/50 px-5 py-2 text-[10px]">
       {/* Autosave */}
       <span className="flex items-center gap-1.5">
         {state.saveState === 'Saved' ? (

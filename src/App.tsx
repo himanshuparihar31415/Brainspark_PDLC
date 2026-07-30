@@ -117,11 +117,11 @@ const AppContent: React.FC = () => {
      * scroll region inside a view is inert — the page scrolls instead. A definite
      * height here is what makes `h-full` resolve anywhere below it.
      */
-    <div className="flex h-screen flex-col overflow-hidden bg-slate-100/70 font-sans text-slate-800 antialiased">
+    <div className="ios-mesh flex h-screen flex-col overflow-hidden font-sans text-slate-800 antialiased">
       <Header />
       <div className="flex min-h-0 flex-1 overflow-hidden">
         <Sidebar />
-        <main className="min-h-0 flex-1 overflow-y-auto bg-slate-100/60">
+        <main className="min-h-0 flex-1 overflow-y-auto bg-transparent">
           {/* Keyed so switching views remounts the boundary rather than holding
               the previous screen while the next chunk loads. */}
           <Suspense key={activeNav} fallback={<ViewFallback />}>

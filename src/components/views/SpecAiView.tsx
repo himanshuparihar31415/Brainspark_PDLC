@@ -70,7 +70,7 @@ export const SpecAiView: React.FC = () => {
   if (!project) {
     return (
       <div className="p-6">
-        <p className="rounded-xl border border-slate-200 bg-white px-4 py-8 text-center text-xs text-slate-500">
+        <p className="glass-panel rounded-2xl border border-white/60 px-4 py-8 text-center text-xs text-slate-500">
           No project is in scope.
         </p>
       </div>

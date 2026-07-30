@@ -1,1 +1,102 @@
 @import "tailwindcss";
+
+/*
+ * iOS-inspired light glass theme.
+ * Remap indigo → system blue so existing utility classes pick up the accent
+ * without rewriting every view. Status greens/ambers/roses stay semantic.
+ */
+@theme {
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI",
+    system-ui, "Helvetica Neue", Helvetica, Arial, sans-serif;
+
+  /* iOS system blue ramp (replaces default indigo / purple) */
+  --color-indigo-50: #eff6ff;
+  --color-indigo-100: #dbeafe;
+  --color-indigo-200: #bfdbfe;
+  --color-indigo-300: #93c5fd;
+  --color-indigo-400: #60a5fa;
+  --color-indigo-500: #3b82f6;
+  --color-indigo-600: #007aff;
+  --color-indigo-700: #0062cc;
+  --color-indigo-800: #004999;
+  --color-indigo-900: #003366;
+  --color-indigo-950: #001a33;
+
+  /* Cooler iOS-adjacent neutrals */
+  --color-slate-50: #f5f7fa;
+  --color-slate-100: #eef1f6;
+  --color-slate-200: #e1e5eb;
+  --color-slate-300: #c5ccd6;
+  --color-slate-400: #8e99a8;
+  --color-slate-500: #6b7585;
+  --color-slate-600: #545e6e;
+  --color-slate-700: #3d4654;
+  --color-slate-800: #2a313c;
+  --color-slate-900: #1c222b;
+  --color-slate-950: #11151c;
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    margin: 0;
+    font-family: var(--font-sans);
+    color: var(--color-slate-800);
+    background-color: #e8eef6;
+    background-image:
+      radial-gradient(ellipse 90% 60% at 10% -10%, rgba(0, 122, 255, 0.14), transparent 55%),
+      radial-gradient(ellipse 70% 50% at 95% 5%, rgba(90, 200, 250, 0.18), transparent 50%),
+      radial-gradient(ellipse 60% 40% at 50% 110%, rgba(0, 122, 255, 0.08), transparent 55%),
+      linear-gradient(180deg, #f4f7fb 0%, #e8eef6 45%, #eef2f7 100%);
+    background-attachment: fixed;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+@layer utilities {
+  .glass {
+    background: rgba(255, 255, 255, 0.55);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.55);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.7) inset,
+      0 8px 32px rgba(28, 34, 43, 0.06);
+  }
+
+  .glass-panel {
+    background: rgba(255, 255, 255, 0.72);
+    backdrop-filter: blur(28px) saturate(180%);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.65);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.85) inset,
+      0 4px 24px rgba(28, 34, 43, 0.05);
+  }
+
+  .glass-strong {
+    background: rgba(255, 255, 255, 0.82);
+    backdrop-filter: blur(40px) saturate(190%);
+    -webkit-backdrop-filter: blur(40px) saturate(190%);
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.9) inset,
+      0 12px 40px rgba(28, 34, 43, 0.08);
+  }
+
+  .ios-hairline {
+    border-color: rgba(60, 60, 67, 0.12);
+  }
+
+  .ios-mesh {
+    background-color: transparent;
+    background-image: none;
+  }
+}
