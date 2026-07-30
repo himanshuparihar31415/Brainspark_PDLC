@@ -8,7 +8,7 @@ import {
   moduleLabel,
 } from '../../data/observability';
 import { OBSERVABILITY_RUNS } from '../../data/observabilityData';
-import { Cockpit } from '../observability/Cockpit';
+import { ObsDashboard } from '../observability/ObsDashboard';
 import { ModuleHealth } from '../observability/ModuleHealth';
 import { ScopeHealth } from '../observability/ScopeHealth';
 import { RunTimeline } from '../observability/RunTimeline';
@@ -102,8 +102,8 @@ export const ObservabilityView: React.FC = () => {
               PDLC Observability
             </h1>
             <p className="mt-1 text-xs text-slate-500">
-              Reliability, tenant economics, agent drift, security audit, and trends — each card is
-              one query against scoped execution data, with drill-down to the run timeline.
+              Platform cost, performance, reliability, agent behavior, and tenant economics —
+              aligned with the Observability API surface, with drill-down to run timelines.
             </p>
           </div>
 
@@ -150,7 +150,7 @@ export const ObservabilityView: React.FC = () => {
         </nav>
       </header>
 
-      {drill.level === 'L1' && <Cockpit runs={scopedRuns} onDrill={setDrill} />}
+      {drill.level === 'L1' && <ObsDashboard onDrill={setDrill} />}
       {drill.level === 'L2' && (
         <ModuleHealth runs={scopedRuns} moduleName={drill.moduleName} onDrill={setDrill} from={drill} />
       )}
