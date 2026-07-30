@@ -1,5 +1,6 @@
 import React from 'react';
 import { SpecSource, SpecAiState } from '../../types/specai';
+import { workspaceStoryCompletion } from '../../data/completion';
 import { Check, Cloud, CloudOff, Loader2, RefreshCw } from 'lucide-react';
 
 /**
@@ -12,6 +13,7 @@ export const StatusBar: React.FC<{ state: SpecAiState }> = ({ state }) => {
   );
   const failed = state.sources.filter((s) => s.ingest === 'Failed');
   const indexed = state.sources.filter((s) => s.ingest === 'Indexed').length;
+  const storyRollup = workspaceStoryCompletion(state.modules, state.stories);
 
   return (
     <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 border-t border-slate-200 bg-white/80 px-5 py-2 text-[10px] backdrop-blur">
@@ -66,6 +68,15 @@ export const StatusBar: React.FC<{ state: SpecAiState }> = ({ state }) => {
           <span className="text-indigo-700">
             Generating {state.generating}… you can leave this page.
           </span>
+        </span>
+      )}
+
+      {storyRollup.total > 0 && (
+        <span className="flex items-center gap-1.5 text-slate-500">
+          Module completion:{' '}
+          <b className="text-slate-800">
+            {storyRollup.done}/{storyRollup.total} · {storyRollup.percent}%
+          </b>
         </span>
       )}
 

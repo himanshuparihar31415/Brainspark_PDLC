@@ -332,6 +332,17 @@ export type StoryType =
   | 'Testing story'
   | 'Migration story';
 
+/**
+ * Delivery lifecycle after generation. `exported` stays as a convenience flag
+ * kept in sync with `deliveryStatus !== 'Draft'`.
+ */
+export type StoryDeliveryStatus =
+  | 'Draft'
+  | 'Exported'
+  | 'In progress'
+  | 'Done'
+  | 'Blocked';
+
 export interface UserStory {
   id: string;
   /** e.g. "FMB2-AUTH-031". */
@@ -352,6 +363,9 @@ export interface UserStory {
   sourceEvidence: string;
   /** True when a linked requirement or artifact changed after generation. */
   stale: boolean;
+  /** Where this story sits in delivery — source of truth for completion rollups. */
+  deliveryStatus: StoryDeliveryStatus;
+  /** True once pushed to the tracker (`deliveryStatus !== 'Draft'`). */
   exported: boolean;
 }
 

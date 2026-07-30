@@ -11,6 +11,7 @@ import {
   SpecAiState,
   SpecQuestion,
   SpecStageKey,
+  StoryDeliveryStatus,
   UnderstandingKey,
 } from '../types/specai';
 /* `synthesize` is loaded on demand — its topic tables and brief prose have no
@@ -21,6 +22,7 @@ import {
   GENERATED_MODULES,
   GENERATED_STORIES,
 } from '../data/specAiGenerated';
+import { withDeliveryStatus } from '../data/completion';
 import {
   ARCHETYPES,
   SPEC_STAGES,
@@ -918,7 +920,9 @@ export const useSpecAiSlice = ({
 
     patch(projectId, (s) => ({
       ...s,
-      stories: s.stories.map((st) => ({ ...st, exported: true })),
+      stories: s.stories.map((st) =>
+        st.deliveryStatus === 'Draft' ? withDeliveryStatus(st, 'Exported') : st
+      ),
       jiraSyncedMinutesAgo: 0,
     }));
 
@@ -929,6 +933,20 @@ export const useSpecAiSlice = ({
       `${pending} stories · epic ${state.jiraMapping.epic}`,
       'Bidirectional sync established'
     );
+  };
+
+  const setStoryDeliveryStatus = (
+    projectId: string,
+    storyId: string,
+    status: StoryDeliveryStatus
+  ) => {
+    patch(projectId, (s) => ({
+      ...s,
+      stories: s.stories.map((st) =>
+        st.id === storyId ? withDeliveryStatus(st, status) : st
+      ),
+    }));
+    addToast(`Story marked ${status}.`);
   };
 
   return {
@@ -970,6 +988,7 @@ export const useSpecAiSlice = ({
     reviewStaleStory,
     setJiraMapping,
     exportStoriesToJira,
+    setStoryDeliveryStatus,
   };
 };
 

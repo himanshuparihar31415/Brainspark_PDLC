@@ -460,7 +460,8 @@ export const GENERATED_STORIES = (): UserStory[] => [
     linkedArtifactIds: ['art-prd', 'art-hld', 'art-sequence', 'art-openapi'],
     sourceEvidence: 'Jira FMB2-142 · Zoom workshop · live app observation · ADR-004',
     stale: false,
-    exported: false,
+    deliveryStatus: 'Done',
+    exported: true,
   },
   {
     id: 'st-2',
@@ -490,7 +491,8 @@ export const GENERATED_STORIES = (): UserStory[] => [
     linkedArtifactIds: ['art-lld', 'art-c4'],
     sourceEvidence: 'auth-service config · HLD 4.3',
     stale: false,
-    exported: false,
+    deliveryStatus: 'Done',
+    exported: true,
   },
   {
     id: 'st-3',
@@ -520,7 +522,8 @@ export const GENERATED_STORIES = (): UserStory[] => [
     linkedArtifactIds: ['art-openapi'],
     sourceEvidence: 'OpenAPI auth/biometric',
     stale: false,
-    exported: false,
+    deliveryStatus: 'In progress',
+    exported: true,
   },
   {
     id: 'st-4',
@@ -545,7 +548,8 @@ export const GENERATED_STORIES = (): UserStory[] => [
     linkedArtifactIds: ['art-rules', 'art-events'],
     sourceEvidence: 'Security review 24 Jul 2026',
     stale: false,
-    exported: false,
+    deliveryStatus: 'Exported',
+    exported: true,
   },
   {
     id: 'st-5',
@@ -570,7 +574,8 @@ export const GENERATED_STORIES = (): UserStory[] => [
     linkedArtifactIds: ['art-er', 'art-schema'],
     sourceEvidence: 'ER model · ADR-004',
     stale: false,
-    exported: false,
+    deliveryStatus: 'Exported',
+    exported: true,
   },
   {
     id: 'st-6',
@@ -595,6 +600,7 @@ export const GENERATED_STORIES = (): UserStory[] => [
     linkedArtifactIds: ['art-nfr', 'art-sequence'],
     sourceEvidence: 'FRD FR-04 · BR-01',
     stale: false,
+    deliveryStatus: 'Draft',
     exported: false,
   },
   {
@@ -620,6 +626,7 @@ export const GENERATED_STORIES = (): UserStory[] => [
     linkedArtifactIds: ['art-er'],
     sourceEvidence: 'Legacy authentication architecture.pdf',
     stale: false,
-    exported: false,
+    deliveryStatus: 'Blocked',
+    exported: true,
   },
 ];

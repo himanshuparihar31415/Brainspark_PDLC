@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { SpecAiState } from '../../types/specai';
+import { featureCompletions } from '../../data/completion';
 import {
   Plus,
   Trash2,
@@ -40,6 +41,8 @@ export const Stage4Modules: React.FC<{
   const [mergeTo, setMergeTo] = useState('');
 
   const disabled = readOnly || locked;
+  const featureDone = featureCompletions(state.modules, state.stories);
+  const chipFor = (featureId: string) => featureDone.find((f) => f.featureId === featureId);
 
   return (
     <div className="space-y-3">
@@ -185,6 +188,7 @@ export const Stage4Modules: React.FC<{
                 <div className="mt-2.5 space-y-1.5 pl-4">
                   {m.features.map((f) => {
                     const open = expanded === f.id;
+                    const completion = chipFor(f.id);
                     return (
                       <div key={f.id} className="rounded-xl border border-slate-100 bg-slate-50/40 p-2">
                         <div className="flex flex-wrap items-center gap-2">
@@ -198,6 +202,20 @@ export const Stage4Modules: React.FC<{
                           <span className="shrink-0 rounded bg-white px-1.5 py-0.5 text-[9px] font-bold text-slate-500">
                             Feature
                           </span>
+                          {completion && completion.total > 0 && (
+                            <span
+                              title={`${completion.done} of ${completion.total} stories done`}
+                              className={`shrink-0 rounded px-1.5 py-0.5 text-[9px] font-bold ${
+                                completion.percent === 100
+                                  ? 'bg-emerald-50 text-emerald-700'
+                                  : completion.percent === 0
+                                  ? 'bg-slate-100 text-slate-500'
+                                  : 'bg-amber-50 text-amber-800'
+                              }`}
+                            >
+                              {completion.done}/{completion.total} done · {completion.percent}%
+                            </span>
+                          )}
                           {f.requirementIds.length > 0 && (
                             <span
                               title={f.requirementIds.join(', ')}
