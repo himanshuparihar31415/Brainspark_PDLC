@@ -9,14 +9,13 @@ import {
   stageStateFor,
 } from '../../data/specai';
 import { StageStrip } from '../specai/StageStrip';
-import { GateButton } from '../specai/StageGate';
+import { StageFooter } from '../specai/StageFooter';
 import { StatusBar } from '../specai/StatusBar';
 import { Stage1Knowledge } from '../specai/Stage1Knowledge';
 import { Stage2Understanding } from '../specai/Stage2Understanding';
 import { Stage3Artifacts } from '../specai/Stage3Artifacts';
 import { Stage4Modules } from '../specai/Stage4Modules';
 import { Stage5Stories } from '../specai/Stage5Stories';
-import { Eye } from 'lucide-react';
 
 const STAGE_ORDER: SpecStageKey[] = [
   'knowledge',
@@ -30,6 +29,9 @@ const STAGE_ORDER: SpecStageKey[] = [
  * Spec AI module shell. Full-screen: the platform nav collapses on entry, and the
  * stage strip across the top is the only chrome — there is no stage heading,
  * because the strip already says where you are.
+ *
+ * The forward action lives at the foot of the workspace rather than in the header
+ * row, so every stage answers "and then?" in the same corner.
  */
 export const SpecAiView: React.FC = () => {
   const { currentScope, currentRole, projects, specAiFor, lockSpecStage, goToSpecStage } = useApp();
@@ -41,9 +43,9 @@ export const SpecAiView: React.FC = () => {
   const [track, setTrack] = useState<StoryTrack | 'All'>('All');
 
   const readOnly = !canEditSpecAi(currentRole);
-  const stage = stageDef(viewing);
   const isLocked = stageStateFor(viewing, state) === 'Locked';
   const warnings = stageGateWarnings(viewing, state);
+  const next = STAGE_ORDER[STAGE_ORDER.indexOf(viewing) + 1];
 
   /** Stage 1 fills the viewport; the document stages scroll. */
   const fills = viewing === 'knowledge';
@@ -66,49 +68,13 @@ export const SpecAiView: React.FC = () => {
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="flex min-h-0 flex-1 flex-col gap-2.5 p-3 lg:p-4">
-        <div className="flex flex-wrap items-stretch gap-2">
-          <div className="min-w-0 flex-1">
-            <StageStrip state={state} activeKey={viewing} onSelect={select} activeTrack={track} />
-          </div>
-          {/*
-            No stage title. The strip already says which stage you are on, and a
-            heading repeating it was the largest thing on screen saying the least.
-            Only the actions survive, on one slim row.
-          */}
-          {(viewing !== 'stories' || readOnly) && (
-            <div className="flex shrink-0 flex-wrap items-center gap-2">
-              {readOnly && (
-                <span className="flex items-center gap-1.5 text-[10px] font-semibold text-slate-500">
-                  <Eye className="h-3 w-3 text-slate-400" />
-                  Read-only — Spec AI belongs to the PM and Architect
-                </span>
-              )}
-
-              {viewing !== 'stories' && (
-                <GateButton
-                  label={stage.gateLabel}
-                  warnings={warnings}
-                  locked={isLocked}
-                  readOnly={readOnly}
-                  confirm={
-                    viewing === 'understanding'
-                      ? {
-                          title: 'Lock Project Understanding?',
-                          body: 'Downstream artifacts will be generated from this locked version.',
-                        }
-                      : undefined
-                  }
-                  onLock={() => {
-                    lockSpecStage(state.projectId, viewing);
-                    const next = STAGE_ORDER[STAGE_ORDER.indexOf(viewing) + 1];
-                    if (next) setViewing(next);
-                  }}
-                />
-              )}
-            </div>
-          )}
-        </div>
+      <div className="flex min-h-0 flex-1 flex-col gap-2 p-3 lg:p-4">
+        {/*
+          The strip is the only thing that always holds a row. No stage title — it
+          already says which stage you are on, and a heading repeating it was the
+          largest thing on screen saying the least.
+        */}
+        <StageStrip state={state} activeKey={viewing} onSelect={select} activeTrack={track} />
 
         <div
           className={
@@ -139,6 +105,27 @@ export const SpecAiView: React.FC = () => {
             />
           )}
         </div>
+
+        <StageFooter
+          /* The strip's own label, so the button names the segment it moves to. */
+          nextTitle={next ? stageDef(next).railLabel : undefined}
+          warnings={warnings}
+          locked={isLocked}
+          readOnly={readOnly}
+          confirm={
+            viewing === 'understanding'
+              ? {
+                  title: 'Lock Project Understanding?',
+                  body: 'Downstream artifacts will be generated from this locked version.',
+                }
+              : undefined
+          }
+          onLockAndContinue={() => {
+            lockSpecStage(state.projectId, viewing);
+            if (next) select(next);
+          }}
+          onContinue={() => next && select(next)}
+        />
       </div>
 
       <StatusBar state={state} />

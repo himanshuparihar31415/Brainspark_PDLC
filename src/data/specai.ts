@@ -23,11 +23,10 @@ import {
 export interface SpecStageDef {
   key: SpecStageKey;
   index: number;
+  /** Short label, used on the strip and on the Next button that moves there. */
   railLabel: string;
+  /** Long name, used in toasts and the audit trail. */
   title: string;
-  subtitle: string;
-  /** Label on the stage-advancing gate button. */
-  gateLabel: string;
 }
 
 export const SPEC_STAGES: SpecStageDef[] = [
@@ -36,41 +35,30 @@ export const SPEC_STAGES: SpecStageDef[] = [
     index: 1,
     railLabel: 'Knowledge',
     title: 'Knowledge Creation & Contextualization',
-    subtitle: 'Bring together everything you know, inspect what exists, and shape rough requirements.',
-    gateLabel: 'Build understanding',
   },
   {
     key: 'understanding',
     index: 2,
     railLabel: 'Understanding',
     title: 'Project Understanding',
-    subtitle: 'The convergence of everything you brought in. Edit any section, then lock.',
-    gateLabel: 'Lock understanding and generate artifacts',
   },
   {
     key: 'artifacts',
     index: 3,
     railLabel: 'Artifacts',
     title: 'Artifact Studio',
-    subtitle: 'The full package, generated in one pass. Review, edit, or regenerate any piece.',
-    gateLabel: 'Approve package and map modules',
   },
   {
     key: 'modules',
     index: 4,
     railLabel: 'Modules & Features',
     title: 'Modules & Features',
-    subtitle: 'The system, decomposed. Rearrange until it’s right, then finalize.',
-    gateLabel: 'Finalize map and generate stories',
   },
   {
     key: 'stories',
     index: 5,
     railLabel: 'User Stories',
     title: 'User Stories',
-    subtitle:
-      'Implementation-ready work items, split into non-technical and technical tracks and generated from your module map.',
-    gateLabel: 'Review and export to Jira',
   },
 ];
 

@@ -7,7 +7,6 @@ import {
   Check,
   Download,
   History,
-  Info,
   MessageSquare,
   Pencil,
   RefreshCw,
@@ -154,13 +153,6 @@ export const Stage3Artifacts: React.FC<{
   return (
     <div className="space-y-3">
       {ModeBar}
-
-      <div className="flex items-start gap-2 rounded-xl border border-slate-200 bg-slate-50/60 px-4 py-2.5">
-        <Info className="mt-px h-3.5 w-3.5 shrink-0 text-slate-400" />
-        <span className="text-[11px] text-slate-600">
-          Regenerating one artifact or section preserves your edits everywhere else.
-        </span>
-      </div>
 
       {needsReview.length > 0 && (
         <div className="flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5">

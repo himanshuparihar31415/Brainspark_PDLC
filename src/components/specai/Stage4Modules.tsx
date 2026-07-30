@@ -10,7 +10,6 @@ import {
   MoveRight,
   Network,
   ListTree,
-  Info,
   Box,
   CornerDownRight,
   Link2,
@@ -143,15 +142,6 @@ export const Stage4Modules: React.FC<{
           </>
         )}
       </section>
-
-      {view === 'graph' && (
-        <div className="flex items-start gap-2 rounded-xl border border-slate-200 bg-slate-50/60 px-4 py-2.5">
-          <Info className="mt-px h-3.5 w-3.5 shrink-0 text-slate-400" />
-          <span className="text-[11px] text-slate-600">
-            Dependencies here drive story priority scoring in the next stage.
-          </span>
-        </div>
-      )}
 
       {state.modules.length === 0 ? (
         <p className="rounded-2xl border border-slate-200 bg-white px-4 py-10 text-center text-xs text-slate-500">

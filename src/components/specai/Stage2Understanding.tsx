@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { SpecAiState, UnderstandingKey } from '../../types/specai';
 import { CARD_TYPES, UNDERSTANDING_COPY } from '../../data/specai';
-import { History, RefreshCw, Pencil, Check, Info, Link2, ChevronDown } from 'lucide-react';
+import { History, RefreshCw, Pencil, Check, Link2, ChevronDown } from 'lucide-react';
 
 /** Stage 2 — Project Understanding and the formal requirement register. */
 export const Stage2Understanding: React.FC<{
@@ -22,13 +22,6 @@ export const Stage2Understanding: React.FC<{
     <div className="grid min-h-0 grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
       {/* Understanding sections */}
       <div className="min-w-0 space-y-3">
-        <div className="flex items-start gap-2 rounded-xl border border-slate-200 bg-slate-50/60 px-4 py-2.5">
-          <Info className="mt-px h-3.5 w-3.5 shrink-0 text-slate-400" />
-          <span className="text-[11px] text-slate-600">
-            Edits save as you go. Regenerating one section won’t touch your edits elsewhere.
-          </span>
-        </div>
-
         {state.understanding.map((section) => {
           const copy = UNDERSTANDING_COPY[section.key];
           const isEditing = editing === section.key;
