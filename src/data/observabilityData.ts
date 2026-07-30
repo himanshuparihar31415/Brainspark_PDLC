@@ -1,12 +1,13 @@
-import {
+﻿import {
   AgentCatalogEntry,
   AgentExecution,
+  EvidenceAccessLog,
   ModelCatalogEntry,
   ObservabilityEvent,
   ObservabilityRun,
 } from '../types/observability';
 
-// ───────────────────────────── master.agents ─────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ master.agents â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export const AGENT_CATALOG: AgentCatalogEntry[] = [
   {
@@ -83,7 +84,7 @@ export const AGENT_CATALOG: AgentCatalogEntry[] = [
   },
 ];
 
-// ───────────────────────────── master.llm_models ─────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ master.llm_models â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /**
  * Pricing carries a validity window, so a price change is a new row rather than an
@@ -134,7 +135,7 @@ export const MODEL_CATALOG: ModelCatalogEntry[] = [
   },
 ];
 
-// ───────────────────────── Level 1 — observability runs ─────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Level 1 â€” observability runs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /**
  * The first run is the worked example from the specification: PRD generation that
@@ -145,7 +146,7 @@ export const OBSERVABILITY_RUNS: ObservabilityRun[] = [
   {
     id: 'obs-run-8a3f',
     runId: 'run-8a3f',
-    tenantId: 't-incedolabs',
+    tenantId: 't-incedo',
     tenantName: 'Incedo Labs',
     userId: 'u-priya',
     userName: 'Priya Nair',
@@ -172,11 +173,14 @@ export const OBSERVABILITY_RUNS: ObservabilityRun[] = [
     totalCostUsd: 0.1843,
     acceptanceStatus: 'accepted',
     payloadPolicy: 'redacted',
+    clientIp: '10.24.18.41',
+    artifactUnits: 1,
+    artifactUnitLabel: 'other',
   },
   {
     id: 'obs-run-91c2',
     runId: 'run-91c2',
-    tenantId: 't-incedolabs',
+    tenantId: 't-incedo',
     tenantName: 'Incedo Labs',
     userId: 'u-arjun',
     userName: 'Arjun Mehta',
@@ -203,11 +207,14 @@ export const OBSERVABILITY_RUNS: ObservabilityRun[] = [
     totalCostUsd: 0.1245,
     acceptanceStatus: 'accepted',
     payloadPolicy: 'redacted',
+    clientIp: '10.24.18.55',
+    artifactUnits: 7,
+    artifactUnitLabel: 'user_story',
   },
   {
     id: 'obs-run-b7d4',
     runId: 'run-b7d4',
-    tenantId: 't-incedolabs',
+    tenantId: 't-incedo',
     tenantName: 'Incedo Labs',
     userId: 'u-devika',
     userName: 'Devika Rao',
@@ -234,12 +241,17 @@ export const OBSERVABILITY_RUNS: ObservabilityRun[] = [
     acceptanceStatus: 'rejected',
     payloadPolicy: 'redacted',
     errorSummary: 'Jira returned 429 on issue fetch after two provider retries.',
+    clientIp: '10.24.19.12',
+    rateLimited: true,
+    artifactUnits: 0,
+    artifactUnitLabel: 'test_case',
+    sensitiveMarkers: ['EMAIL', 'ACCOUNT_ID'],
   },
   {
     id: 'obs-run-c3e8',
     runId: 'run-c3e8',
     tenantId: 't-acme',
-    tenantName: 'Acme Retail Group',
+    tenantName: 'Acme Corporation',
     userId: 'u-sam',
     userName: 'Sam Okafor',
     projectId: 'p-acme-portal',
@@ -262,16 +274,20 @@ export const OBSERVABILITY_RUNS: ObservabilityRun[] = [
     totalOutputTokens: 0,
     totalCostUsd: 0.0372,
     acceptanceStatus: 'pending',
-    /* Acme runs metadata-only, so this run cannot be replayed — the policy event
+    /* Acme runs metadata-only, so this run cannot be replayed â€” the policy event
        under it is what explains the absence. */
     payloadPolicy: 'metadata_only',
     errorSummary: 'Two of five screens returned empty; run marked partial.',
+    clientIp: '203.0.113.44',
+    artifactUnits: 3,
+    artifactUnitLabel: 'design',
+    sensitiveMarkers: ['PHONE'],
   },
   {
     id: 'obs-run-d519',
     runId: 'run-d519',
     tenantId: 't-acme',
-    tenantName: 'Acme Retail Group',
+    tenantName: 'Acme Corporation',
     userId: 'u-sam',
     userName: 'Sam Okafor',
     projectId: 'p-acme-portal',
@@ -295,11 +311,14 @@ export const OBSERVABILITY_RUNS: ObservabilityRun[] = [
     totalCostUsd: 0.0336,
     acceptanceStatus: 'accepted',
     payloadPolicy: 'metadata_only',
+    clientIp: '203.0.113.44',
+    artifactUnits: 1,
+    artifactUnitLabel: 'pr',
   },
   {
     id: 'obs-run-e7f1',
     runId: 'run-e7f1',
-    tenantId: 't-incedolabs',
+    tenantId: 't-incedo',
     tenantName: 'Incedo Labs',
     userId: 'u-maya',
     userName: 'Maya Kapoor',
@@ -325,10 +344,13 @@ export const OBSERVABILITY_RUNS: ObservabilityRun[] = [
     totalCostUsd: 0.0634,
     acceptanceStatus: 'pending',
     payloadPolicy: 'full',
+    clientIp: '10.24.18.90',
+    artifactUnits: 1,
+    artifactUnitLabel: 'other',
   },
 ];
 
-// ──────────────────── Level 2 — agent executions ────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Level 2 â€” agent executions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /**
  * Six rows for three agents on the worked example. The loop is plainly visible and
@@ -347,7 +369,7 @@ export const AGENT_EXECUTIONS: AgentExecution[] = [
     startedAt: '2026-07-29T10:00:00.000Z',
     completedAt: '2026-07-29T10:00:04.100Z',
     durationMs: 4_100,
-    inputSummary: '4 sources · problem statement (312 chars)',
+    inputSummary: '4 sources Â· problem statement (312 chars)',
     outputSummary: '5 pieces of context, 1 disagreement',
     llmCallCount: 1,
     toolCallCount: 2,
@@ -388,7 +410,7 @@ export const AGENT_EXECUTIONS: AgentExecution[] = [
     startedAt: '2026-07-29T10:00:11.500Z',
     completedAt: '2026-07-29T10:00:14.300Z',
     durationMs: 2_800,
-    outputSummary: 'FAILED completeness — 3 sections unsupported',
+    outputSummary: 'FAILED completeness â€” 3 sections unsupported',
     llmCallCount: 1,
     toolCallCount: 0,
     inputTokens: 5_100,
@@ -453,10 +475,10 @@ export const AGENT_EXECUTIONS: AgentExecution[] = [
     inputTokens: 3_400,
     outputTokens: 700,
     costUsd: 0.0009,
-    qualityResult: 'completeness 0.88 · groundedness 0.93',
+    qualityResult: 'completeness 0.88 Â· groundedness 0.93',
   },
 
-  // ── Stories run: a sub-agent fan-out, showing nesting and parallelism ──
+  // â”€â”€ Stories run: a sub-agent fan-out, showing nesting and parallelism â”€â”€
   {
     id: 'ex-7',
     observabilityRunId: 'obs-run-91c2',
@@ -490,7 +512,7 @@ export const AGENT_EXECUTIONS: AgentExecution[] = [
     startedAt: '2026-07-29T11:14:08.500Z',
     completedAt: '2026-07-29T11:14:19.100Z',
     durationMs: 10_600,
-    inputSummary: 'Non-technical track · 5 modules',
+    inputSummary: 'Non-technical track Â· 5 modules',
     outputSummary: '12 user stories',
     llmCallCount: 1,
     toolCallCount: 0,
@@ -512,7 +534,7 @@ export const AGENT_EXECUTIONS: AgentExecution[] = [
     startedAt: '2026-07-29T11:14:08.501Z',
     completedAt: '2026-07-29T11:14:22.800Z',
     durationMs: 14_299,
-    inputSummary: 'Technical track · 5 modules',
+    inputSummary: 'Technical track Â· 5 modules',
     outputSummary: '30 technical stories',
     llmCallCount: 1,
     toolCallCount: 0,
@@ -521,7 +543,7 @@ export const AGENT_EXECUTIONS: AgentExecution[] = [
     costUsd: 0.0275,
   },
 
-  // ── Failed QA run: dependency error, then a workflow retry that also failed ──
+  // â”€â”€ Failed QA run: dependency error, then a workflow retry that also failed â”€â”€
   {
     id: 'ex-10',
     observabilityRunId: 'obs-run-b7d4',
@@ -561,7 +583,7 @@ export const AGENT_EXECUTIONS: AgentExecution[] = [
     errorDetail: 'jira_client.RateLimited: 429 Too Many Requests',
   },
 
-  // ── Partial prototype run, with a human-in-the-loop pause ──
+  // â”€â”€ Partial prototype run, with a human-in-the-loop pause â”€â”€
   {
     id: 'ex-12',
     observabilityRunId: 'obs-run-c3e8',
@@ -580,7 +602,7 @@ export const AGENT_EXECUTIONS: AgentExecution[] = [
     inputTokens: 12_400,
     outputTokens: 0,
     costUsd: 0.0372,
-    qualityResult: 'partial — 2 screens empty',
+    qualityResult: 'partial â€” 2 screens empty',
   },
   {
     id: 'ex-13',
@@ -622,15 +644,15 @@ export const AGENT_EXECUTIONS: AgentExecution[] = [
   },
 ];
 
-// ──────────────────────── Level 3 — events ────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Level 3 â€” events â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /**
  * The two tool calls sharing group pg-parse fired concurrently. The final state
  * transition back to requirement analysis is the recorded evidence of the retry
- * decision — none of which is recoverable from application logs.
+ * decision â€” none of which is recoverable from application logs.
  */
 export const OBSERVABILITY_EVENTS: ObservabilityEvent[] = [
-  // ── ex-1: analyze_requirements, attempt 1 ──
+  // â”€â”€ ex-1: analyze_requirements, attempt 1 â”€â”€
   {
     id: 'ev-1',
     agentExecutionId: 'ex-1',
@@ -680,11 +702,11 @@ export const OBSERVABILITY_EVENTS: ObservabilityEvent[] = [
     modelParams: { temperature: 0.2, max_tokens: 4096, top_p: 1 },
     promptVersionId: 'pv-req-analysis-7',
     promptVersionLabel: 'requirement_analysis v7',
-    systemPromptHash: 'sha256:4f1c…8a2b',
+    systemPromptHash: 'sha256:4f1câ€¦8a2b',
     inputPayload:
-      'You extract only what bears on the stated problem. Sources: [REDACTED — 4 sources, 61 chunks]. Problem: returning customers abandon login when a PIN is demanded every time.',
+      'You extract only what bears on the stated problem. Sources: [REDACTED â€” 4 sources, 61 chunks]. Problem: returning customers abandon login when a PIN is demanded every time.',
     outputPayload:
-      '5 findings. (1) PIN then OTP on new device — from Architecture files. (2) 15-minute token expiry shared with web. (3) Central OAuth gateway mandatory. (4) Three-strikes fallback agreed. (5) Jira and Zoom disagree on release timing.',
+      '5 findings. (1) PIN then OTP on new device â€” from Architecture files. (2) 15-minute token expiry shared with web. (3) Central OAuth gateway mandatory. (4) Three-strikes fallback agreed. (5) Jira and Zoom disagree on release timing.',
     payloadReference: 'obs-payloads/2026/07/29/ev-3.json',
     inputTokens: 8_400,
     outputTokens: 1_200,
@@ -708,7 +730,7 @@ export const OBSERVABILITY_EVENTS: ObservabilityEvent[] = [
     decisionLabel: 'context sufficient',
   },
 
-  // ── ex-2: generate_prd, attempt 1 ──
+  // â”€â”€ ex-2: generate_prd, attempt 1 â”€â”€
   {
     id: 'ev-5',
     agentExecutionId: 'ex-2',
@@ -726,9 +748,9 @@ export const OBSERVABILITY_EVENTS: ObservabilityEvent[] = [
     modelParams: { temperature: 0.4, max_tokens: 8192, top_p: 1 },
     promptVersionId: 'pv-prd-write-12',
     promptVersionLabel: 'prd_writer v12',
-    systemPromptHash: 'sha256:9b3e…c701',
-    inputPayload: 'Write the PRD from the locked understanding. [REDACTED — 9 sections]',
-    outputPayload: 'PRD draft, sections 1-9 of 14. [REDACTED — 18k chars]',
+    systemPromptHash: 'sha256:9b3eâ€¦c701',
+    inputPayload: 'Write the PRD from the locked understanding. [REDACTED â€” 9 sections]',
+    outputPayload: 'PRD draft, sections 1-9 of 14. [REDACTED â€” 18k chars]',
     payloadReference: 'obs-payloads/2026/07/29/ev-5.json',
     inputTokens: 9_800,
     outputTokens: 2_900,
@@ -752,9 +774,9 @@ export const OBSERVABILITY_EVENTS: ObservabilityEvent[] = [
     provider: 'openai',
     promptVersionId: 'pv-prd-write-12',
     promptVersionLabel: 'prd_writer v12',
-    systemPromptHash: 'sha256:9b3e…c701',
+    systemPromptHash: 'sha256:9b3eâ€¦c701',
     inputPayload: 'Continue from section 10. [REDACTED]',
-    outputPayload: 'Sections 10-14. [REDACTED — 7k chars]',
+    outputPayload: 'Sections 10-14. [REDACTED â€” 7k chars]',
     inputTokens: 4_800,
     outputTokens: 1_200,
     costUsd: 0.0211,
@@ -762,7 +784,7 @@ export const OBSERVABILITY_EVENTS: ObservabilityEvent[] = [
     retryCount: 0,
   },
 
-  // ── ex-3: validate_output, attempt 1 — the failure that causes the loop ──
+  // â”€â”€ ex-3: validate_output, attempt 1 â€” the failure that causes the loop â”€â”€
   {
     id: 'ev-7',
     agentExecutionId: 'ex-3',
@@ -779,7 +801,7 @@ export const OBSERVABILITY_EVENTS: ObservabilityEvent[] = [
     provider: 'azure',
     promptVersionId: 'pv-validate-4',
     promptVersionLabel: 'output_validator v4',
-    systemPromptHash: 'sha256:1a77…4dd0',
+    systemPromptHash: 'sha256:1a77â€¦4dd0',
     inputPayload: 'Check each PRD claim against its cited source. [REDACTED]',
     outputPayload:
       'FAIL. Sections 4, 7 and 11 assert behaviour no cited source supports. Completeness 0.62 against a 0.80 threshold.',
@@ -788,6 +810,7 @@ export const OBSERVABILITY_EVENTS: ObservabilityEvent[] = [
     costUsd: 0.001,
     wasCached: false,
     retryCount: 0,
+    fallbackTier: 1,
   },
   {
     id: 'ev-8',
@@ -817,10 +840,10 @@ export const OBSERVABILITY_EVENTS: ObservabilityEvent[] = [
     payloadPolicy: 'metadata_only',
     fromStep: 'validate_output',
     toStep: 'analyze_requirements',
-    decisionLabel: 'completeness below threshold — loop back',
+    decisionLabel: 'completeness below threshold â€” loop back',
   },
 
-  // ── ex-4/5/6: the second pass ──
+  // â”€â”€ ex-4/5/6: the second pass â”€â”€
   {
     id: 'ev-10',
     agentExecutionId: 'ex-4',
@@ -852,7 +875,7 @@ export const OBSERVABILITY_EVENTS: ObservabilityEvent[] = [
     provider: 'openai',
     promptVersionId: 'pv-req-analysis-7',
     promptVersionLabel: 'requirement_analysis v7',
-    systemPromptHash: 'sha256:4f1c…8a2b',
+    systemPromptHash: 'sha256:4f1câ€¦8a2b',
     inputPayload: 'Re-analyse with sections 4, 7 and 11 flagged as unsupported. [REDACTED]',
     outputPayload: '2 further findings, both sourced.',
     inputTokens: 7_900,
@@ -872,7 +895,7 @@ export const OBSERVABILITY_EVENTS: ObservabilityEvent[] = [
     completedAt: '2026-07-29T10:00:18.462Z',
     durationMs: 12,
     payloadPolicy: 'metadata_only',
-    cacheKeyHash: 'sha256:c0ff…ee12',
+    cacheKeyHash: 'sha256:c0ffâ€¦ee12',
     estimatedSavingsUsd: 0.0208,
   },
   {
@@ -891,9 +914,9 @@ export const OBSERVABILITY_EVENTS: ObservabilityEvent[] = [
     provider: 'openai',
     promptVersionId: 'pv-prd-write-12',
     promptVersionLabel: 'prd_writer v12',
-    systemPromptHash: 'sha256:9b3e…c701',
+    systemPromptHash: 'sha256:9b3eâ€¦c701',
     inputPayload: 'Rewrite sections 4, 7 and 11 against the new findings. [REDACTED]',
-    outputPayload: 'PRD draft v2, all 14 sections. [REDACTED — 24k chars]',
+    outputPayload: 'PRD draft v2, all 14 sections. [REDACTED â€” 24k chars]',
     inputTokens: 8_800,
     outputTokens: 4_400,
     costUsd: 0.0581,
@@ -923,6 +946,7 @@ export const OBSERVABILITY_EVENTS: ObservabilityEvent[] = [
     costUsd: 0.0009,
     wasCached: false,
     retryCount: 0,
+    fallbackTier: 1,
   },
   {
     id: 'ev-15',
@@ -1093,7 +1117,7 @@ export const OBSERVABILITY_EVENTS: ObservabilityEvent[] = [
     retryCount: 0,
   },
 
-  // ── Failed QA run: the dependency error, kept distinct from an internal fault ──
+  // â”€â”€ Failed QA run: the dependency error, kept distinct from an internal fault â”€â”€
   {
     id: 'ev-17',
     agentExecutionId: 'ex-10',
@@ -1107,7 +1131,7 @@ export const OBSERVABILITY_EVENTS: ObservabilityEvent[] = [
     payloadPolicy: 'redacted',
     toolSlug: 'jira_client',
     toolInput: '{ "jql": "project = FMB2 AND fixVersion = 2.1", "maxResults": 200 }',
-    dependencyError: 'HTTP 429 Too Many Requests — retry-after 60s',
+    dependencyError: 'HTTP 429 Too Many Requests â€” retry-after 60s',
     errorType: 'jira_client.RateLimited',
     errorDetail: 'Rate limit exceeded on issue search after 2 provider retries.',
     retryCount: 2,
@@ -1138,13 +1162,13 @@ export const OBSERVABILITY_EVENTS: ObservabilityEvent[] = [
     durationMs: 3_900,
     payloadPolicy: 'redacted',
     toolSlug: 'jira_client',
-    dependencyError: 'HTTP 429 Too Many Requests — retry-after 60s',
+    dependencyError: 'HTTP 429 Too Many Requests â€” retry-after 60s',
     errorType: 'jira_client.RateLimited',
     errorDetail: 'Still rate limited. Run marked failed.',
     retryCount: 2,
   },
 
-  // ── Partial prototype run: policy decision explains the missing payloads ──
+  // â”€â”€ Partial prototype run: policy decision explains the missing payloads â”€â”€
   {
     id: 'ev-20',
     agentExecutionId: 'ex-12',
@@ -1157,7 +1181,7 @@ export const OBSERVABILITY_EVENTS: ObservabilityEvent[] = [
     durationMs: 2,
     payloadPolicy: 'metadata_only',
     policyName: 'tenant_payload_capture',
-    policyDecision: 'metadata_only — tenant opted out of content capture',
+    policyDecision: 'metadata_only â€” tenant opted out of content capture',
   },
   {
     id: 'ev-21',
@@ -1170,7 +1194,7 @@ export const OBSERVABILITY_EVENTS: ObservabilityEvent[] = [
     completedAt: '2026-07-29T09:43:20.000Z',
     durationMs: 100_000,
     payloadPolicy: 'metadata_only',
-    hitlReason: 'Two screens returned empty — approval needed to ship partial output',
+    hitlReason: 'Two screens returned empty â€” approval needed to ship partial output',
     hitlApproverRole: 'Project Admin',
     hitlResolution: 'Approved as partial',
   },
@@ -1193,11 +1217,12 @@ export const OBSERVABILITY_EVENTS: ObservabilityEvent[] = [
     costUsd: 0.0372,
     wasCached: false,
     retryCount: 3,
+    fallbackTier: 2,
     errorType: 'ProviderTimeout',
     errorDetail: 'No completion after 25s and 3 provider retries.',
   },
 
-  // ── Code IQ run ──
+  // â”€â”€ Code IQ run â”€â”€
   {
     id: 'ev-23',
     agentExecutionId: 'ex-13',
@@ -1242,11 +1267,11 @@ export const OBSERVABILITY_EVENTS: ObservabilityEvent[] = [
     completedAt: '2026-07-29T13:20:04.510Z',
     durationMs: 10,
     payloadPolicy: 'metadata_only',
-    cacheKeyHash: 'sha256:beef…9a41',
+    cacheKeyHash: 'sha256:beefâ€¦9a41',
     estimatedSavingsUsd: 0.0093,
   },
 
-  // ── UAT run on the release candidate, for prompt-version comparison ──
+  // â”€â”€ UAT run on the release candidate, for prompt-version comparison â”€â”€
   {
     id: 'ev-26',
     agentExecutionId: 'ex-14',
@@ -1264,7 +1289,7 @@ export const OBSERVABILITY_EVENTS: ObservabilityEvent[] = [
     modelParams: { temperature: 0.3, max_tokens: 8192, top_p: 1 },
     promptVersionId: 'pv-prd-write-13',
     promptVersionLabel: 'prd_writer v13',
-    systemPromptHash: 'sha256:ab41…7f0c',
+    systemPromptHash: 'sha256:ab41â€¦7f0c',
     inputPayload:
       'Write the PRD from the locked understanding. Cite the source for every asserted behaviour.',
     outputPayload:
@@ -1274,5 +1299,72 @@ export const OBSERVABILITY_EVENTS: ObservabilityEvent[] = [
     costUsd: 0.0634,
     wasCached: false,
     retryCount: 0,
+    fallbackTier: 0,
   },
 ];
+
+/**
+ * Who opened L5 evidence — kept separate from the audit log so observability
+ * access can be queried without joining the whole platform action stream.
+ */
+export const EVIDENCE_ACCESS_LOGS: EvidenceAccessLog[] = [
+  {
+    id: 'eal-1',
+    viewedAt: '2026-07-29T10:45:00.000Z',
+    viewerUserId: 'u-admin-incedo',
+    viewerName: 'Sec Admin',
+    viewerRole: 'Tenant Admin',
+    observabilityRunId: 'obs-run-8a3f',
+    eventId: 'ev-3',
+    clientIp: '10.24.1.8',
+    action: 'view_payload',
+  },
+  {
+    id: 'eal-2',
+    viewedAt: '2026-07-29T14:02:00.000Z',
+    viewerUserId: 'u-super',
+    viewerName: 'Platform Super Admin',
+    viewerRole: 'Super Admin',
+    observabilityRunId: 'obs-run-b7d4',
+    eventId: 'ev-18',
+    clientIp: '10.0.0.12',
+    action: 'open_timeline',
+  },
+  {
+    id: 'eal-3',
+    viewedAt: '2026-07-30T08:20:00.000Z',
+    viewerUserId: 'u-admin-incedo',
+    viewerName: 'Sec Admin',
+    viewerRole: 'Tenant Admin',
+    observabilityRunId: 'obs-run-e7f1',
+    eventId: 'ev-26',
+    clientIp: '10.24.1.8',
+    action: 'export_evidence',
+  },
+  {
+    id: 'eal-4',
+    viewedAt: '2026-07-29T22:11:00.000Z',
+    viewerUserId: 'u-super',
+    viewerName: 'Platform Super Admin',
+    viewerRole: 'Super Admin',
+    observabilityRunId: 'obs-run-c3e8',
+    eventId: 'ev-20',
+    clientIp: '198.51.100.77',
+    action: 'view_payload',
+  },
+];
+
+/**
+ * Prior-period rollups for week-over-week cards. Scoped keys match tenantId or
+ * `platform`. Numbers are intentionally slightly worse so deltas read as recovery.
+ */
+export const PRIOR_WEEK_STATS: Record<
+  string,
+  { costUsd: number; errorRate: number; p95Ms: number; runs: number; tokens: number }
+> = {
+  platform: { costUsd: 0.52, errorRate: 28, p95Ms: 95_000, runs: 5, tokens: 90_000 },
+  't-incedo': { costUsd: 0.38, errorRate: 22, p95Ms: 40_000, runs: 3, tokens: 70_000 },
+  't-acme': { costUsd: 0.14, errorRate: 40, p95Ms: 180_000, runs: 2, tokens: 20_000 },
+};
+
+
