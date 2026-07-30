@@ -2,16 +2,23 @@ import { Role } from '../types';
 import {
   Archetype,
   ArtifactGroup,
+  BriefBandKey,
   CardState,
   CardType,
   EvidenceClass,
+  IngestState,
+  QuestionStatus,
+  QuestionTrack,
   RelationKind,
   SourceType,
   SpecAiState,
+  SpecQuestion,
+  SpecSource,
   SpecStageKey,
   SpecStageState,
   StoryType,
   UnderstandingKey,
+  UnderstandingSection,
 } from '../types/specai';
 
 export interface SpecStageDef {
@@ -197,7 +204,126 @@ export const SOURCE_BADGE: Record<SourceType, { glyph: string; tint: string }> =
   Transcript: { glyph: 'M', tint: 'bg-violet-100 text-violet-700' },
   App: { glyph: 'A', tint: 'bg-emerald-100 text-emerald-700' },
   Repository: { glyph: '</>', tint: 'bg-slate-800 text-white' },
+  Image: { glyph: '▣', tint: 'bg-amber-100 text-amber-700' },
+  Audio: { glyph: '♪', tint: 'bg-fuchsia-100 text-fuchsia-700' },
 };
+
+/** File extensions the intake picker accepts, and what each becomes. */
+export const SOURCE_TYPE_FOR_FILE = (filename: string): SourceType => {
+  const ext = filename.toLowerCase().split('.').pop() ?? '';
+  if (['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg'].includes(ext)) return 'Image';
+  if (['mp3', 'wav', 'm4a', 'aac', 'ogg'].includes(ext)) return 'Audio';
+  if (['vtt', 'srt'].includes(ext)) return 'Transcript';
+  if (ext === 'pdf') return 'PDF';
+  if (['doc', 'docx'].includes(ext)) return 'DOCX';
+  return 'TXT';
+};
+
+export const INTAKE_ACCEPT =
+  '.pdf,.doc,.docx,.txt,.md,.png,.jpg,.jpeg,.gif,.webp,.svg,.mp3,.wav,.m4a,.aac,.vtt,.srt';
+
+export const INGEST_COPY: Record<IngestState, { label: string; chip: string; dot: string }> = {
+  Queued: { label: 'Queued', chip: 'bg-slate-100 text-slate-500', dot: 'bg-slate-300' },
+  Parsing: { label: 'Parsing', chip: 'bg-amber-100 text-amber-800', dot: 'bg-amber-500' },
+  Indexed: { label: 'Indexed', chip: 'bg-emerald-50 text-emerald-700', dot: 'bg-emerald-500' },
+  Failed: { label: 'Failed', chip: 'bg-rose-100 text-rose-700', dot: 'bg-rose-500' },
+};
+
+// ──────────────── Synthesis: the brief and the question queue ────────────────
+
+export const BRIEF_BANDS: BriefBandKey[] = ['understood', 'inferring', 'cannotTell'];
+
+export const BRIEF_BAND_COPY: Record<
+  BriefBandKey,
+  { header: string; helper: string; accent: string }
+> = {
+  understood: {
+    header: 'What I understand',
+    helper: 'Drawn straight from indexed sources. Each line names its backing.',
+    accent: 'border-emerald-300',
+  },
+  inferring: {
+    header: 'What I’m inferring',
+    helper: 'Reasoned rather than stated. Confirm before any of it carries weight.',
+    accent: 'border-blue-300',
+  },
+  cannotTell: {
+    header: 'What I can’t tell yet',
+    helper: 'No source covers this. These became the questions below.',
+    accent: 'border-amber-300',
+  },
+};
+
+export const QUESTION_TRACKS: QuestionTrack[] = ['Product', 'Architecture'];
+
+export const QUESTION_TRACK_COPY: Record<
+  QuestionTrack,
+  { helper: string; chip: string; defaultOwnerRole: Role }
+> = {
+  Product: {
+    helper: 'Scope, priority, and behaviour a stakeholder decides.',
+    chip: 'bg-indigo-50 text-indigo-700',
+    defaultOwnerRole: 'Product Manager',
+  },
+  Architecture: {
+    helper: 'Where things live, what they depend on, and what the build must honour.',
+    chip: 'bg-slate-800 text-white',
+    defaultOwnerRole: 'Architect',
+  },
+};
+
+export const QUESTION_STATUS_CHIP: Record<QuestionStatus, string> = {
+  Open: 'bg-amber-100 text-amber-800',
+  Answered: 'bg-emerald-50 text-emerald-700',
+  Assumed: 'bg-blue-50 text-blue-700',
+  Deferred: 'bg-slate-100 text-slate-500',
+};
+
+export const openQuestionsIn = (state: SpecAiState, track?: QuestionTrack): SpecQuestion[] =>
+  state.questions.filter((q) => q.status === 'Open' && (!track || q.track === track));
+
+/**
+ * Carries the Stage 1 reading into Stage 2 as a starting draft. Only empty
+ * sections are filled — the brief seeds Project Understanding, it never
+ * overwrites something a person has already written.
+ *
+ * This is the whole relationship between the two surfaces: Stage 1's brief is
+ * disposable and regenerated freely, Stage 2's understanding is edited, owned,
+ * and locked. Seeding on lock is the one moment they touch.
+ */
+export const seedUnderstandingFromBrief = (state: SpecAiState): UnderstandingSection[] => {
+  const brief = state.brief;
+  if (!brief) return state.understanding;
+
+  const join = (band: BriefBandKey) =>
+    brief.bands[band].map((l) => l.text).join(' ');
+
+  const unsettled = state.questions.filter((q) => q.status === 'Open');
+
+  const seed: Partial<Record<UnderstandingSection['key'], string>> = {
+    objective: state.problemStatement.trim(),
+    currentState: join('understood'),
+    assumptions: join('inferring'),
+    openQuestions: [join('cannotTell'), ...unsettled.map((q) => `${q.track}: ${q.text}`)]
+      .filter(Boolean)
+      .join(' '),
+  };
+
+  return state.understanding.map((section) => {
+    const candidate = seed[section.key];
+    if (section.body.trim() !== '' || !candidate) return section;
+    return {
+      ...section,
+      body: candidate,
+      versions: section.versions + 1,
+      supportingCardIds: section.supportingCardIds,
+    };
+  });
+};
+
+/** Sources that synthesis can actually read. */
+export const indexedSources = (state: SpecAiState): SpecSource[] =>
+  state.sources.filter((s) => s.ingest === 'Indexed');
 
 /** Card states, and what each one allows next. */
 export const CARD_STATES: Record<CardState, { chip: string; nextActions: string[] }> = {
@@ -310,9 +436,16 @@ export const knowledgeReadiness = (state: SpecAiState): Readiness => {
   const conflicts = state.cards.filter((c) => c.type === 'Conflict');
   const conflictsOpen = conflicts.filter((c) => c.state === 'Flagged').length;
   const conflictsResolved = conflicts.length - conflictsOpen;
-  const openQuestions = state.cards.filter(
-    (c) => c.type === 'Question' && c.state !== 'Confirmed' && c.state !== 'Superseded'
-  ).length;
+  /*
+   * Both surfaces count. A question sitting unanswered in the queue is exactly as
+   * unresolved as one on the board — promoted ones are skipped so they are not
+   * counted twice.
+   */
+  const openQuestions =
+    state.cards.filter(
+      (c) => c.type === 'Question' && c.state !== 'Confirmed' && c.state !== 'Superseded'
+    ).length +
+    state.questions.filter((q) => q.status === 'Open' && !q.cardId).length;
   const confirmedSeeds = state.cards.filter(
     (c) => c.type === 'Requirement seed' && c.state !== 'Superseded'
   ).length;
@@ -404,6 +537,21 @@ export const canLockStage = (key: SpecStageKey, state: SpecAiState): GateCheck =
           }.`,
         };
       }
+      /*
+       * Architecture questions gate the stage. An unanswered "where does this
+       * live?" propagates into every artifact generated downstream, so it is
+       * cheaper to settle it here — answering, assuming, or deferring all count,
+       * because a recorded assumption is traceable and silence is not.
+       */
+      const openArch = openQuestionsIn(state, 'Architecture');
+      if (openArch.length > 0)
+        return {
+          ok: false,
+          reason: `${openArch.length} architecture question${
+            openArch.length === 1 ? '' : 's'
+          } unsettled — answer, assume, or defer before locking.`,
+        };
+
       const seeds = state.cards.filter((c) => c.type === 'Requirement seed').length;
       if (seeds === 0) return { ok: false, reason: 'Confirm at least one requirement seed first.' };
       return { ok: true };

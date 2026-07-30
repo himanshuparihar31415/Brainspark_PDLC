@@ -4,8 +4,9 @@ import { knowledgeReadiness } from '../../data/specai';
 import { ChalkBoard } from './ChalkBoard';
 import { CardInspector } from './CardInspector';
 import { ConflictResolver } from './ConflictResolver';
-import { CopilotPanel } from './CopilotPanel';
 import { KnowledgeSources } from './KnowledgeSources';
+import { ProblemStatement } from './ProblemStatement';
+import { RightRail } from './RightRail';
 import { SourceDrawer } from './SourceDrawer';
 import { AlertTriangle } from 'lucide-react';
 
@@ -40,6 +41,9 @@ export const Stage1Knowledge: React.FC<{
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2.5">
+      {/* What everything below is read against */}
+      <ProblemStatement state={state} disabled={disabled} />
+
       {/* Connected domains, and how ready they leave the board */}
       <div className="flex flex-wrap items-center gap-1.5">
         {state.channels.map((ch) => (
@@ -94,7 +98,7 @@ export const Stage1Knowledge: React.FC<{
           }}
         />
 
-        <CopilotPanel
+        <RightRail
           state={state}
           disabled={disabled}
           selectedIds={selectedIds}

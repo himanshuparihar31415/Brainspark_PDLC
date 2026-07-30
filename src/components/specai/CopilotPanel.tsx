@@ -2,7 +2,7 @@ import React, { useMemo, useRef, useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { BoardCard, SpecAiState } from '../../types/specai';
 import { CARD_TYPES, COPILOT_SUGGESTIONS } from '../../data/specai';
-import { ArrowUp, Bot } from 'lucide-react';
+import { ArrowUp } from 'lucide-react';
 
 interface Turn {
   id: number;
@@ -146,19 +146,14 @@ export const CopilotPanel: React.FC<{
   };
 
   return (
-    <aside className="flex min-h-0 w-full shrink-0 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white max-lg:h-80 lg:w-56 xl:w-72">
-      <div className="shrink-0 border-b border-slate-200 px-3.5 py-3">
-        <h3 className="flex items-center gap-1.5 text-[12px] font-extrabold tracking-tight text-slate-900">
-          <Bot className="h-3.5 w-3.5 text-indigo-600" /> AI copilot
-        </h3>
-        <p className="mt-0.5 text-[10px] text-slate-500">
-          {selectedIds.length > 0
-            ? `Reasoning over ${selectedIds.length} selected card${
-                selectedIds.length === 1 ? '' : 's'
-              }.`
-            : 'Ask across selected board items.'}
-        </p>
-      </div>
+    <div className="flex min-h-0 flex-1 flex-col">
+      <p className="shrink-0 px-3.5 pt-2.5 text-[10px] text-slate-500">
+        {selectedIds.length > 0
+          ? `Reasoning over ${selectedIds.length} selected card${
+              selectedIds.length === 1 ? '' : 's'
+            }.`
+          : 'Ask across selected board items.'}
+      </p>
 
       <div ref={scroller} className="min-h-0 flex-1 space-y-2 overflow-y-auto p-3">
         <p className="rounded-xl rounded-tl-sm bg-indigo-50 px-3 py-2 text-[10.5px] leading-relaxed text-slate-700">
@@ -235,6 +230,6 @@ export const CopilotPanel: React.FC<{
           </button>
         </div>
       </div>
-    </aside>
+    </div>
   );
 };

@@ -5,12 +5,16 @@ import {
   CardState,
   CardType,
   JiraMapping,
+  QuestionStatus,
   RelationKind,
   SourceType,
   SpecAiState,
+  SpecQuestion,
   SpecStageKey,
   UnderstandingKey,
 } from '../types/specai';
+/* `synthesize` is loaded on demand — its topic tables and brief prose have no
+   business in the initial bundle, since only Spec AI ever runs them. */
 import { INITIAL_SPEC_AI, blankSpecAiState } from '../data/specAiData';
 import {
   GENERATED_ARTIFACTS,
@@ -23,6 +27,7 @@ import {
   UNDERSTANDING_COPY,
   canLockStage,
   isStageReachable,
+  seedUnderstandingFromBrief,
   stageDef,
   stageIndex,
   unmappedStoryTypes,
@@ -39,7 +44,9 @@ interface Deps {
   connectors: Connector[];
 }
 
-const nid = (prefix: string) => `${prefix}-${Date.now().toString(36)}`;
+/** Counter as well as clock, so ids minted in the same millisecond stay distinct. */
+let idSeq = 0;
+const nid = (prefix: string) => `${prefix}-${Date.now().toString(36)}${(++idSeq).toString(36)}`;
 
 /**
  * The Spec AI state slice. Extracted from AppContext so the module's mutations
@@ -69,20 +76,233 @@ export const useSpecAiSlice = ({
 
   // ── Sources ────────────────────────────────────────────────────────────────
 
-  const addSpecSource = (projectId: string, name: string, type: SourceType) => {
+  /**
+   * A source arrives unparsed and becomes readable a moment later. The delay is
+   * simulated, but the state is not: synthesis only reads `Indexed` sources, so a
+   * brief generated mid-ingest genuinely leaves the new material out and says so.
+   */
+  const addSpecSource = (projectId: string, name: string, type: SourceType, detail?: string) => {
+    const id = nid('src');
+
     patch(projectId, (s) => ({
       ...s,
-      sources: [...s.sources, { id: nid('src'), name, type }],
+      sources: [...s.sources, { id, name, type, detail, ingest: 'Parsing' }],
       hasLegacyArchitecture:
         s.hasLegacyArchitecture || /legacy|existing architecture|as-is/i.test(name),
+      brief: s.brief
+        ? { ...s.brief, stale: true, staleReason: `${name} arrived after this reading.` }
+        : s.brief,
     }));
-    addToast(`Added ${name}.`);
-    addAuditLog('Add Spec Source', `Project: ${projectId}`, `${type}: ${name}`, 'Source indexed');
+
+    addAuditLog('Add Spec Source', `Project: ${projectId}`, `${type}: ${name}`, 'Ingestion started');
+
+    window.setTimeout(() => {
+      patch(projectId, (s) => ({
+        ...s,
+        sources: s.sources.map((x) =>
+          x.id === id
+            ? {
+                ...x,
+                ingest: 'Indexed',
+                ingestNote:
+                  type === 'Image'
+                    ? 'Text extracted from image'
+                    : type === 'Audio'
+                    ? 'Transcribed'
+                    : undefined,
+              }
+            : x
+        ),
+      }));
+      addToast(`${name} indexed. Re-run synthesis to include it.`);
+    }, 1400);
   };
 
   const removeSpecSource = (projectId: string, sourceId: string) => {
-    patch(projectId, (s) => ({ ...s, sources: s.sources.filter((x) => x.id !== sourceId) }));
+    patch(projectId, (s) => {
+      const gone = s.sources.find((x) => x.id === sourceId);
+      return {
+        ...s,
+        sources: s.sources.filter((x) => x.id !== sourceId),
+        brief:
+          s.brief && gone && s.brief.generatedFrom.sourceIds.includes(sourceId)
+            ? { ...s.brief, stale: true, staleReason: `${gone.name} was removed.` }
+            : s.brief,
+      };
+    });
     addToast('Source removed.', 'info');
+  };
+
+  const retrySpecSource = (projectId: string, sourceId: string) => {
+    patch(projectId, (s) => ({
+      ...s,
+      sources: s.sources.map((x) =>
+        x.id === sourceId ? { ...x, ingest: 'Parsing', ingestNote: undefined } : x
+      ),
+    }));
+
+    window.setTimeout(() => {
+      patch(projectId, (s) => ({
+        ...s,
+        sources: s.sources.map((x) => (x.id === sourceId ? { ...x, ingest: 'Indexed' } : x)),
+      }));
+      addToast('Source indexed on retry.');
+    }, 1400);
+  };
+
+  // ── Problem statement & synthesis ───────────────────────────────────────────
+
+  const setProblemStatement = (projectId: string, text: string) => {
+    patch(projectId, (s) => ({
+      ...s,
+      problemStatement: text,
+      brief:
+        s.brief && s.brief.generatedFrom.problemStatement !== text.trim()
+          ? { ...s.brief, stale: true, staleReason: 'The problem statement changed.' }
+          : s.brief,
+    }));
+  };
+
+  /**
+   * Reads the problem statement plus everything indexed and produces a brief, a
+   * question queue, and flag cards. Answers already given survive the re-run —
+   * regenerating a reading must not quietly discard a decision someone made.
+   */
+  const synthesizeUnderstanding = (projectId: string) => {
+    const state = specAiFor(projectId);
+
+    if (!state.problemStatement.trim() && state.sources.length === 0) {
+      addToast('Describe the problem or add a source first.', 'error');
+      return;
+    }
+
+    patch(projectId, (s) => ({ ...s, generating: 'Reading everything you have brought in…' }));
+
+    window.setTimeout(async () => {
+      const { synthesize } = await import('../data/specAiSynthesis');
+      const current = specAiFor(projectId);
+      const result = synthesize({
+        problemStatement: current.problemStatement,
+        sources: current.sources,
+        channels: current.channels,
+        cards: current.cards,
+        version: (current.brief?.version ?? 0) + 1,
+        pmName: currentRole === 'Product Manager' ? currentUserName : 'Maya Kapoor',
+        architectName: currentRole === 'Architect' ? currentUserName : 'Arjun Mehta',
+      });
+
+      /* Ids are minted here, not inside the updater — a state updater has to be
+         pure, and React may call it more than once. */
+      const newCards = result.flagCards.map((c) => ({ ...c, id: nid('card') }));
+
+      patch(projectId, (s) => {
+        /* Carry forward anything already settled, matched on the question text. */
+        const settled = new Map(
+          s.questions.filter((q) => q.status !== 'Open').map((q) => [q.text, q])
+        );
+        const merged: SpecQuestion[] = result.questions.map((q) => {
+          const prior = settled.get(q.text);
+          return prior
+            ? {
+                ...q,
+                id: prior.id,
+                status: prior.status,
+                answer: prior.answer,
+                owner: prior.owner,
+                cardId: prior.cardId,
+              }
+            : q;
+        });
+
+        /* Settled questions the new run stopped asking are kept, not dropped. */
+        const orphaned = [...settled.values()].filter(
+          (q) => !result.questions.some((r) => r.text === q.text)
+        );
+
+        /* Re-check titles against current state: a card may have landed while the
+           reading was in flight, and the generator only saw a snapshot. */
+        const fresh = newCards.filter(
+          (c) => !s.cards.some((x) => x.title.toLowerCase() === c.title.toLowerCase())
+        );
+
+        return {
+          ...s,
+          generating: undefined,
+          brief: result.brief,
+          questions: [...merged, ...orphaned],
+          cards: [...s.cards, ...fresh],
+        };
+      });
+
+      const flags = result.flagCards.length;
+      addToast(
+        `Reading v${result.brief.version} ready — ${result.questions.length} questions${
+          flags > 0 ? `, ${flags} flagged on the board` : ''
+        }.`
+      );
+      addAuditLog(
+        'Synthesize Understanding',
+        `Project: ${projectId}`,
+        `${current.sources.filter((s) => s.ingest === 'Indexed').length} indexed sources`,
+        `Brief v${result.brief.version}, ${result.questions.length} questions, ${flags} flags`
+      );
+    }, 900);
+  };
+
+  const answerQuestion = (
+    projectId: string,
+    questionId: string,
+    status: QuestionStatus,
+    answer?: string
+  ) => {
+    patch(projectId, (s) => ({
+      ...s,
+      questions: s.questions.map((q) =>
+        q.id === questionId ? { ...q, status, answer: answer?.trim() || q.answer } : q
+      ),
+    }));
+
+    const q = specAiFor(projectId).questions.find((x) => x.id === questionId);
+    addToast(`Marked ${status.toLowerCase()}.`);
+    if (q)
+      addAuditLog(
+        'Settle Spec Question',
+        `${q.track}: ${q.text}`,
+        answer ?? '—',
+        `Status: ${status}`
+      );
+  };
+
+  /** Push a question onto the board so it can carry relations and evidence. */
+  const promoteQuestionToBoard = (projectId: string, questionId: string) => {
+    const state = specAiFor(projectId);
+    const q = state.questions.find((x) => x.id === questionId);
+    if (!q || q.cardId) return;
+
+    const cardId = nid('card');
+    patch(projectId, (s) => ({
+      ...s,
+      cards: [
+        ...s.cards,
+        {
+          id: cardId,
+          laneId: 'lane-decisions',
+          type: 'Question',
+          state: 'Flagged',
+          title: q.text,
+          content: q.rationale,
+          evidenceClass: 'AI assumption',
+          owner: q.owner,
+          dueState:
+            q.track === 'Architecture' ? 'Blocks the knowledge gate' : 'Needed before lock',
+          relations: [],
+          aiCreated: true,
+          rationale: `Promoted from the ${q.track.toLowerCase()} question queue.`,
+        },
+      ],
+      questions: s.questions.map((x) => (x.id === questionId ? { ...x, cardId } : x)),
+    }));
+    addToast('Question added to the board.');
   };
 
   // ── Board: cards, lanes, lifecycle, relations ───────────────────────────────
@@ -343,7 +563,17 @@ export const useSpecAiSlice = ({
 
     patch(projectId, (s) => ({
       ...s,
-      sources: [...s.sources, { id: nid('src'), name: `Archetype: ${archetype.name}`, type: 'TXT' }],
+      sources: [
+        ...s.sources,
+        {
+          id: nid('src'),
+          name: `Archetype: ${archetype.name}`,
+          type: 'TXT',
+          detail: 'Reusable pattern, not a project source',
+          // Nothing to parse — an archetype is already structured.
+          ingest: 'Indexed',
+        },
+      ],
       cards: [
         ...s.cards,
         {
@@ -617,6 +847,8 @@ export const useSpecAiSlice = ({
       ...s,
       lockedStages: s.lockedStages.includes(stage) ? s.lockedStages : [...s.lockedStages, stage],
       currentStage: next?.key ?? stage,
+      // The Stage 1 reading becomes Stage 2's starting draft, filling only blanks.
+      understanding: stage === 'knowledge' ? seedUnderstandingFromBrief(s) : s.understanding,
       artifacts:
         stage === 'understanding' && s.artifacts.length === 0 ? GENERATED_ARTIFACTS() : s.artifacts,
       modules: stage === 'artifacts' && s.modules.length === 0 ? GENERATED_MODULES() : s.modules,
@@ -704,6 +936,11 @@ export const useSpecAiSlice = ({
     specAiFor,
     addSpecSource,
     removeSpecSource,
+    retrySpecSource,
+    setProblemStatement,
+    synthesizeUnderstanding,
+    answerQuestion,
+    promoteQuestionToBoard,
     addCard,
     updateCard,
     moveCardToLane,

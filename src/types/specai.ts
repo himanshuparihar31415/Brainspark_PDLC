@@ -26,7 +26,15 @@ export type SourceType =
   | 'Jira'
   | 'Repository'
   | 'Transcript'
-  | 'App';
+  | 'App'
+  | 'Image'
+  | 'Audio';
+
+/**
+ * Where a source is in ingestion. Nothing can be synthesized from a source that
+ * has not been indexed, so this state is load-bearing rather than cosmetic.
+ */
+export type IngestState = 'Queued' | 'Parsing' | 'Indexed' | 'Failed';
 
 export interface SpecSource {
   id: string;
@@ -34,6 +42,9 @@ export interface SpecSource {
   type: SourceType;
   /** Second line in the knowledge-sources list, e.g. "184 selected items". */
   detail?: string;
+  ingest: IngestState;
+  /** Why ingestion failed, or what was extracted. Shown on the row. */
+  ingestNote?: string;
 }
 
 /**
@@ -174,13 +185,57 @@ export type UnderstandingKey =
   | 'assumptions'
   | 'openQuestions';
 
-export interface OpenQuestion {
+// ─────────── Stage 1: synthesis — the brief and the question queue ───────────
+
+/**
+ * The three bands of a synthesized reading. Separating them is the point: a
+ * comprehensive overview that blurs what is known with what is guessed is worse
+ * than no overview, because it launders assumptions into facts.
+ */
+export type BriefBandKey = 'understood' | 'inferring' | 'cannotTell';
+
+export interface BriefLine {
   id: string;
   text: string;
-  status: 'Open' | 'Resolved' | 'Deferred' | 'Assumption';
-  owner?: string;
-  /** Recorded when deferring or converting to an assumption. */
-  rationale?: string;
+  evidenceClass: EvidenceClass;
+  /** Sources this line was drawn from. */
+  sourceIds: string[];
+  /** Human summary of the backing, e.g. "Jira · 184 items · 1 transcript". */
+  sourceSummary: string;
+}
+
+export interface UnderstandingBrief {
+  /** Bumped on every synthesis run; earlier versions are never overwritten silently. */
+  version: number;
+  /** The exact inputs this reading was produced from. */
+  generatedFrom: { problemStatement: string; sourceIds: string[]; channelIds: string[] };
+  bands: Record<BriefBandKey, BriefLine[]>;
+  /** Set when a source arrived or the problem statement changed after generation. */
+  stale: boolean;
+  staleReason?: string;
+}
+
+/**
+ * A question the synthesis could not answer from the sources. Product questions
+ * belong to the PM; architecture questions belong to the Architect, which is the
+ * same split the module's ownership already assumes.
+ */
+export type QuestionTrack = 'Product' | 'Architecture';
+
+export type QuestionStatus = 'Open' | 'Answered' | 'Assumed' | 'Deferred';
+
+export interface SpecQuestion {
+  id: string;
+  track: QuestionTrack;
+  text: string;
+  /** What the sources do and do not say — why this had to be asked. */
+  rationale: string;
+  owner: string;
+  status: QuestionStatus;
+  /** Recorded when answered, assumed, or deferred. */
+  answer?: string;
+  /** Set once the question has been pushed onto the board as a card. */
+  cardId?: string;
 }
 
 export interface UnderstandingSection {
@@ -331,8 +386,17 @@ export interface SpecAiState {
   specKey: string;
   currentStage: SpecStageKey;
   lockedStages: SpecStageKey[];
+  /** The high-level ask. What synthesis is aimed at, so a reading is targeted. */
+  problemStatement: string;
   sources: SpecSource[];
   channels: KnowledgeChannel[];
+  /**
+   * The provisional reading of everything brought in. Disposable and freely
+   * regenerated — Stage 2's Project Understanding is the owned, lockable version,
+   * seeded from this on lock.
+   */
+  brief?: UnderstandingBrief;
+  questions: SpecQuestion[];
   lanes: BoardLane[];
   cards: BoardCard[];
   understanding: UnderstandingSection[];

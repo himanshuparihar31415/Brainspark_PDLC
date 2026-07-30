@@ -3,6 +3,8 @@ import {
   BoardCard,
   KnowledgeChannel,
   SpecAiState,
+  SpecQuestion,
+  UnderstandingBrief,
   UnderstandingSection,
 } from '../types/specai';
 
@@ -374,35 +376,272 @@ const finEdgeUnderstanding: UnderstandingSection[] = [
   },
 ];
 
+/**
+ * Reading v1, produced before the whiteboard photo and the stand-up recording
+ * arrived — hence stale. Re-running it is the demonstration: the new image is
+ * folded in, and the failed audio becomes an acknowledged hole rather than a
+ * silence.
+ */
+const finEdgeBrief: UnderstandingBrief = {
+  version: 1,
+  generatedFrom: {
+    problemStatement:
+      'Returning customers abandon login because a PIN is demanded every single time. We want biometric login for customers who have already onboarded, without weakening device security or breaking the shared OAuth gateway.',
+    sourceIds: ['src-jira', 'src-standards', 'src-prd', 'src-call', 'src-app', 'src-repo', 'src-legacy'],
+    channelIds: ['ch-jira', 'ch-confluence', 'ch-docs', 'ch-meetings', 'ch-code', 'ch-apis', 'ch-flows'],
+  },
+  bands: {
+    understood: [
+      {
+        id: 'brief-v1-1',
+        text: 'The ask, as you stated it: returning customers abandon login because a PIN is demanded every single time, and biometric login should serve customers who have already onboarded.',
+        evidenceClass: 'User decision',
+        sourceIds: [],
+        sourceSummary: 'No source — stated by you',
+      },
+      {
+        id: 'brief-v1-2',
+        text: 'The backlog already tracks work in this area (184 selected items), so this is not starting from nothing.',
+        evidenceClass: 'Source fact',
+        sourceIds: ['src-jira'],
+        sourceSummary: 'MBV2 Jira',
+      },
+      {
+        id: 'brief-v1-3',
+        text: 'Stakeholders described the intent directly in a recorded conversation, so the motivation is first-hand rather than relayed.',
+        evidenceClass: 'Source fact',
+        sourceIds: ['src-call'],
+        sourceSummary: 'Product discovery call',
+      },
+      {
+        id: 'brief-v1-4',
+        text: 'The current journey has been observed in the running application: PIN, then OTP on an unrecognised device, then the dashboard.',
+        evidenceClass: 'Source fact',
+        sourceIds: ['src-app'],
+        sourceSummary: 'Test application',
+      },
+      {
+        id: 'brief-v1-5',
+        text: 'The existing implementation is indexed (customer-auth-service), so current structure is fact and not assumption — including a 15-minute access-token expiry shared with the web channel.',
+        evidenceClass: 'Source fact',
+        sourceIds: ['src-repo'],
+        sourceSummary: 'customer-auth-service',
+      },
+      {
+        id: 'brief-v1-6',
+        text: 'Platform standards are indexed and binding: every customer-facing channel federates through the central OAuth gateway, so no new identity provider is available to you.',
+        evidenceClass: 'Source fact',
+        sourceIds: ['src-standards'],
+        sourceSummary: 'Platform Standards',
+      },
+    ],
+    inferring: [
+      {
+        id: 'brief-v1-7',
+        text: 'Priority looks contested: the backlog phases biometric login into 2.1 while the conversation treats it as launch-critical. I am reading the conversation as more current.',
+        evidenceClass: 'AI assumption',
+        sourceIds: ['src-jira', 'src-call'],
+        sourceSummary: 'MBV2 Jira · Product discovery call',
+      },
+      {
+        id: 'brief-v1-8',
+        text: 'Nothing states the target design, so I am assuming this extends customer-auth-service rather than introducing a separate enrolment service.',
+        evidenceClass: 'AI assumption',
+        sourceIds: ['src-repo'],
+        sourceSummary: 'customer-auth-service',
+      },
+      {
+        id: 'brief-v1-9',
+        text: 'Device registration appears to be a precondition for biometrics, but that is my reading of the device-bound rule in the standards page rather than anything stated.',
+        evidenceClass: 'AI assumption',
+        sourceIds: ['src-standards', 'src-app'],
+        sourceSummary: 'Platform Standards · Test application',
+      },
+    ],
+    cannotTell: [
+      {
+        id: 'brief-v1-10',
+        text: 'What the intended experience is — the flows channel is connected but no design covers the biometric prompt itself.',
+        evidenceClass: 'AI assumption',
+        sourceIds: [],
+        sourceSummary: 'No source',
+      },
+      {
+        id: 'brief-v1-11',
+        text: 'What the acceptance bar is — no test plan or QA source is connected, so success stays a matter of opinion.',
+        evidenceClass: 'AI assumption',
+        sourceIds: [],
+        sourceSummary: 'No source',
+      },
+      {
+        id: 'brief-v1-12',
+        text: 'How many devices one customer may register, and what happens on a rooted or jailbroken device.',
+        evidenceClass: 'AI assumption',
+        sourceIds: [],
+        sourceSummary: 'No source',
+      },
+    ],
+  },
+  stale: true,
+  staleReason: '2 sources arrived after this reading — including one that failed to ingest.',
+};
+
+/**
+ * The queue as it stands: one product question already answered, the
+ * architecture ones still open. Those open ones are what hold the stage gate,
+ * alongside the unresolved priority conflict on the board.
+ */
+const finEdgeQuestions: SpecQuestion[] = [
+  {
+    id: 'q-v1-1',
+    track: 'Product',
+    text: 'Is authentication required for this release, or is the backlog’s phasing correct?',
+    rationale:
+      'The backlog and the recorded conversation disagree, and nothing indexed breaks the tie.',
+    owner: 'Maya Kapoor',
+    status: 'Open',
+  },
+  {
+    id: 'q-v1-2',
+    track: 'Product',
+    text: 'What is explicitly out of scope for this release?',
+    rationale: 'No source draws the outer edge, so scope creep has nothing to push against.',
+    owner: 'Maya Kapoor',
+    status: 'Answered',
+    answer:
+      'Voice biometrics, desktop biometric login, business-banking users, and third-party identity providers are all out.',
+  },
+  {
+    id: 'q-v1-3',
+    track: 'Product',
+    text: 'What happens to a customer whose device cannot support the new method?',
+    rationale: 'Standard unknown for authentication work; no indexed source answers it.',
+    owner: 'Maya Kapoor',
+    status: 'Answered',
+    answer: 'The biometric option is hidden and PIN remains available. No degraded messaging.',
+  },
+  {
+    id: 'q-v1-4',
+    track: 'Architecture',
+    text: 'Does this extend customer-auth-service, or land in a new service?',
+    rationale: 'The repository is indexed but nothing states where new capability belongs.',
+    owner: 'Arjun Mehta',
+    status: 'Open',
+  },
+  {
+    id: 'q-v1-5',
+    track: 'Architecture',
+    text: 'Where is the device or credential binding stored, and what revokes it when a device is lost?',
+    rationale: 'Unresolved for authentication; no indexed source covers it.',
+    owner: 'Arjun Mehta',
+    status: 'Open',
+  },
+  {
+    id: 'q-v1-6',
+    track: 'Architecture',
+    text: 'Does the session and token lifecycle change, or must the new path fit the existing expiry?',
+    rationale:
+      'The 15-minute access-token expiry is indexed and shared with web, so this is a decision rather than an unknown.',
+    owner: 'Arjun Mehta',
+    status: 'Assumed',
+    answer:
+      'Assuming the existing 15-minute expiry holds. Biometric re-auth issues a fresh token rather than extending one.',
+  },
+  {
+    id: 'q-v1-7',
+    track: 'Architecture',
+    text: 'Which platform standards apply here, and does anything need a documented exception?',
+    rationale: 'Standards are indexed and binding, but which clauses bite is not stated.',
+    owner: 'Arjun Mehta',
+    status: 'Open',
+  },
+  {
+    id: 'q-v1-8',
+    track: 'Architecture',
+    text: 'What is the failure mode when the new path is unavailable?',
+    rationale: 'Every source describes the happy path. None describes degradation.',
+    owner: 'Arjun Mehta',
+    status: 'Deferred',
+    answer: 'Deferred to HLD — falls back to the existing PIN path, detail to follow.',
+  },
+];
+
 const finEdge: SpecAiState = {
   projectId: 'p-mobile-v2',
   specKey: 'FMB2',
   currentStage: 'knowledge',
   lockedStages: [],
+  problemStatement:
+    'Returning customers abandon login because a PIN is demanded every single time. We want biometric login for customers who have already onboarded, without weakening device security or breaking the shared OAuth gateway.',
   sources: [
-    { id: 'src-jira', name: 'MBV2 Jira', type: 'Jira', detail: '184 selected items' },
+    {
+      id: 'src-jira',
+      name: 'MBV2 Jira',
+      type: 'Jira',
+      detail: '184 selected items',
+      ingest: 'Indexed',
+    },
     {
       id: 'src-standards',
       name: 'Platform Standards',
       type: 'Confluence',
       detail: 'Confluence · 16 pages',
+      ingest: 'Indexed',
     },
-    { id: 'src-prd', name: 'Mobile Banking PRD', type: 'DOCX', detail: 'DOCX · indexed' },
-    { id: 'src-call', name: 'Product discovery call', type: 'Transcript', detail: 'Zoom transcript' },
-    { id: 'src-app', name: 'Test application', type: 'App', detail: '12 screens explored' },
+    {
+      id: 'src-prd',
+      name: 'Mobile Banking PRD',
+      type: 'DOCX',
+      detail: 'DOCX · indexed',
+      ingest: 'Indexed',
+    },
+    {
+      id: 'src-call',
+      name: 'Product discovery call',
+      type: 'Transcript',
+      detail: 'Zoom transcript',
+      ingest: 'Indexed',
+    },
+    {
+      id: 'src-app',
+      name: 'Test application',
+      type: 'App',
+      detail: '12 screens explored',
+      ingest: 'Indexed',
+    },
     {
       id: 'src-repo',
       name: 'customer-auth-service',
       type: 'Repository',
       detail: 'Repository · indexed',
+      ingest: 'Indexed',
     },
     {
       id: 'src-legacy',
       name: 'Legacy authentication architecture',
       type: 'PDF',
       detail: 'PDF · 24 pages',
+      ingest: 'Indexed',
+    },
+    {
+      id: 'src-wireframes',
+      name: 'Login wireframes (photo of whiteboard)',
+      type: 'Image',
+      detail: 'Image · 3 screens',
+      ingest: 'Indexed',
+      ingestNote: 'Text extracted from image',
+    },
+    {
+      id: 'src-standup',
+      name: 'Security stand-up recording',
+      type: 'Audio',
+      detail: 'Audio · 22 minutes',
+      ingest: 'Failed',
+      ingestNote: 'no speech track found',
     },
   ],
+  brief: finEdgeBrief,
+  questions: finEdgeQuestions,
   channels: finEdgeChannels(),
   lanes: DEFAULT_LANES,
   cards: finEdgeCards,
@@ -518,7 +757,9 @@ const blank: SpecAiState = {
   specKey: 'ACP',
   currentStage: 'knowledge',
   lockedStages: [],
+  problemStatement: '',
   sources: [],
+  questions: [],
   channels: emptyChannels(),
   lanes: DEFAULT_LANES,
   cards: [],
@@ -555,4 +796,8 @@ export const blankSpecAiState = (projectId: string): SpecAiState => ({
   understanding: blank.understanding.map((s) => ({ ...s })),
   lanes: DEFAULT_LANES.map((l) => ({ ...l })),
   cards: [],
+  problemStatement: '',
+  sources: [],
+  brief: undefined,
+  questions: [],
 });
