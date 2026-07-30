@@ -4,8 +4,8 @@ import { SpecStageKey } from '../../types/specai';
 import {
   StoryTrack,
   canEditSpecAi,
-  canLockStage,
   stageDef,
+  stageGateWarnings,
   stageStateFor,
 } from '../../data/specai';
 import { StageStrip } from '../specai/StageStrip';
@@ -56,7 +56,7 @@ export const SpecAiView: React.FC = () => {
   const readOnly = !canEditSpecAi(currentRole);
   const stage = stageDef(viewing);
   const isLocked = stageStateFor(viewing, state) === 'Locked';
-  const gate = canLockStage(viewing, state);
+  const warnings = stageGateWarnings(viewing, state);
 
   /** Stage 1 fills the viewport; the document stages scroll. */
   const fills = viewing === 'knowledge';
@@ -124,7 +124,7 @@ export const SpecAiView: React.FC = () => {
               {viewing !== 'stories' && (
                 <GateButton
                   label={stage.gateLabel}
-                  check={gate}
+                  warnings={warnings}
                   locked={isLocked}
                   readOnly={readOnly}
                   confirm={

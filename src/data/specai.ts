@@ -482,92 +482,60 @@ export const stageDetail = (key: SpecStageKey, state: SpecAiState): string => {
   }
 };
 
-export interface GateCheck {
-  ok: boolean;
-  /** Why the gate is closed, shown on the disabled control. */
-  reason?: string;
-}
-
-export const canLockStage = (key: SpecStageKey, state: SpecAiState): GateCheck => {
-  /*
-   * Navigation is free but locking is ordered. A lock says "the next stage was
-   * generated from this version", which is a claim you cannot make while an
-   * earlier stage is still moving underneath it.
-   */
-  const unlockedBefore = SPEC_STAGES.filter(
-    (s) => s.index < stageIndex(key) && !state.lockedStages.includes(s.key)
-  );
-  if (unlockedBefore.length > 0)
-    return { ok: false, reason: `Lock ${unlockedBefore[0].railLabel} first.` };
+/**
+ * What is still unresolved at a stage gate. Advisory, never blocking: the system's
+ * job is to say what you are carrying forward, and the decision to proceed anyway
+ * is yours. Anything listed here is recorded on the lock so it stays traceable
+ * rather than becoming a silence.
+ */
+export const stageGateWarnings = (key: SpecStageKey, state: SpecAiState): string[] => {
+  const warnings: string[] = [];
 
   switch (key) {
     case 'knowledge': {
-      const openConflicts = state.cards.filter(
-        (c) => c.type === 'Disagreement' && c.state === 'Flagged'
-      );
-      if (openConflicts.length > 0) {
-        const influenced = state.cards.filter(
-          (c) => c.type === 'Requirement seed' && c.state !== 'Superseded'
-        ).length;
-        return {
-          ok: false,
-          reason: `This conflict is still influencing ${influenced} requirement seed${
-            influenced === 1 ? '' : 's'
-          }.`,
-        };
-      }
-      /*
-       * Architecture questions gate the stage. An unanswered "where does this
-       * live?" propagates into every artifact generated downstream, so it is
-       * cheaper to settle it here — answering, assuming, or deferring all count,
-       * because a recorded assumption is traceable and silence is not.
-       */
+      const open = state.cards.filter((c) => c.type === 'Disagreement' && c.state === 'Flagged');
+      for (const c of open) warnings.push(`Unresolved: ${c.title}`);
+
       const openArch = openQuestionsIn(state, 'Architecture');
       if (openArch.length > 0)
-        return {
-          ok: false,
-          reason: `${openArch.length} architecture question${
+        warnings.push(
+          `${openArch.length} architecture question${
             openArch.length === 1 ? '' : 's'
-          } unsettled — answer, assume, or defer before locking.`,
-        };
+          } unanswered — they will propagate into every artifact generated from here`
+        );
 
-      const seeds = state.cards.filter((c) => c.type === 'Requirement seed').length;
-      if (seeds === 0) return { ok: false, reason: 'Confirm at least one requirement seed first.' };
-      return { ok: true };
+      const openProduct = openQuestionsIn(state, 'Product');
+      if (openProduct.length > 0)
+        warnings.push(`${openProduct.length} product question${openProduct.length === 1 ? '' : 's'} unanswered`);
+
+      if (state.cards.filter((c) => c.type === 'Requirement seed').length === 0)
+        warnings.push('No requirement seed yet, so nothing downstream has an anchor');
+
+      if (state.brief?.stale) warnings.push('The project brief is out of date');
+      break;
     }
     case 'understanding': {
-      const empty = state.understanding.filter((s) => s.body.trim() === '').length;
-      if (empty > 0) return { ok: false, reason: 'Every section needs content before locking.' };
-      const unresolved = state.understanding
-        .find((s) => s.key === 'openQuestions')
-        ?.body.trim();
-      if (state.requirements.length === 0 && !unresolved)
-        return { ok: false, reason: 'Confirm at least one formal requirement first.' };
-      return { ok: true };
+      const empty = state.understanding.filter((sec) => sec.body.trim() === '');
+      for (const sec of empty) warnings.push(`${UNDERSTANDING_COPY[sec.key].header} is empty`);
+      if (state.requirements.length === 0) warnings.push('No formal requirement is confirmed');
+      break;
     }
     case 'artifacts': {
       if (state.archMode === 'Brownfield' && !state.hasLegacyArchitecture)
-        return {
-          ok: false,
-          reason: 'Add the existing architecture in the Knowledge stage first.',
-        };
-      const low = state.artifacts.filter((a) => a.confidence === 'low' || a.stale).length;
-      if (low > 0)
-        return {
-          ok: false,
-          reason: `${low} artifact${low === 1 ? '' : 's'} need review before approval.`,
-        };
-      return { ok: true };
+        warnings.push('Brownfield, but no existing architecture was brought in');
+      const low = state.artifacts.filter((a) => a.confidence === 'low' || a.stale);
+      for (const a of low) warnings.push(`${a.label} needs review`);
+      break;
     }
     case 'modules': {
-      if (state.modules.length === 0) return { ok: false, reason: 'Add at least one module.' };
-      const bare = state.modules.find((m) => m.features.length === 0);
-      if (bare) return { ok: false, reason: `${bare.name} has no features yet.` };
-      return { ok: true };
+      if (state.modules.length === 0) warnings.push('No modules mapped yet');
+      for (const m of state.modules.filter((x) => x.features.length === 0))
+        warnings.push(`${m.name} has no features`);
+      break;
     }
-    default:
-      return { ok: true };
   }
+
+  return warnings;
 };
 
 /** Story types that must be mapped before an export can run. */

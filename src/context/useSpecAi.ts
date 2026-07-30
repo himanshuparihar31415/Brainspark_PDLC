@@ -25,7 +25,7 @@ import {
   ARCHETYPES,
   SPEC_STAGES,
   UNDERSTANDING_COPY,
-  canLockStage,
+  stageGateWarnings,
   seedUnderstandingFromBrief,
   stageDef,
   stageIndex,
@@ -824,25 +824,28 @@ export const useSpecAiSlice = ({
    */
   const lockSpecStage = (projectId: string, stage: SpecStageKey) => {
     const state = specAiFor(projectId);
-    const check = canLockStage(stage, state);
-
-    if (!check.ok) {
-      addToast(check.reason ?? 'This stage cannot be locked yet.', 'error');
-      return;
-    }
-
+    const carried = stageGateWarnings(stage, state);
     const next = SPEC_STAGES.find((s) => s.index === stageIndex(stage) + 1);
+
+    /* Locking a stage locks anything still open before it, so jumping ahead can
+       never leave a hole in the pipeline. */
+    const through = SPEC_STAGES.filter((s) => s.index <= stageIndex(stage)).map((s) => s.key);
 
     patch(projectId, (s) => ({
       ...s,
-      lockedStages: s.lockedStages.includes(stage) ? s.lockedStages : [...s.lockedStages, stage],
+      lockedStages: [...new Set([...s.lockedStages, ...through])],
       currentStage: next?.key ?? stage,
       // The Stage 1 reading becomes Stage 2's starting draft, filling only blanks.
-      understanding: stage === 'knowledge' ? seedUnderstandingFromBrief(s) : s.understanding,
+      understanding: through.includes('knowledge')
+        ? seedUnderstandingFromBrief(s)
+        : s.understanding,
       artifacts:
-        stage === 'understanding' && s.artifacts.length === 0 ? GENERATED_ARTIFACTS() : s.artifacts,
-      modules: stage === 'artifacts' && s.modules.length === 0 ? GENERATED_MODULES() : s.modules,
-      stories: stage === 'modules' && s.stories.length === 0 ? GENERATED_STORIES() : s.stories,
+        through.includes('understanding') && s.artifacts.length === 0
+          ? GENERATED_ARTIFACTS()
+          : s.artifacts,
+      modules:
+        through.includes('artifacts') && s.modules.length === 0 ? GENERATED_MODULES() : s.modules,
+      stories: through.includes('modules') && s.stories.length === 0 ? GENERATED_STORIES() : s.stories,
     }));
 
     const generated =
@@ -854,12 +857,23 @@ export const useSpecAiSlice = ({
         ? ' Stories generated.'
         : '';
 
-    addToast(`${stageDef(stage).title} locked.${generated}`);
+    addToast(
+      `${stageDef(stage).title} locked.${generated}${
+        carried.length > 0
+          ? ` ${carried.length} unresolved ${
+              carried.length === 1 ? 'item' : 'items'
+            } carried forward.`
+          : ''
+      }`
+    );
+
+    /* What was still open at the moment of locking is recorded, so anything
+       generated from this version can be traced back to it. */
     addAuditLog(
       'Lock Spec AI Stage',
       `${stageDef(stage).title} · Project ${projectId}`,
-      `Locked by ${currentRole}`,
-      next ? `Version-locked; ${next.railLabel} unlocked` : 'Version-locked'
+      carried.length > 0 ? `Carried forward: ${carried.join('; ')}` : 'Nothing outstanding',
+      next ? `Version-locked; ${next.railLabel} reached` : 'Version-locked'
     );
   };
 
