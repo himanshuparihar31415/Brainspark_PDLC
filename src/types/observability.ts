@@ -318,3 +318,161 @@ export interface OpsAnswer {
   moduleName?: string;
   tenantId?: string;
 }
+
+// ─────────────────── API Response Types (API_ENDPOINTS_1346.md) ───────────────
+
+export interface PlatformAppMetrics {
+  total_tenants: number;
+  active_tenants: number;
+  total_users: number;
+  recent_auth_success: number;
+  recent_auth_failure: number;
+  recent_rate_limit_events: number;
+  recent_schema_provision_failures: number;
+}
+
+export interface TenantObservability {
+  tenant_id: string;
+  active_member_count: number;
+  project_count: number;
+  enabled_tool_count: number;
+  recent_session_count: number;
+  recent_run_count: number;
+  recent_run_failures: number;
+}
+
+export interface ProjectObservability {
+  project_id: string;
+  member_count: number;
+  members_by_role: Record<string, number>;
+  enabled_tool_count: number;
+  recent_session_count: number;
+  recent_run_count: number;
+  recent_run_failures: number;
+}
+
+export interface CostByModuleItem {
+  module: string;
+  total_cost_usd: number;
+  run_count: number;
+  total_tokens: number;
+}
+
+export interface CostByAgentItem {
+  agent_slug: string;
+  total_cost: number;
+  invocation_count: number;
+  avg_cost_per_call: number;
+  total_tokens: number;
+}
+
+export interface CacheSavingsResponse {
+  total_llm_calls: number;
+  cached_calls: number;
+  cache_hit_rate_pct: number;
+  estimated_savings_usd: number;
+}
+
+export interface PerfByAgentItem {
+  agent_slug: string;
+  p50_ms: number;
+  p95_ms: number;
+  avg_ms: number;
+  max_ms: number;
+  call_count: number;
+}
+
+export interface BottleneckItem {
+  span_id: string;
+  name: string;
+  span_kind: string;
+  duration_ms: number;
+  pct_of_total: number;
+}
+
+export interface ErrorRateItem {
+  agent_slug: string;
+  total_calls: number;
+  error_count: number;
+  error_rate_pct: number;
+}
+
+export interface ProviderHealthItem {
+  provider: string;
+  total_calls: number;
+  error_count: number;
+  error_rate_pct: number;
+  avg_latency_ms: number;
+}
+
+export interface FallbackRateResponse {
+  total_llm_calls: number;
+  fallback_hits: number;
+  fallback_rate_pct: number;
+  by_agent: { agent_slug: string; fallback_count: number }[];
+}
+
+export interface TopConsumerItem {
+  tenant_id: string;
+  tenant_schema: string;
+  total_cost_usd: number;
+  run_count: number;
+  total_tokens: number;
+}
+
+export interface TokenTrendItem {
+  period: string;
+  avg_tokens: number;
+  avg_input: number;
+  avg_output: number;
+  call_count: number;
+}
+
+export interface ToolUsageResponse {
+  avg_tool_calls_per_run: number;
+  tool_breakdown: { tool_name: string; call_count: number; avg_duration_ms: number }[];
+}
+
+export interface RetryRateResponse {
+  total_calls: number;
+  retried_calls: number;
+  retry_rate_pct: number;
+  max_attempts_seen: number;
+}
+
+export interface RunSummaryResponse {
+  id: string;
+  module: string;
+  capability: string;
+  entry_agent: string;
+  status: string;
+  started_at: string;
+  completed_at: string;
+  duration_ms: number;
+  total_agents: number;
+  total_llm_calls: number;
+  total_tool_calls: number;
+  total_input_tokens: number;
+  total_output_tokens: number;
+  total_cost_usd: number;
+  cached_llm_calls: number;
+  error_summary: string | null;
+}
+
+export interface SpanTimelineItem {
+  span_id: string;
+  parent_span_id: string | null;
+  span_kind: string;
+  name: string;
+  agent_id: string;
+  status: string;
+  attempt_number: number;
+  started_at: string;
+  completed_at: string;
+  duration_ms: number;
+  error_type: string | null;
+  error_detail: string | null;
+  model_served: string;
+  provider: string;
+  cost_usd: number;
+}
