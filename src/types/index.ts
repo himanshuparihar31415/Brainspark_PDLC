@@ -29,6 +29,7 @@ export type NavView =
   | 'Connectors'
   | 'Agent Registry'
   | 'Evaluation'
+  | 'Observability'
   | 'Prompt Controls'
   | 'Security'
   | 'My Services'

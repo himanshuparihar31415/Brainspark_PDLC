@@ -28,6 +28,9 @@ const ConnectorsView = lazy(() =>
 const AgentRegistryView = lazy(() =>
   import('./components/views/AgentRegistryView').then((m) => ({ default: m.AgentRegistryView }))
 );
+const ObservabilityView = lazy(() =>
+  import('./components/views/ObservabilityView').then((m) => ({ default: m.ObservabilityView }))
+);
 const EvaluationView = lazy(() =>
   import('./components/views/EvaluationView').then((m) => ({ default: m.EvaluationView }))
 );
@@ -80,6 +83,8 @@ const AppContent: React.FC = () => {
         return <ConnectorsView />;
       case 'Agent Registry':
         return <AgentRegistryView />;
+      case 'Observability':
+        return <ObservabilityView />;
       case 'Evaluation':
         return <EvaluationView />;
       case 'Prompt Controls':

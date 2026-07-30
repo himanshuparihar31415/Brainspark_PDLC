@@ -36,6 +36,12 @@ export const NAV_VISIBILITY: Record<NavView, Role[]> = {
   // Visible to a Project Admin, but read-only — see canDeprecateAgent.
   'Agent Registry': GOVERNANCE_ROLES,
   Evaluation: TENANT_ROLES,
+  /*
+   * All three governance tiers see it; scope decides what the numbers cover, so a
+   * Tenant Admin's "enterprise" view is their own tenant. Reading payload content
+   * at L5 is a separate right — see canViewPayloads in data/observability.
+   */
+  Observability: GOVERNANCE_ROLES,
   'Prompt Controls': TENANT_ROLES,
   Security: TENANT_ROLES,
   'My Services': PDLC_ROLES,
