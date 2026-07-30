@@ -246,10 +246,10 @@ export const DashboardView: React.FC = () => {
         <div
           className={`flex flex-col gap-3 rounded-2xl border px-5 py-4 sm:flex-row sm:items-center sm:justify-between ${
             budgetTone === 'bad'
-              ? 'border-rose-200 bg-rose-50'
+              ? 'border-rose-200 bg-rose-50/80 backdrop-blur-md'
               : budgetTone === 'warn'
-              ? 'border-amber-200 bg-amber-50'
-              : 'border-slate-200 bg-white'
+              ? 'border-amber-200 bg-amber-50/80 backdrop-blur-md'
+              : 'glass-panel border-white/60'
           }`}
         >
           <div className="flex items-center gap-3">

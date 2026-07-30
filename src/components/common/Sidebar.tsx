@@ -58,14 +58,14 @@ export const Sidebar: React.FC = () => {
 
   return (
     <aside
-      className={`bg-slate-900 text-slate-300 flex flex-col justify-between border-r border-slate-800 shrink-0 select-none transition-all duration-200 ${
+      className={`glass z-20 flex shrink-0 select-none flex-col justify-between border-r border-white/50 text-slate-700 transition-all duration-200 ${
         navCollapsed ? 'w-14' : 'w-64'
       }`}
     >
       <div className="min-h-0 flex-1 overflow-y-auto py-4">
         {!navCollapsed && (
-          <div className="px-5 mb-3 flex items-center justify-between">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
+          <div className="mb-3 flex items-center justify-between px-5">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
               Navigation ({currentRole})
             </span>
           </div>
@@ -81,25 +81,27 @@ export const Sidebar: React.FC = () => {
                 key={item.label}
                 onClick={() => setActiveNav(item.label)}
                 title={navCollapsed ? item.label : undefined}
-                className={`w-full flex items-center ${
+                className={`flex w-full cursor-pointer items-center rounded-xl py-2.5 text-xs font-semibold transition-all duration-150 ${
                   navCollapsed ? 'justify-center px-0' : 'justify-between px-3.5'
-                } py-2.5 rounded-xl text-xs font-semibold transition-all duration-150 cursor-pointer ${
+                } ${
                   isActive
-                    ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
-                    : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/60'
+                    ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/25'
+                    : 'text-slate-600 hover:bg-white/60 hover:text-slate-900'
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-white' : 'text-slate-400'}`} />
+                  <Icon
+                    className={`h-4 w-4 shrink-0 ${isActive ? 'text-white' : 'text-slate-400'}`}
+                  />
                   {!navCollapsed && <span>{item.label}</span>}
                 </div>
                 {item.badge && !navCollapsed && (
                   <span
-                    className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                    className={`rounded-md px-2 py-0.5 text-[10px] font-bold ${
                       isActive
-                        ? 'bg-indigo-500 text-white'
+                        ? 'bg-white/20 text-white'
                         : item.label === 'Agent Registry'
-                        ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                        ? 'border border-amber-300/60 bg-amber-50 text-amber-700'
                         : 'bg-orange-500 text-white'
                     }`}
                   >
@@ -114,21 +116,21 @@ export const Sidebar: React.FC = () => {
 
       {/* Footer */}
       <div
-        className={`shrink-0 border-t border-slate-800/80 bg-slate-950/40 ${
+        className={`ios-hairline shrink-0 border-t bg-white/30 ${
           navCollapsed ? 'p-2' : 'p-4'
         }`}
       >
         {navCollapsed ? null : (
-        <div className="flex items-center justify-between text-xs text-slate-400">
-          <button className="flex items-center gap-1.5 hover:text-white transition-colors">
-            <HelpCircle className="w-3.5 h-3.5" />
-            <span>Help & docs</span>
-          </button>
-          <button className="flex items-center gap-1.5 hover:text-white transition-colors">
-            <FileText className="w-3.5 h-3.5" />
-            <span>What's new</span>
-          </button>
-        </div>
+          <div className="flex items-center justify-between text-xs text-slate-500">
+            <button className="flex items-center gap-1.5 transition-colors hover:text-indigo-600">
+              <HelpCircle className="h-3.5 w-3.5" />
+              <span>Help & docs</span>
+            </button>
+            <button className="flex items-center gap-1.5 transition-colors hover:text-indigo-600">
+              <FileText className="h-3.5 w-3.5" />
+              <span>What's new</span>
+            </button>
+          </div>
         )}
       </div>
     </aside>

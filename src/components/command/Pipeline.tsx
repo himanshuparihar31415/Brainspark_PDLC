@@ -91,18 +91,18 @@ const PhaseCard: React.FC<{
     <div
       className={`flex flex-col overflow-hidden rounded-2xl border transition-all ${
         phase.status === 'Blocked'
-          ? 'border-rose-300 bg-rose-50/20'
+          ? 'border-rose-300/70 bg-rose-50/40 backdrop-blur-xl'
           : phase.status === 'Waiting'
-          ? 'border-amber-300 bg-amber-50/20'
+          ? 'border-amber-300/70 bg-amber-50/40 backdrop-blur-xl'
           : phase.status === 'Complete'
-          ? 'border-emerald-200 bg-emerald-50/30'
+          ? 'border-emerald-200/80 bg-emerald-50/35 backdrop-blur-xl'
           : expanded
-          ? 'border-indigo-500 bg-white shadow-md'
+          ? 'glass-strong border-indigo-400/60 shadow-md'
           : focused
-          ? 'border-indigo-300 bg-white shadow-md ring-1 ring-indigo-200'
+          ? 'glass-panel border-indigo-300/50 shadow-md ring-1 ring-indigo-200/60'
           : notStarted
-          ? 'border-slate-200 bg-slate-50/60'
-          : 'border-slate-200 bg-white'
+          ? 'glass border-white/40 bg-white/35'
+          : 'glass-panel border-white/60'
       }`}
       title={!focused ? 'Not your phase — open to view.' : undefined}
     >

@@ -93,25 +93,25 @@ export const Header: React.FC = () => {
   return (
     // shrink-0 rather than sticky: the shell has a definite height now, so the
     // header is genuinely fixed at the top instead of pretending to be.
-    <header className="h-16 shrink-0 bg-white border-b border-slate-200 px-4 md:px-6 flex items-center justify-between z-30 shadow-xs">
+    <header className="glass z-30 flex h-16 shrink-0 items-center justify-between border-b border-white/50 px-4 md:px-6">
       {/* Left branding & Scope Selector */}
       <div className="flex items-center gap-4 lg:gap-6">
         {/* Nav collapse — pinned open or closed by the user, auto-set on entry */}
         <button
           onClick={() => setNavCollapsed(!navCollapsed)}
           title={navCollapsed ? 'Expand navigation' : 'Collapse navigation'}
-          className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer shrink-0"
+          className="shrink-0 cursor-pointer rounded-lg p-1.5 text-slate-500 transition-colors hover:bg-white/70 hover:text-slate-900"
         >
           {navCollapsed ? (
-            <PanelLeftOpen className="w-4 h-4" />
+            <PanelLeftOpen className="h-4 w-4" />
           ) : (
-            <PanelLeftClose className="w-4 h-4" />
+            <PanelLeftClose className="h-4 w-4" />
           )}
         </button>
 
         <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-slate-900 to-indigo-950 flex items-center justify-center text-white shadow-md shadow-indigo-950/20">
-            <Brain className="w-5 h-5 text-indigo-400" />
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-600 to-indigo-500 text-white shadow-sm shadow-indigo-600/30">
+            <Brain className="h-5 w-5 text-white" />
           </div>
           <div>
             <div className="flex items-center gap-1.5">
@@ -190,7 +190,7 @@ export const Header: React.FC = () => {
 
           {/* Scope Dropdown */}
           {scopeDropdownOpen && (
-            <div className="absolute top-full left-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-slate-200 py-2 z-50 text-xs text-slate-700 animate-in fade-in slide-in-from-top-1">
+            <div className="glass-strong absolute top-full left-0 z-50 mt-2 w-64 animate-in fade-in slide-in-from-top-1 rounded-2xl border border-white/60 py-2 text-xs text-slate-700 shadow-xl">
               <div className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
                 Scope Level
               </div>
@@ -270,7 +270,7 @@ export const Header: React.FC = () => {
           onFocus={() => setSearchFocused(true)}
           onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
           placeholder="Search projects, agents, connectors, artifacts…"
-          className="w-full bg-slate-100 hover:bg-slate-100/80 focus:bg-white text-xs text-slate-800 placeholder-slate-400 rounded-xl pl-9 pr-8 py-2 border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 outline-none transition-all"
+          className="w-full rounded-xl border border-white/60 bg-white/50 py-2 pr-8 pl-9 text-xs text-slate-800 outline-none transition-all placeholder:text-slate-400 hover:bg-white/70 focus:border-indigo-500 focus:bg-white/90 focus:ring-2 focus:ring-indigo-500/15"
         />
         {searchQuery && (
           <button
@@ -283,7 +283,7 @@ export const Header: React.FC = () => {
 
         {/* Live Search Quick Popover */}
         {searchFocused && searchQuery.length > 0 && (
-          <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-slate-200 p-3 z-50 animate-in fade-in slide-in-from-top-1 text-xs">
+          <div className="glass-strong absolute top-full right-0 left-0 z-50 mt-2 animate-in fade-in slide-in-from-top-1 rounded-2xl border border-white/60 p-3 text-xs shadow-xl">
             <div className="font-semibold text-slate-500 text-[10px] uppercase tracking-wider mb-2">
               Instant Search Matches for "{searchQuery}"
             </div>
@@ -342,8 +342,8 @@ export const Header: React.FC = () => {
 
           {/* Role Picker Menu */}
           {roleMenuOpen && rolesList.length > 1 && (
-            <div className="absolute top-full right-0 mt-2 w-72 bg-white rounded-xl shadow-2xl border border-slate-200 py-2 z-50 text-xs animate-in fade-in slide-in-from-top-1">
-              <div className="px-3 py-1.5 border-b border-slate-100 bg-slate-50/50">
+            <div className="glass-strong absolute top-full right-0 z-50 mt-2 w-72 animate-in fade-in slide-in-from-top-1 rounded-2xl border border-white/60 py-2 text-xs shadow-2xl">
+              <div className="ios-hairline border-b bg-white/40 px-3 py-1.5">
                 <div className="font-bold text-slate-900">Switch Role</div>
                 <div className="text-[11px] text-slate-500 leading-tight mt-0.5">
                   {currentUser?.primaryRole === 'Super Admin'
@@ -398,8 +398,8 @@ export const Header: React.FC = () => {
           </button>
 
           {notifOpen && (
-            <div className="absolute top-full right-0 mt-2 w-80 bg-white rounded-xl shadow-2xl border border-slate-200 py-2 z-50 text-xs animate-in fade-in slide-in-from-top-1">
-              <div className="px-3 py-2 border-b border-slate-100 flex items-center justify-between">
+            <div className="glass-strong absolute top-full right-0 z-50 mt-2 w-80 animate-in fade-in slide-in-from-top-1 rounded-2xl border border-white/60 py-2 text-xs shadow-2xl">
+              <div className="ios-hairline flex items-center justify-between border-b bg-white/40 px-3 py-2">
                 <span className="font-bold text-slate-900">Notifications</span>
                 <span className="text-[10px] bg-slate-100 px-2 py-0.5 rounded-full font-medium text-slate-600">
                   {unreadNotifs.length} unread
@@ -446,7 +446,7 @@ export const Header: React.FC = () => {
               className="w-8 h-8 rounded-full object-cover ring-1 ring-slate-200"
             />
           ) : (
-            <div className="w-8 h-8 rounded-full bg-slate-900 text-white font-bold text-xs flex items-center justify-center">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-600 text-xs font-bold text-white shadow-sm shadow-indigo-600/30">
               {(currentUser?.name || currentRole)
                 .split(' ')
                 .map((w) => w[0])

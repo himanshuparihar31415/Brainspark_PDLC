@@ -50,10 +50,10 @@ const Tile: React.FC<{
   <button
     onClick={onClick}
     title={ACTION_HINT[spec.action]}
-    className={`group relative overflow-hidden rounded-2xl border bg-white p-5 text-left shadow-xs transition-all cursor-pointer ${
+    className={`glass-panel group relative cursor-pointer overflow-hidden rounded-2xl border p-5 text-left transition-all ${
       active
-        ? 'border-indigo-600 ring-2 ring-indigo-600/20'
-        : 'border-slate-200 hover:border-slate-300'
+        ? 'border-indigo-500/50 ring-2 ring-indigo-600/20'
+        : 'border-white/60 hover:border-indigo-200/80'
     }`}
   >
     <div className="flex items-center justify-between">
