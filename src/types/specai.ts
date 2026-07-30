@@ -187,11 +187,14 @@ export type UnderstandingKey =
 // ─────────── Stage 1: synthesis — the brief and the question queue ───────────
 
 /**
- * The three bands of a synthesized reading. Separating them is the point: a
+ * The bands of a synthesized reading. Separating them is the point: a
  * comprehensive overview that blurs what is known with what is guessed is worse
  * than no overview, because it launders assumptions into facts.
+ *
+ * `decided` holds what you settled by talking to the agent, which is why the
+ * brief gets better the more you use it rather than staying a first impression.
  */
-export type BriefBandKey = 'understood' | 'inferring' | 'cannotTell';
+export type BriefBandKey = 'understood' | 'decided' | 'inferring' | 'cannotTell';
 
 export interface BriefLine {
   id: string;
@@ -206,6 +209,12 @@ export interface BriefLine {
 export interface UnderstandingBrief {
   /** Bumped on every synthesis run; earlier versions are never overwritten silently. */
   version: number;
+  /**
+   * The narrative opening — a few paragraphs a person could read on its own and
+   * come away knowing what this project is. Everything below it is the detail
+   * behind these sentences.
+   */
+  summary: string;
   /** The exact inputs this reading was produced from. */
   generatedFrom: { problemStatement: string; sourceIds: string[]; channelIds: string[] };
   bands: Record<BriefBandKey, BriefLine[]>;

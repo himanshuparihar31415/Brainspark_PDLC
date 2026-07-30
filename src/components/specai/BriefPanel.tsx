@@ -7,17 +7,23 @@ import {
   EVIDENCE_CLASSES,
   indexedSources,
 } from '../../data/specai';
-import { AlertTriangle, Loader2, RefreshCw, Sparkles } from 'lucide-react';
+import { QuestionQueue } from './QuestionQueue';
+import { AlertTriangle, Loader2, MessageSquare, RefreshCw, Sparkles } from 'lucide-react';
 
 /**
- * The provisional reading. Three bands, never merged: what the sources say, what
- * was reasoned from them, and what nothing covers. A brief that blurs those is
- * worse than none, because it launders assumptions into facts.
+ * What the agent currently understands about the project, long enough to read on
+ * its own. The bands are never merged: a brief that blurs what is known with what
+ * is guessed is worse than none, because it launders assumptions into facts.
+ *
+ * It is provisional by design. Settling a question with the agent marks it out of
+ * date, and refreshing folds the answer in — so the brief improves as you use it
+ * rather than staying a first impression.
  */
 export const BriefPanel: React.FC<{
   state: SpecAiState;
   disabled: boolean;
-}> = ({ state, disabled }) => {
+  onTalkToAgent: () => void;
+}> = ({ state, disabled, onTalkToAgent }) => {
   const { synthesizeUnderstanding } = useApp();
 
   const brief = state.brief;
@@ -37,56 +43,76 @@ export const BriefPanel: React.FC<{
       <div className="flex flex-1 flex-col items-center justify-center gap-3 p-6 text-center">
         <Sparkles className="h-5 w-5 text-slate-300" />
         <p className="text-[10.5px] leading-relaxed text-slate-500">
-          No reading yet. Once you have stated the problem, I will read across everything indexed
-          and tell you what I understand, what I am inferring, and what I cannot tell.
+          No brief yet. Once you have stated the problem, the agent reads across everything indexed
+          and writes up what it understands, what it is assuming, and what is still missing.
         </p>
         <button
           onClick={() => synthesizeUnderstanding(state.projectId)}
           disabled={disabled}
           className="cursor-pointer rounded-lg bg-indigo-600 px-3 py-1.5 text-[10.5px] font-bold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400"
         >
-          Build the reading
+          Write the brief
         </button>
       </div>
     );
 
-  const total = BRIEF_BANDS.reduce((n, b) => n + brief.bands[b].length, 0);
-
   return (
-    <div className="min-h-0 flex-1 overflow-y-auto p-3">
+    <div className="min-h-0 flex-1 overflow-y-auto px-3.5 py-3">
       <div className="flex flex-wrap items-center gap-1.5 pb-2">
         <span className="rounded bg-slate-900 px-1.5 py-0.5 text-[9px] font-bold text-white">
           v{brief.version}
         </span>
         <span className="text-[9.5px] text-slate-400">
-          {total} lines from {brief.generatedFrom.sourceIds.length} sources
+          from {brief.generatedFrom.sourceIds.length} sources
         </span>
+        <button
+          onClick={onTalkToAgent}
+          className="ml-auto flex cursor-pointer items-center gap-1 text-[9.5px] font-bold text-indigo-600 hover:underline"
+        >
+          <MessageSquare className="h-2.5 w-2.5" /> Talk to the agent
+        </button>
       </div>
 
       {brief.stale && (
-        <div className="mb-2.5 rounded-xl border border-amber-200 bg-amber-50 px-2.5 py-2">
+        <div className="mb-3 rounded-xl border border-amber-200 bg-amber-50 px-2.5 py-2">
           <p className="flex items-start gap-1.5 text-[10px] font-bold leading-relaxed text-amber-900">
             <AlertTriangle className="mt-px h-3 w-3 shrink-0" />
-            {brief.staleReason ?? 'Inputs changed since this reading.'}
+            {brief.staleReason ?? 'Inputs changed since this was written.'}
           </p>
           <button
             onClick={() => synthesizeUnderstanding(state.projectId)}
             disabled={disabled}
             className="mt-1.5 flex cursor-pointer items-center gap-1 rounded-lg bg-amber-500 px-2 py-1 text-[9.5px] font-bold text-white hover:bg-amber-600 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <RefreshCw className="h-2.5 w-2.5" /> Re-read {readable} sources
+            <RefreshCw className="h-2.5 w-2.5" /> Refresh from {readable} sources
           </button>
         </div>
       )}
 
-      <div className="space-y-3">
+      {/* The narrative — readable on its own, without the detail below it */}
+      <div className="space-y-2 border-b border-slate-200 pb-3">
+        {brief.summary.split('\n\n').map((para, i) => (
+          <p
+            key={i}
+            className={`leading-relaxed ${
+              i === 0 ? 'text-[11.5px] font-semibold text-slate-900' : 'text-[11px] text-slate-600'
+            }`}
+          >
+            {para}
+          </p>
+        ))}
+      </div>
+
+      {/* The detail behind it, kept in separate bands */}
+      <div className="mt-3 space-y-3.5">
         {BRIEF_BANDS.map((key) => {
           const copy = BRIEF_BAND_COPY[key];
           const lines = brief.bands[key];
+          if (lines.length === 0) return null;
 
           return (
             <section key={key}>
-              <h4 className="text-[10.5px] font-extrabold tracking-tight text-slate-900">
+              <h4 className="text-[11px] font-extrabold tracking-tight text-slate-900">
                 {copy.header}
                 <span className="ml-1.5 font-mono text-[9px] font-bold text-slate-400">
                   {lines.length}
@@ -95,16 +121,16 @@ export const BriefPanel: React.FC<{
               <p className="mt-0.5 text-[9.5px] leading-snug text-slate-400">{copy.helper}</p>
 
               <div className="mt-1.5 space-y-1.5">
-                {lines.length === 0 ? (
-                  <p className="text-[10px] italic text-slate-400">Nothing in this band.</p>
-                ) : (
-                  lines.map((l) => (
-                    <div
-                      key={l.id}
-                      className={`rounded-r-lg border-l-2 bg-slate-50/70 py-1.5 pl-2.5 pr-2 ${copy.accent}`}
-                    >
-                      <p className="text-[10.5px] leading-relaxed text-slate-700">{l.text}</p>
-                      <div className="mt-1 flex flex-wrap items-center gap-1">
+                {lines.map((l) => (
+                  <div
+                    key={l.id}
+                    className={`rounded-r-lg border-l-2 bg-slate-50/70 py-1.5 pl-2.5 pr-2 ${copy.accent}`}
+                  >
+                    <p className="text-[10.5px] leading-relaxed text-slate-700">{l.text}</p>
+                    <div className="mt-1 flex flex-wrap items-center gap-1">
+                      {/* Silence means sourced — only a guess is marked. */}
+                      {(l.evidenceClass === 'AI assumption' ||
+                        l.evidenceClass === 'Inferred interpretation') && (
                         <span
                           className={`rounded px-1 py-0.5 text-[8px] font-bold ${
                             EVIDENCE_CLASSES[l.evidenceClass].chip
@@ -113,24 +139,29 @@ export const BriefPanel: React.FC<{
                         >
                           {EVIDENCE_CLASSES[l.evidenceClass].short}
                         </span>
-                        <span
-                          title={l.sourceSummary}
-                          className="min-w-0 flex-1 truncate text-[9px] text-slate-400"
-                        >
-                          {l.sourceSummary}
-                        </span>
-                      </div>
+                      )}
+                      <span
+                        title={l.sourceSummary}
+                        className="min-w-0 flex-1 truncate text-[9px] text-slate-400"
+                      >
+                        {l.sourceSummary}
+                      </span>
                     </div>
-                  ))
-                )}
+                  </div>
+                ))}
               </div>
             </section>
           );
         })}
       </div>
 
+      {/* What the agent needs answered, settled inline */}
+      <div className="mt-4 border-t border-slate-200 pt-3">
+        <QuestionQueue state={state} disabled={disabled} />
+      </div>
+
       <p className="mt-3 border-t border-slate-200 pt-2 text-[9.5px] leading-relaxed text-slate-400">
-        This reading is provisional and safe to throw away. Locking the stage seeds it into Project
+        This brief is provisional and safe to throw away. Locking the stage seeds it into Project
         Understanding, which is the version that gets edited and approved.
       </p>
     </div>

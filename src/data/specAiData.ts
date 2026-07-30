@@ -309,6 +309,8 @@ const finEdgeUnderstanding: UnderstandingSection[] = [
  */
 const finEdgeBrief: UnderstandingBrief = {
   version: 1,
+  summary:
+    'This project exists because returning customers abandon login when a PIN is demanded every single time. The goal is biometric login for customers who have already onboarded, without weakening device security or breaking the shared OAuth gateway.\n\nI read 7 sources against that — the Jira project, platform standards, the PRD, the discovery call, the test application, the auth service repository, and the legacy architecture document — and put 5 pieces of context on the board. The rest repeats the problem statement, corroborates something already there, or does not bear on it, so it stayed in the source.\n\nWhat is firm: four things are stated outright by a source — the PIN-then-OTP journey, the fifteen-minute token expiry shared with web, the mandatory central gateway, and the three-strikes fallback agreed in security review. Three more have been settled with me. Those are safe to build on.\n\nWhat is not firm: three things are my assumptions rather than anything a source states, and there is one place where your sources actively disagree — Jira phases biometrics into 2.1 while the discovery call treats it as needed at launch. That disagreement is on the board and holds the stage gate.\n\nThe architecture questions matter most. An unanswered “where does this live?” propagates into every artifact generated after this stage, so it is cheapest to settle here. Four are still open.',
   generatedFrom: {
     problemStatement:
       'Returning customers abandon login because a PIN is demanded every single time. We want biometric login for customers who have already onboarded, without weakening device security or breaking the shared OAuth gateway.',
@@ -358,6 +360,32 @@ const finEdgeBrief: UnderstandingBrief = {
         evidenceClass: 'Source fact',
         sourceIds: ['src-standards'],
         sourceSummary: 'Platform Standards',
+      },
+    ],
+    decided: [
+      {
+        id: 'brief-v1-d1',
+        text:
+          'Out of scope for this release — voice biometrics, desktop biometric login, business-banking users, and third-party identity providers are all excluded.',
+        evidenceClass: 'User decision',
+        sourceIds: [],
+        sourceSummary: 'Settled with the agent',
+      },
+      {
+        id: 'brief-v1-d2',
+        text:
+          'A device that cannot support biometrics simply hides the option and keeps PIN available. No degraded messaging.',
+        evidenceClass: 'User decision',
+        sourceIds: [],
+        sourceSummary: 'Settled with the agent',
+      },
+      {
+        id: 'brief-v1-d3',
+        text:
+          'Assuming the existing fifteen-minute token expiry holds. Biometric re-authentication issues a fresh token rather than extending one.',
+        evidenceClass: 'AI assumption',
+        sourceIds: [],
+        sourceSummary: 'Assumed with the agent',
       },
     ],
     inferring: [

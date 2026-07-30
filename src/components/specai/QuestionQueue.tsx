@@ -32,21 +32,21 @@ export const QuestionQueue: React.FC<{
 
   if (state.questions.length === 0)
     return (
-      <div className="flex flex-1 flex-col items-center justify-center gap-2 p-6 text-center">
-        <HelpCircle className="h-5 w-5 text-slate-300" />
-        <p className="text-[10.5px] leading-relaxed text-slate-500">
-          No questions yet. Build the reading and anything the sources cannot answer lands here.
-        </p>
-      </div>
+      <p className="flex items-center gap-1.5 text-[10px] text-slate-400">
+        <HelpCircle className="h-3 w-3 shrink-0" />
+        Nothing outstanding — every question the sources raised has been settled.
+      </p>
     );
 
   return (
-    <div className="min-h-0 flex-1 overflow-y-auto p-3">
-      <div className="flex flex-wrap items-center gap-1.5 pb-2">
-        <span className="text-[9.5px] text-slate-400">
-          {open.length} open · {state.questions.length - open.length} settled
-        </span>
-      </div>
+    <div>
+      <h4 className="text-[11px] font-extrabold tracking-tight text-slate-900">
+        What I need answered
+      </h4>
+      <p className="mt-0.5 pb-2 text-[9.5px] leading-snug text-slate-400">
+        {open.length} open · {state.questions.length - open.length} settled. Settling one folds it
+        into the brief.
+      </p>
 
       {openArch.length > 0 && (
         <p className="mb-2.5 flex items-start gap-1.5 rounded-xl border border-amber-200 bg-amber-50 px-2.5 py-2 text-[10px] font-bold leading-relaxed text-amber-900">

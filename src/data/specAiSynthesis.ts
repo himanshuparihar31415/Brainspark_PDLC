@@ -27,6 +27,8 @@ export interface SynthesisInput {
   channels: KnowledgeChannel[];
   /** Existing board cards, so a flag is never raised twice. */
   cards: BoardCard[];
+  /** Anything already settled with the agent. Becomes the decided band. */
+  settled: SpecQuestion[];
   /** Version of the brief being produced. */
   version: number;
   pmName: string;
@@ -176,7 +178,8 @@ const FINDINGS: {
 const nextId = (prefix: string, n: number) => `${prefix}-${n}`;
 
 export const synthesize = (input: SynthesisInput): SynthesisResult => {
-  const { problemStatement, sources, channels, cards, version, pmName, architectName } = input;
+  const { problemStatement, sources, channels, cards, settled, version, pmName, architectName } =
+    input;
 
   const indexed = sources.filter((s) => s.ingest === 'Indexed');
   const failed = sources.filter((s) => s.ingest === 'Failed');
@@ -206,9 +209,21 @@ export const synthesize = (input: SynthesisInput): SynthesisResult => {
 
   const bands: Record<BriefBandKey, BriefLine[]> = {
     understood: [],
+    decided: [],
     inferring: [],
     cannotTell: [],
   };
+
+  /* Everything settled with the agent, so the brief reflects the conversation
+     rather than staying the first impression it started as. */
+  for (const q of settled)
+    bands.decided.push(
+      line(
+        `${q.text} — ${q.answer ?? 'settled without a note.'}`,
+        q.status === 'Assumed' ? 'AI assumption' : 'User decision',
+        []
+      )
+    );
 
   // ── What I understand ──────────────────────────────────────────────────────
 
@@ -547,9 +562,41 @@ export const synthesize = (input: SynthesisInput): SynthesisResult => {
       )
     );
 
+  const readCount = indexed.length;
+  const summary = [
+    statement
+      ? `This project exists because: ${statement.replace(/\s+/g, ' ')}`
+      : 'No problem statement has been written yet, so this reading has nothing to aim at.',
+    readCount === 0
+      ? 'Nothing has finished indexing, so everything below comes from that statement alone.'
+      : `I read ${readCount} source${readCount === 1 ? '' : 's'} against it — ${indexed
+          .map((x) => x.name)
+          .join(', ')} — and put ${boardCards.length} ${
+          boardCards.length === 1 ? 'piece' : 'pieces'
+        } of context on the board. The rest of what I read repeats the problem statement, corroborates something already there, or does not bear on it, so it stayed in the source.`,
+    bands.understood.length > 0
+      ? `What is firm: ${bands.understood.length} things are stated outright by a source, and ${
+          bands.decided.length
+        } more have been settled with me. Those are safe to build on.`
+      : 'Nothing is firm yet.',
+    bands.inferring.length > 0 || bands.cannotTell.length > 0
+      ? `What is not firm: I am assuming ${bands.inferring.length} thing${
+          bands.inferring.length === 1 ? '' : 's'
+        } that no source actually states, and ${bands.cannotTell.length} question${
+          bands.cannotTell.length === 1 ? '' : 's'
+        } have no source at all. Those are listed below, and the architecture ones hold the stage gate until you settle them.`
+      : 'Nothing outstanding.',
+    questions.filter((q) => q.track === 'Architecture').length > 0
+      ? 'The architecture questions matter most: an unanswered "where does this live?" propagates into every artifact generated after this stage, so it is cheapest to settle here.'
+      : '',
+  ]
+    .filter(Boolean)
+    .join('\n\n');
+
   return {
     brief: {
       version,
+      summary,
       generatedFrom: {
         problemStatement: statement,
         sourceIds: indexed.map((s) => s.id),

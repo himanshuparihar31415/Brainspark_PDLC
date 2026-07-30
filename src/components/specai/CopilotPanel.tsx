@@ -131,7 +131,10 @@ export const CopilotPanel: React.FC<{
 
     const snapshot = selected;
     runBoardAction(state.projectId, actionId, selectedIds);
-    push('ai', actionReport(actionId, snapshot));
+    push(
+      'ai',
+      `${actionReport(actionId, snapshot)} The project brief is out of date now — refresh it on that tab to fold this in.`
+    );
 
     // These two rewrite the board, so the old selection no longer refers to it.
     if (actionId === 'draft' || actionId === 'remove') onSelectionChange([]);

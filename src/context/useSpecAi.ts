@@ -186,6 +186,7 @@ export const useSpecAiSlice = ({
         sources: current.sources,
         channels: current.channels,
         cards: current.cards,
+        settled: current.questions.filter((q) => q.status !== 'Open'),
         version: (current.brief?.version ?? 0) + 1,
         pmName: currentRole === 'Product Manager' ? currentUserName : 'Maya Kapoor',
         architectName: currentRole === 'Architect' ? currentUserName : 'Arjun Mehta',
@@ -255,12 +256,23 @@ export const useSpecAiSlice = ({
     status: QuestionStatus,
     answer?: string
   ) => {
-    patch(projectId, (s) => ({
-      ...s,
-      questions: s.questions.map((q) =>
-        q.id === questionId ? { ...q, status, answer: answer?.trim() || q.answer } : q
-      ),
-    }));
+    patch(projectId, (s) => {
+      const target = s.questions.find((q) => q.id === questionId);
+      return {
+        ...s,
+        questions: s.questions.map((q) =>
+          q.id === questionId ? { ...q, status, answer: answer?.trim() || q.answer } : q
+        ),
+        brief:
+          s.brief && target && status !== 'Open'
+            ? {
+                ...s.brief,
+                stale: true,
+                staleReason: `You settled “${target.text}”. Refresh to fold it in.`,
+              }
+            : s.brief,
+      };
+    });
 
     const q = specAiFor(projectId).questions.find((x) => x.id === questionId);
     addToast(`Marked ${status.toLowerCase()}.`);
@@ -395,6 +407,17 @@ export const useSpecAiSlice = ({
    * context; nothing is invented silently — gaps come back as Question cards and
    * disagreements as Conflict cards.
    */
+  /**
+   * The brief is a reading of a moment. Anything that changes what there is to
+   * read makes it out of date, and saying so is better than letting it quietly
+   * describe a board that has moved on.
+   */
+  const markBriefStale = (projectId: string, reason: string) => {
+    patch(projectId, (s) =>
+      s.brief ? { ...s, brief: { ...s.brief, stale: true, staleReason: reason } } : s
+    );
+  };
+
   const runBoardAction = (projectId: string, actionId: string, cardIds: string[]) => {
     const state = specAiFor(projectId);
     const selected = state.cards.filter((c) => cardIds.includes(c.id));
@@ -402,10 +425,12 @@ export const useSpecAiSlice = ({
     switch (actionId) {
       case 'remove':
         removeCards(projectId, cardIds);
+        markBriefStale(projectId, `${cardIds.length} pieces were removed from the board.`);
         return;
 
       case 'draft':
         createRequirementSeed(projectId, cardIds);
+        markBriefStale(projectId, 'A requirement seed was drafted from the board.');
         return;
 
       case 'group': {
@@ -437,6 +462,7 @@ export const useSpecAiSlice = ({
           ],
         }));
         addToast('1 gap raised as a question. Nothing was invented.');
+        markBriefStale(projectId, 'A new question was raised and is not in the brief yet.');
         return;
       }
 
@@ -471,7 +497,8 @@ export const useSpecAiSlice = ({
             },
           ],
         }));
-        addToast('1 conflict raised for resolution.');
+        addToast('1 disagreement raised for resolution.');
+        markBriefStale(projectId, 'A disagreement between sources was raised.');
         return;
       }
 
@@ -517,7 +544,8 @@ export const useSpecAiSlice = ({
           : c
       ),
     }));
-    addToast('Conflict resolved and recorded as a decision.');
+    addToast('Disagreement resolved and recorded as a decision.');
+    markBriefStale(projectId, 'You resolved a disagreement. Refresh to fold the decision in.');
     addAuditLog('Resolve Conflict', `Card: ${cardId}`, resolution, 'Recorded as user decision');
   };
 

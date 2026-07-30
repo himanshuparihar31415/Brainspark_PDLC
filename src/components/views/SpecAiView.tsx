@@ -8,7 +8,7 @@ import {
   stageDef,
   stageStateFor,
 } from '../../data/specai';
-import { StageRail } from '../specai/StageRail';
+import { StageStrip } from '../specai/StageStrip';
 import { GateButton, GateNote } from '../specai/StageGate';
 import { StatusBar } from '../specai/StatusBar';
 import { Stage1Knowledge } from '../specai/Stage1Knowledge';
@@ -85,10 +85,10 @@ export const SpecAiView: React.FC = () => {
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="flex min-h-0 flex-1 flex-col gap-3 p-4 lg:flex-row lg:gap-4 lg:p-5">
-        <StageRail state={state} activeKey={viewing} onSelect={select} activeTrack={track} />
+      <div className="flex min-h-0 flex-1 flex-col gap-2.5 p-3 lg:p-4">
+        <StageStrip state={state} activeKey={viewing} onSelect={select} activeTrack={track} />
 
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-3">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2.5">
           {/* Stage header — identity on the left, the gate on the right */}
           <header className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0">

@@ -182,25 +182,30 @@ export const INGEST_COPY: Record<IngestState, { label: string; chip: string; dot
 
 // ──────────────── Synthesis: the brief and the question queue ────────────────
 
-export const BRIEF_BANDS: BriefBandKey[] = ['understood', 'inferring', 'cannotTell'];
+export const BRIEF_BANDS: BriefBandKey[] = ['understood', 'decided', 'inferring', 'cannotTell'];
 
 export const BRIEF_BAND_COPY: Record<
   BriefBandKey,
   { header: string; helper: string; accent: string }
 > = {
   understood: {
-    header: 'What I understand',
-    helper: 'Drawn straight from indexed sources. Each line names its backing.',
+    header: 'What we know',
+    helper: 'Straight from your sources. Each line names where it came from.',
     accent: 'border-emerald-300',
   },
+  decided: {
+    header: 'What’s been decided',
+    helper: 'Settled by you, so it now carries weight downstream.',
+    accent: 'border-teal-300',
+  },
   inferring: {
-    header: 'What I’m inferring',
-    helper: 'Reasoned rather than stated. Confirm before any of it carries weight.',
+    header: 'What I’m assuming',
+    helper: 'Reasoned, not stated. Worth checking before it carries weight.',
     accent: 'border-blue-300',
   },
   cannotTell: {
-    header: 'What I can’t tell yet',
-    helper: 'No source covers this. These became the questions below.',
+    header: 'What’s still missing',
+    helper: 'No source covers this. It became a question below.',
     accent: 'border-amber-300',
   },
 };

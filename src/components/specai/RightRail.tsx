@@ -3,15 +3,13 @@ import { SpecAiState } from '../../types/specai';
 import { openQuestionsIn } from '../../data/specai';
 import { BriefPanel } from './BriefPanel';
 import { CopilotPanel } from './CopilotPanel';
-import { QuestionQueue } from './QuestionQueue';
 
-type Tab = 'copilot' | 'brief' | 'questions';
+type Tab = 'agent' | 'brief';
 
 /**
- * The reading rail. Three views of the same corpus: something to ask, the
- * synthesized reading, and what the reading could not settle. Tabbed rather than
- * stacked because a brief long enough to be comprehensive would otherwise fight
- * the board for vertical space.
+ * Two tabs, because there are only two things to do here: talk to the agent, or
+ * read what it currently understands. The brief moves as you talk — settling a
+ * question marks it out of date and folds the answer in on the next refresh.
  */
 export const RightRail: React.FC<{
   state: SpecAiState;
@@ -22,21 +20,26 @@ export const RightRail: React.FC<{
   const [tab, setTab] = useState<Tab>('brief');
 
   const openCount = openQuestionsIn(state).length;
-  const briefBadge = state.brief ? (state.brief.stale ? '!' : `v${state.brief.version}`) : undefined;
+  const archOpen = openQuestionsIn(state, 'Architecture').length > 0;
 
   const tabs: { key: Tab; label: string; badge?: string; alert?: boolean }[] = [
-    { key: 'copilot', label: 'Copilot' },
-    { key: 'brief', label: 'Brief', badge: briefBadge, alert: state.brief?.stale },
+    { key: 'agent', label: 'Agent' },
     {
-      key: 'questions',
-      label: 'Questions',
-      badge: openCount > 0 ? String(openCount) : undefined,
-      alert: openQuestionsIn(state, 'Architecture').length > 0,
+      key: 'brief',
+      label: 'Project brief',
+      badge: state.brief
+        ? state.brief.stale
+          ? '!'
+          : openCount > 0
+          ? String(openCount)
+          : `v${state.brief.version}`
+        : undefined,
+      alert: state.brief?.stale || archOpen,
     },
   ];
 
   return (
-    <aside className="flex min-h-0 w-full shrink-0 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white max-lg:h-96 lg:w-64 xl:w-80">
+    <aside className="flex min-h-0 w-full shrink-0 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white max-lg:h-96 lg:w-72 xl:w-96">
       <div className="flex shrink-0 border-b border-slate-200" role="tablist">
         {tabs.map((t) => (
           <button
@@ -68,16 +71,16 @@ export const RightRail: React.FC<{
         ))}
       </div>
 
-      {tab === 'copilot' && (
+      {tab === 'agent' ? (
         <CopilotPanel
           state={state}
           disabled={disabled}
           selectedIds={selectedIds}
           onSelectionChange={onSelectionChange}
         />
+      ) : (
+        <BriefPanel state={state} disabled={disabled} onTalkToAgent={() => setTab('agent')} />
       )}
-      {tab === 'brief' && <BriefPanel state={state} disabled={disabled} />}
-      {tab === 'questions' && <QuestionQueue state={state} disabled={disabled} />}
     </aside>
   );
 };
