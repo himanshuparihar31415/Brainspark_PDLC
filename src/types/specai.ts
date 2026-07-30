@@ -19,7 +19,7 @@ export type SpecStageKey =
  */
 export type SpecStageState = 'Locked' | 'Current' | 'Ahead';
 
-// ─────────────────────── Stage 1: Knowledge & Chalk Board ───────────────────────
+// ───────────────────── Stage 1: Knowledge & the agent terminal ─────────────────────
 
 export type SourceType =
   | 'PDF'
@@ -53,18 +53,18 @@ export interface SpecSource {
 
 /**
  * What a card is. Nothing here is picked from a menu except a note — a card is a
- * piece of context that came from a source, and it names that source instead of
- * wearing a label.
+ * piece of context the agent read out of a source, and it names that source
+ * instead of wearing a label.
  *
  * `Disagreement` exists because two sources saying different things is a decision
  * you have to make, not a piece of context. `Requirement seed` is what the stage
- * produces.
+ * produces, promoted from a line of the brief.
  */
 export type CardType = 'Context' | 'Disagreement' | 'Note' | 'Requirement seed';
 
 /**
- * The visible content lifecycle. Every card sits at exactly one state, and the
- * state decides which actions are offered.
+ * The content lifecycle. Every card sits at exactly one state, and the state
+ * decides which actions are offered.
  */
 export type CardState =
   | 'Captured'
@@ -113,17 +113,15 @@ export interface ConflictDetail {
   resolvedBy?: string;
 }
 
-export interface BoardLane {
-  id: string;
-  name: string;
-}
-
+/**
+ * An extract, kept so a brief line, a requirement or an understanding section can
+ * always be traced back to the quote that justified it. There is no board — these
+ * surface against the source they came from, and in whatever cites them.
+ */
 export interface BoardCard {
   id: string;
   /** The source this came from. Absent on notes you wrote yourself. */
   sourceId?: string;
-  /** Which lane it sits in. This is the card's only position on the board. */
-  laneId: string;
   type: CardType;
   state: CardState;
   title: string;
@@ -151,6 +149,48 @@ export interface Archetype {
   description: string;
 }
 
+// ──────────────────── Stage 1: the agent terminal ────────────────────
+
+/**
+ * How a tool call ended. `empty` is separated from `error` on purpose — a tool
+ * that ran fine and found nothing is a finding, and collapsing it into failure
+ * is what makes a reading look more complete than it is.
+ */
+export type ToolCallStatus = 'running' | 'ok' | 'empty' | 'error';
+
+/**
+ * One tool the agent ran, shown as it ran it. The terminal exists because a
+ * statement you cannot see the retrieval behind is indistinguishable from a
+ * guess: the tool line is the difference between "the agent says" and "the agent
+ * read this file and it says".
+ */
+export interface AgentToolCall {
+  id: string;
+  /** Code-facing tool name, e.g. read_source. */
+  name: string;
+  /** The argument, printed after the name. */
+  argument: string;
+  sourceId?: string;
+  status: ToolCallStatus;
+  durationMs: number;
+  /** What came back — or why nothing did. */
+  result: string;
+  /** Verbatim supporting text, when the tool returned any. */
+  excerpt?: string;
+}
+
+export interface AgentTurn {
+  id: string;
+  from: 'you' | 'agent';
+  text: string;
+  /** Tool calls run before answering. Agent turns only. */
+  toolCalls?: AgentToolCall[];
+  /** True while the tools are still resolving. */
+  pending?: boolean;
+  /** What this turn did to the brief, when it changed it. */
+  briefEffect?: { version: number; added: number };
+}
+
 // ──────────────── Stage 2: Understanding & formal requirements ────────────────
 
 export type UnderstandingKey =
@@ -164,12 +204,12 @@ export type UnderstandingKey =
   | 'assumptions'
   | 'openQuestions';
 
-// ─────────── Stage 1: synthesis — the brief and the question queue ───────────
+// ─────────── Stage 1: the project brief and the question queue ───────────
 
 /**
- * The bands of a synthesized reading. Separating them is the point: a
- * comprehensive overview that blurs what is known with what is guessed is worse
- * than no overview, because it launders assumptions into facts.
+ * The bands of the brief. Separating them is the point: an overview that blurs
+ * what is known with what is guessed is worse than no overview, because it
+ * launders assumptions into facts.
  *
  * `decided` holds what you settled by talking to the agent, which is why the
  * brief gets better the more you use it rather than staying a first impression.
@@ -222,7 +262,7 @@ export interface SpecQuestion {
   status: QuestionStatus;
   /** Recorded when answered, assumed, or deferred. */
   answer?: string;
-  /** Set once the question has been pushed onto the board as a card. */
+  /** Set once the question has been recorded as an extract. */
   cardId?: string;
 }
 
@@ -231,7 +271,7 @@ export interface UnderstandingSection {
   body: string;
   /** Count of stored versions, surfaced by the version-history caret. */
   versions: number;
-  /** Board cards supporting this section — the source map. */
+  /** Extracts supporting this section — the source map. */
   supportingCardIds: string[];
 }
 
@@ -243,7 +283,7 @@ export interface AcceptanceCriterion {
 
 export type RequirementType = 'Functional' | 'Non-functional' | 'Security' | 'Data';
 
-/** A confirmed requirement, promoted from one or more board seeds. */
+/** A confirmed requirement, promoted from one or more seeds. */
 export interface FormalRequirement {
   id: string;
   title: string;
@@ -258,7 +298,7 @@ export interface FormalRequirement {
   fallback?: string;
   acceptance: AcceptanceCriterion[];
   evidenceCardIds: string[];
-  /** Human summary of the evidence set, e.g. "5 board cards, 2 Jira issues". */
+  /** Human summary of the evidence set, e.g. "5 extracts, 2 Jira issues". */
   evidenceSummary: string;
   confidence: number;
   owner: string;
@@ -397,8 +437,14 @@ export interface SpecAiState {
    * seeded from this on lock.
    */
   brief?: UnderstandingBrief;
+  /**
+   * The conversation with the agent, tool calls included. This is what the brief
+   * is built out of — every line in the brief traces to a turn here, so "where
+   * did that come from" is always answerable.
+   */
+  transcript: AgentTurn[];
   questions: SpecQuestion[];
-  lanes: BoardLane[];
+  /** Evidence records, referenced by brief lines, requirements and understanding. */
   cards: BoardCard[];
   understanding: UnderstandingSection[];
   requirements: FormalRequirement[];

@@ -68,7 +68,7 @@ const JIRA_ISSUE_TYPES = ['Story', 'Task', 'Bug', 'Test', 'Sub-task'];
  *
  * The backlog is presented in two tracks: work a stakeholder can accept on its
  * own, and work that exists because of how the system is built. Both export to
- * the same board — the split is for reading and reviewing, not for permissions.
+ * the same backlog — the split is for reading and reviewing, not for permissions.
  */
 export const Stage5Stories: React.FC<{
   state: SpecAiState;

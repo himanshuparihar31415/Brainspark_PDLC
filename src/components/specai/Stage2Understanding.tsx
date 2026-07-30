@@ -108,7 +108,7 @@ export const Stage2Understanding: React.FC<{
                 </p>
               )}
 
-              {/* Source map — every statement traces back to board cards */}
+              {/* Source map — every statement traces back to an extract */}
               {sourceMap === section.key && (
                 <div className="mt-2.5 space-y-1 rounded-xl border border-slate-200 bg-slate-50/60 p-2.5">
                   <div className="text-[9px] font-bold uppercase tracking-wider text-slate-400">
@@ -139,7 +139,7 @@ export const Stage2Understanding: React.FC<{
             Formal requirements ({state.requirements.length})
           </h3>
           <p className="mt-0.5 text-[11px] text-slate-500">
-            Promoted from confirmed board seeds, with the evidence retained.
+            Promoted from confirmed seeds, with the evidence retained.
           </p>
         </div>
 

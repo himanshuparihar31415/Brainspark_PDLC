@@ -1,20 +1,19 @@
 import { useState } from 'react';
 import { Connector, Role } from '../types';
 import {
+  AgentTurn,
   BoardCard,
   CardState,
   CardType,
   JiraMapping,
   QuestionStatus,
-  RelationKind,
   SourceType,
   SpecAiState,
-  SpecQuestion,
   SpecStageKey,
   StoryDeliveryStatus,
   UnderstandingKey,
 } from '../types/specai';
-/* `synthesize` is loaded on demand — its topic tables and brief prose have no
+/* The agent engine is loaded on demand — its retrieval tables and prose have no
    business in the initial bundle, since only Spec AI ever runs them. */
 import { INITIAL_SPEC_AI, blankSpecAiState } from '../data/specAiData';
 import {
@@ -164,90 +163,166 @@ export const useSpecAiSlice = ({
     }));
   };
 
-  /**
-   * Reads the problem statement plus everything indexed and produces a brief, a
-   * question queue, and flag cards. Answers already given survive the re-run —
-   * regenerating a reading must not quietly discard a decision someone made.
-   */
-  const synthesizeUnderstanding = (projectId: string) => {
-    const state = specAiFor(projectId);
+  // ── The agent terminal ──────────────────────────────────────────────────────
 
-    if (!state.problemStatement.trim() && state.sources.length === 0) {
+  /**
+   * One turn with the agent, tool calls included.
+   *
+   * An empty message means the opening read across every source; anything else is
+   * a question or a decision. Either way the shape is the same: the tools resolve
+   * on screen one at a time, and only then does the reply land — because a reply
+   * that arrives before its evidence is just an assertion.
+   *
+   * The brief is the by-product. Every turn that learns something folds it in and
+   * bumps the version, so the brief is literally the accumulation of this
+   * conversation rather than a separate document that has to be kept in step.
+   */
+  const askAgent = (projectId: string, message: string) => {
+    const before = specAiFor(projectId);
+    const opening = message.trim() === '';
+
+    if (before.generating) return;
+    if (opening && !before.problemStatement.trim() && before.sources.length === 0) {
       addToast('Describe the problem or add a source first.', 'error');
       return;
     }
 
-    patch(projectId, (s) => ({ ...s, generating: 'Reading everything you have brought in…' }));
+    const turnId = nid('turn');
 
-    window.setTimeout(async () => {
-      const { synthesize } = await import('../data/specAiSynthesis');
-      const current = specAiFor(projectId);
-      const result = synthesize({
-        problemStatement: current.problemStatement,
-        sources: current.sources,
-        cards: current.cards,
-        settled: current.questions.filter((q) => q.status !== 'Open'),
-        version: (current.brief?.version ?? 0) + 1,
+    patch(projectId, (s) => ({
+      ...s,
+      generating: opening ? 'Reading everything you have brought in…' : 'Working…',
+      transcript: [
+        ...s.transcript,
+        ...(opening
+          ? []
+          : [{ id: nid('turn'), from: 'you' as const, text: message.trim().replace(/\s+/g, ' ') }]),
+        { id: turnId, from: 'agent' as const, text: '', toolCalls: [], pending: true },
+      ],
+    }));
+
+    void (async () => {
+      const { runAgent, foldIntoBands, briefNarrative, EMPTY_BANDS } = await import(
+        '../data/specAiAgent'
+      );
+
+      const run = runAgent({
+        message,
+        problemStatement: before.problemStatement,
+        sources: before.sources,
+        existingBriefText: before.brief
+          ? Object.values(before.brief.bands).flatMap((lines) => lines.map((l) => l.text))
+          : [],
+        existingQuestionText: before.questions.map((q) => q.text),
+        existingEvidenceText: before.cards.map((c) => c.title),
+        settled: before.questions.filter((q) => q.status !== 'Open'),
         pmName: currentRole === 'Product Manager' ? currentUserName : 'Maya Kapoor',
         architectName: currentRole === 'Architect' ? currentUserName : 'Arjun Mehta',
       });
 
-      /* Ids are minted here, not inside the updater — a state updater has to be
-         pure, and React may call it more than once. */
-      const newCards = result.boardCards.map((c) => ({ ...c, id: nid('card') }));
+      /* Ids are minted out here. A state updater has to be pure, and React is
+         free to call it more than once. */
+      const calls = run.toolCalls.map((c, i) => ({ ...c, id: `${turnId}-t${i}` }));
+      const newCards = run.evidence.map((c) => ({ ...c, id: nid('card') }));
+      const newQuestions = run.questions.map((q) => ({ ...q, id: nid('q') }));
 
-      patch(projectId, (s) => {
-        /* Carry forward anything already settled, matched on the question text. */
-        const settled = new Map(
-          s.questions.filter((q) => q.status !== 'Open').map((q) => [q.text, q])
-        );
-        const merged: SpecQuestion[] = result.questions.map((q) => {
-          const prior = settled.get(q.text);
-          return prior
-            ? {
-                ...q,
-                id: prior.id,
-                status: prior.status,
-                answer: prior.answer,
-                owner: prior.owner,
-                cardId: prior.cardId,
-              }
-            : q;
-        });
-
-        /* Settled questions the new run stopped asking are kept, not dropped. */
-        const orphaned = [...settled.values()].filter(
-          (q) => !result.questions.some((r) => r.text === q.text)
-        );
-
-        /* Re-check titles against current state: a card may have landed while the
-           reading was in flight, and the generator only saw a snapshot. */
-        const fresh = newCards.filter(
-          (c) => !s.cards.some((x) => x.title.toLowerCase() === c.title.toLowerCase())
-        );
-
-        return {
+      const setTurn = (fn: (turn: AgentTurn) => AgentTurn) =>
+        patch(projectId, (s) => ({
           ...s,
-          generating: undefined,
-          brief: result.brief,
-          questions: [...merged, ...orphaned],
-          cards: [...s.cards, ...fresh],
-        };
+          transcript: s.transcript.map((t) => (t.id === turnId ? fn(t) : t)),
+        }));
+
+      /* Each call lands on its own, so the terminal reads as work happening
+         rather than a block of text appearing at once. */
+      calls.forEach((call, i) => {
+        window.setTimeout(() => {
+          setTurn((turn) => ({
+            ...turn,
+            toolCalls: [...(turn.toolCalls ?? []), { ...call, status: 'running' as const }],
+          }));
+        }, 120 + i * 170);
+
+        window.setTimeout(() => {
+          setTurn((turn) => ({
+            ...turn,
+            toolCalls: (turn.toolCalls ?? []).map((c) => (c.id === call.id ? call : c)),
+          }));
+        }, 120 + i * 170 + Math.min(call.durationMs, 520));
       });
 
-      const placed = result.boardCards.length;
-      addToast(
-        `Read ${current.sources.filter((x) => x.ingest === 'Indexed').length} sources — ${placed} ${
-          placed === 1 ? 'piece' : 'pieces'
-        } on the board, ${result.questions.length} questions.`
-      );
-      addAuditLog(
-        'Synthesize Understanding',
-        `Project: ${projectId}`,
-        `${current.sources.filter((s) => s.ingest === 'Indexed').length} indexed sources`,
-        `Brief v${result.brief.version}, ${result.questions.length} questions, ${placed} board cards`
-      );
-    }, 900);
+      window.setTimeout(() => {
+        patch(projectId, (s) => {
+          /* Anything already settled survives — a re-read must never quietly
+             discard a decision someone made. */
+          const asked = new Set(s.questions.map((q) => q.text.toLowerCase()));
+          const freshQuestions = newQuestions.filter((q) => !asked.has(q.text.toLowerCase()));
+
+          const titles = new Set(s.cards.map((c) => c.title.toLowerCase()));
+          const freshCards = newCards.filter((c) => !titles.has(c.title.toLowerCase()));
+
+          const version = (s.brief?.version ?? 0) + (run.briefAdditions.length > 0 ? 1 : 0);
+          const bands = foldIntoBands(
+            s.brief?.bands ?? EMPTY_BANDS(),
+            run.briefAdditions,
+            version
+          );
+          const questions = [...s.questions, ...freshQuestions];
+          const exchanges = s.transcript.filter((t) => t.from === 'you').length + (opening ? 1 : 0);
+
+          return {
+            ...s,
+            generating: undefined,
+            questions,
+            cards: [...s.cards, ...freshCards],
+            brief: {
+              version: Math.max(1, version),
+              summary: briefNarrative(
+                s.problemStatement,
+                bands,
+                s.sources,
+                Math.max(1, exchanges),
+                questions.filter((q) => q.status === 'Open').length
+              ),
+              generatedFrom: {
+                problemStatement: s.problemStatement.trim(),
+                sourceIds: s.sources.filter((x) => x.ingest === 'Indexed').map((x) => x.id),
+              },
+              bands,
+              /* Fresh by construction: it was just rebuilt from current state. */
+              stale: false,
+            },
+            transcript: s.transcript.map((t) =>
+              t.id === turnId
+                ? {
+                    ...t,
+                    text: run.reply,
+                    pending: false,
+                    toolCalls: calls,
+                    briefEffect:
+                      run.briefAdditions.length > 0
+                        ? { version: Math.max(1, version), added: run.briefAdditions.length }
+                        : undefined,
+                  }
+                : t
+            ),
+          };
+        });
+
+        if (opening)
+          addToast(
+            `Read ${before.sources.filter((x) => x.ingest === 'Indexed').length} sources — ${
+              run.briefAdditions.length
+            } lines into the brief, ${run.questions.length} questions raised.`
+          );
+
+        addAuditLog(
+          opening ? 'Agent Read Sources' : 'Agent Turn',
+          `Project: ${projectId}`,
+          opening ? `${calls.length} tool calls` : message.trim().slice(0, 120),
+          `${run.briefAdditions.length} brief lines, ${run.questions.length} questions, ${run.evidence.length} extracts`
+        );
+      }, 120 + calls.length * 170 + 420);
+    })();
   };
 
   const answerQuestion = (
@@ -285,15 +360,7 @@ export const useSpecAiSlice = ({
       );
   };
 
-  // ── Board: cards, lanes, lifecycle, relations ───────────────────────────────
-
-  const addCard = (projectId: string, card: Omit<BoardCard, 'id' | 'relations'>) => {
-    patch(projectId, (s) => ({
-      ...s,
-      cards: [...s.cards, { ...card, id: nid('card'), relations: [] }],
-    }));
-    addToast(`${card.type} added to the board.`);
-  };
+  // ── Evidence records ────────────────────────────────────────────────────────
 
   const updateCard = (projectId: string, cardId: string, patchFields: Partial<BoardCard>) => {
     patch(projectId, (s) => ({
@@ -302,115 +369,22 @@ export const useSpecAiSlice = ({
     }));
   };
 
-  const moveCardToLane = (projectId: string, cardId: string, laneId: string) => {
-    patch(projectId, (s) => ({
-      ...s,
-      cards: s.cards.map((c) => (c.id === cardId ? { ...c, laneId } : c)),
-    }));
-  };
-
   /**
-   * Advances a card's lifecycle state. AI-created cards must be confirmed
-   * explicitly before they can ever become a requirement seed.
+   * Advances an evidence record's lifecycle state. AI-created records must be
+   * confirmed explicitly before they can ever become a requirement seed.
    */
   const setCardState = (projectId: string, cardId: string, state: CardState) => {
     patch(projectId, (s) => ({
       ...s,
       cards: s.cards.map((c) => (c.id === cardId ? { ...c, state } : c)),
     }));
-    addToast(`Card marked ${state.toLowerCase()}.`, 'info');
-  };
-
-  const removeCards = (projectId: string, cardIds: string[]) => {
-    patch(projectId, (s) => ({
-      ...s,
-      cards: s.cards
-        .filter((c) => !cardIds.includes(c.id))
-        // Drop dangling relations pointing at removed cards.
-        .map((c) => ({ ...c, relations: c.relations.filter((r) => !cardIds.includes(r.toCardId)) })),
-    }));
-    addToast(`${cardIds.length} card${cardIds.length === 1 ? '' : 's'} removed.`, 'info');
-  };
-
-  const linkCards = (
-    projectId: string,
-    fromId: string,
-    toId: string,
-    kind: RelationKind
-  ) => {
-    if (fromId === toId) return;
-    patch(projectId, (s) => ({
-      ...s,
-      cards: s.cards.map((c) =>
-        c.id === fromId
-          ? { ...c, relations: [...c.relations.filter((r) => r.toCardId !== toId), { toCardId: toId, kind }] }
-          : c
-      ),
-    }));
-    addToast(`Linked: ${kind.toLowerCase()}.`);
-  };
-
-  const renameLane = (projectId: string, laneId: string, name: string) => {
-    patch(projectId, (s) => ({
-      ...s,
-      lanes: s.lanes.map((l) => (l.id === laneId ? { ...l, name } : l)),
-    }));
-  };
-
-  const addLane = (projectId: string, name: string) => {
-    patch(projectId, (s) => ({ ...s, lanes: [...s.lanes, { id: nid('lane'), name }] }));
-    addToast(`Lane “${name}” added.`);
+    addToast(`Marked ${state.toLowerCase()}.`, 'info');
   };
 
   /**
-   * Convert confirmed cards into a requirement seed. The originals are kept —
-   * evidence is never destroyed by promotion.
-   */
-  const createRequirementSeed = (projectId: string, cardIds: string[]) => {
-    const state = specAiFor(projectId);
-    const sources = state.cards.filter((c) => cardIds.includes(c.id));
-    if (sources.length === 0) return;
-
-    const seedId = nid('card');
-    patch(projectId, (s) => ({
-      ...s,
-      cards: [
-        ...s.cards,
-        {
-          id: seedId,
-          laneId: 'lane-proposed',
-          type: 'Requirement seed' as CardType,
-          state: 'Requirement seed' as CardState,
-          title: sources[0].title,
-          content: `Drafted from ${sources.length} confirmed card${
-            sources.length === 1 ? '' : 's'
-          }. Add actor, need, value and scope before sending to requirements.`,
-          evidenceClass: 'User decision',
-          confidence: 0.7,
-          relations: cardIds.map((id) => ({ toCardId: id, kind: 'Supports' as RelationKind })),
-          aiCreated: false,
-        },
-      ],
-    }));
-
-    addToast(`Requirement seed created from ${sources.length} cards. Originals kept.`);
-    addAuditLog(
-      'Create Requirement Seed',
-      `Project: ${projectId}`,
-      `${sources.length} evidence cards`,
-      'Seed created; evidence retained'
-    );
-  };
-
-  /**
-   * Selection-scoped AI. Every action reads the current selection plus project
-   * context; nothing is invented silently — gaps come back as Question cards and
-   * disagreements as Conflict cards.
-   */
-  /**
-   * The brief is a reading of a moment. Anything that changes what there is to
-   * read makes it out of date, and saying so is better than letting it quietly
-   * describe a board that has moved on.
+   * The brief describes a moment. Anything that changes what there is to read
+   * makes it out of date, and saying so is better than letting it quietly
+   * describe sources that have moved on.
    */
   const markBriefStale = (projectId: string, reason: string) => {
     patch(projectId, (s) =>
@@ -418,115 +392,59 @@ export const useSpecAiSlice = ({
     );
   };
 
-  const runBoardAction = (projectId: string, actionId: string, cardIds: string[]) => {
+  /**
+   * Turn a line of the brief into a requirement seed — the one action that moves
+   * something from "the agent understands this" to "we are going to build this".
+   *
+   * The line stays in the brief. Promotion never destroys the evidence it came
+   * from, so the seed can always be traced back to the source that justified it.
+   */
+  const promoteBriefLine = (projectId: string, lineId: string) => {
     const state = specAiFor(projectId);
-    const selected = state.cards.filter((c) => cardIds.includes(c.id));
+    const line = state.brief
+      ? Object.values(state.brief.bands)
+          .flat()
+          .find((l) => l.id === lineId)
+      : undefined;
+    if (!line) return;
 
-    switch (actionId) {
-      case 'remove':
-        removeCards(projectId, cardIds);
-        markBriefStale(projectId, `${cardIds.length} pieces were removed from the board.`);
-        return;
-
-      case 'draft':
-        createRequirementSeed(projectId, cardIds);
-        markBriefStale(projectId, 'A requirement seed was drafted from the board.');
-        return;
-
-      case 'group': {
-        const laneId = nid('lane');
-        patch(projectId, (s) => ({
-          ...s,
-          lanes: [...s.lanes, { id: laneId, name: `Cluster (${cardIds.length})` }],
-          cards: s.cards.map((c) => (cardIds.includes(c.id) ? { ...c, laneId } : c)),
-        }));
-        addToast(`Grouped ${cardIds.length} cards into a cluster lane.`);
-        return;
-      }
-
-      case 'gaps': {
-        /* Questions live in the rail, so a gap becomes a question rather than
-           another card competing for space on the board. */
-        patch(projectId, (s) => ({
-          ...s,
-          questions: [
-            ...s.questions,
-            {
-              id: nid('q'),
-              track: 'Product',
-              text: 'What happens where the selected pieces disagree?',
-              rationale: `No source among the ${selected.length} selected cards covers this.`,
-              owner: currentUserName,
-              status: 'Open',
-            },
-          ],
-        }));
-        addToast('1 gap raised as a question. Nothing was invented.');
-        markBriefStale(projectId, 'A new question was raised and is not in the brief yet.');
-        return;
-      }
-
-      case 'conflicts': {
-        const a = selected[0];
-        const b = selected[1];
-        patch(projectId, (s) => ({
-          ...s,
-          cards: [
-            ...s.cards,
-            {
-              id: nid('card'),
-              laneId: 'lane-decisions',
-              type: 'Disagreement',
-              state: 'Flagged',
-              title: `Possible conflict: ${a.title}`,
-              content: 'Two selected cards make claims that cannot both hold.',
-              evidenceClass: 'Inferred interpretation',
-              conflict: {
-                claimA: a.content,
-                claimASource: a.provenance?.itemId ?? a.title,
-                claimB: b.content,
-                claimBSource: b.provenance?.itemId ?? b.title,
-                observedState: 'Compare against the current-state cards before deciding.',
-              },
-              relations: [
-                { toCardId: a.id, kind: 'Contradicts' as RelationKind },
-                { toCardId: b.id, kind: 'Contradicts' as RelationKind },
-              ],
-              aiCreated: true,
-              rationale: `Compared ${a.title} against ${b.title}.`,
-            },
-          ],
-        }));
-        addToast('1 disagreement raised for resolution.');
-        markBriefStale(projectId, 'A disagreement between sources was raised.');
-        return;
-      }
-
-      default: {
-        // Summarize: interpret the selection without changing any of it.
-        patch(projectId, (s) => ({
-          ...s,
-          cards: [
-            ...s.cards,
-            {
-              id: nid('card'),
-              laneId: selected[0]?.laneId ?? 'lane-proposed',
-              type: 'Note',
-              state: 'Interpreted',
-              title: `Summary of ${selected.length} cards`,
-              content: selected.map((c) => c.title).join(' · '),
-              evidenceClass: 'Inferred interpretation',
-              author: currentUserName,
-              confidence: 0.72,
-              relations: cardIds.map((id) => ({ toCardId: id, kind: 'Refines' as RelationKind })),
-              aiCreated: true,
-              rationale: `Summarized the selection. Confirm before it can become a requirement seed.`,
-            },
-          ],
-        }));
-        addToast('Summary added as an interpreted card. Confirm it to use it.');
-      }
+    if (state.cards.some((c) => c.type === 'Requirement seed' && c.title === line.text)) {
+      addToast('That is already a requirement seed.', 'info');
+      return;
     }
+
+    const backing = state.sources.filter((s) => line.sourceIds.includes(s.id));
+
+    patch(projectId, (s) => ({
+      ...s,
+      cards: [
+        ...s.cards,
+        {
+          id: nid('card'),
+          sourceId: line.sourceIds[0],
+          type: 'Requirement seed' as CardType,
+          state: 'Requirement seed' as CardState,
+          title: line.text,
+          content:
+            backing.length > 0
+              ? `Promoted from the brief, resting on ${backing.map((x) => x.name).join(' · ')}.`
+              : 'Promoted from the brief. Nothing sourced backs it, so confirm the intent before it carries weight.',
+          evidenceClass: line.evidenceClass,
+          confidence: line.evidenceClass === 'Source fact' ? 0.9 : 0.6,
+          relations: [],
+          aiCreated: false,
+          rationale: `Promoted from brief line: ${line.sourceSummary}`,
+        },
+      ],
+    }));
+
+    addToast('Requirement seed created. The brief line is unchanged.');
+    addAuditLog(
+      'Promote Brief Line',
+      `Project: ${projectId}`,
+      `${line.evidenceClass} · ${line.sourceSummary}`,
+      'Requirement seed created; evidence retained'
+    );
   };
 
   /** Record a conflict decision. Resolving it is what reopens the stage gate. */
@@ -570,7 +488,6 @@ export const useSpecAiSlice = ({
         ...s.cards,
         {
           id: nid('card'),
-          laneId: 'lane-proposed',
           type: 'Note',
           state: 'Interpreted',
           title: archetype.name,
@@ -582,7 +499,7 @@ export const useSpecAiSlice = ({
         },
       ],
     }));
-    addToast(`Seeded from ${archetype.name}. Confirm the cards before relying on them.`);
+    addToast(`Seeded from ${archetype.name}. It is a pattern, not a source — ask the agent to read it.`);
   };
 
   // ── Understanding & requirements ────────────────────────────────────────────
@@ -956,18 +873,11 @@ export const useSpecAiSlice = ({
     removeSpecSource,
     retrySpecSource,
     setProblemStatement,
-    synthesizeUnderstanding,
+    askAgent,
     answerQuestion,
-    addCard,
     updateCard,
-    moveCardToLane,
     setCardState,
-    removeCards,
-    linkCards,
-    renameLane,
-    addLane,
-    createRequirementSeed,
-    runBoardAction,
+    promoteBriefLine,
     resolveConflict,
     applyArchetype,
     updateUnderstanding,

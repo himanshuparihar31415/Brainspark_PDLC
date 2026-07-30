@@ -40,8 +40,8 @@ export const SourceDrawer: React.FC<{
     },
     { label: 'Project', value: currentScope.projectName ?? '—' },
     {
-      label: 'On the board',
-      value: `${drawnFrom.length} ${drawnFrom.length === 1 ? 'piece' : 'pieces'} of context`,
+      label: 'Read out of it',
+      value: `${drawnFrom.length} ${drawnFrom.length === 1 ? 'extract' : 'extracts'}`,
     },
   ];
 
@@ -87,7 +87,7 @@ export const SourceDrawer: React.FC<{
           {drawnFrom.length > 0 && (
             <div className="mt-4">
               <div className="text-[9px] font-bold uppercase tracking-wider text-slate-400">
-                Drawn from this source
+                Read out of this source
               </div>
               <div className="mt-1.5 space-y-1.5">
                 {drawnFrom.map((c) => (
@@ -108,7 +108,7 @@ export const SourceDrawer: React.FC<{
               </div>
               <p className="mt-2 text-[9.5px] leading-relaxed text-slate-400">
                 The rest of what was read either repeats the problem statement, corroborates
-                something already on the board, or does not bear on it.
+                something already in the brief, or does not bear on it.
               </p>
             </div>
           )}

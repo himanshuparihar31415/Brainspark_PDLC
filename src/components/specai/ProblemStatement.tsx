@@ -5,7 +5,7 @@ import { indexedSources } from '../../data/specai';
 import { Loader2, Pencil, Sparkles, Target } from 'lucide-react';
 
 /**
- * The high-level ask. This exists so synthesis has something to aim at — the
+ * The high-level ask. This exists so the agent has something to aim at — the
  * difference between "what is in these files" and "what do we know about this
  * problem" is the whole value of the reading that follows.
  */
@@ -13,7 +13,7 @@ export const ProblemStatement: React.FC<{
   state: SpecAiState;
   disabled: boolean;
 }> = ({ state, disabled }) => {
-  const { setProblemStatement, synthesizeUnderstanding } = useApp();
+  const { setProblemStatement, askAgent } = useApp();
 
   const saved = state.problemStatement.trim();
   const [editing, setEditing] = useState(saved === '');
@@ -27,14 +27,14 @@ export const ProblemStatement: React.FC<{
     ? 'Reading…'
     : hasBrief
     ? state.brief?.stale
-      ? 'Re-run reading'
-      : `Reading v${state.brief?.version}`
-    : 'Build first reading';
+      ? 'Re-read sources'
+      : 'Re-read sources'
+    : 'Read my sources';
 
   const run = () => {
     if (draft.trim() !== state.problemStatement) setProblemStatement(state.projectId, draft);
     setEditing(false);
-    synthesizeUnderstanding(state.projectId);
+    askAgent(state.projectId, '');
   };
 
   if (!editing) {
@@ -61,11 +61,11 @@ export const ProblemStatement: React.FC<{
         )}
 
         <button
-          onClick={() => synthesizeUnderstanding(state.projectId)}
+          onClick={() => askAgent(state.projectId, '')}
           disabled={disabled || busy}
-          title={`Reads your statement plus ${readable} indexed source${
+          title={`Reads your statement against ${readable} indexed source${
             readable === 1 ? '' : 's'
-          }.`}
+          }, in the terminal below.`}
           className={`flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-[10.5px] font-bold transition-colors ${
             state.brief?.stale && !busy
               ? 'cursor-pointer bg-amber-500 text-white hover:bg-amber-600'
@@ -111,7 +111,7 @@ export const ProblemStatement: React.FC<{
           className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-indigo-600 px-3.5 py-2 text-[11px] font-bold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400"
         >
           {busy ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
-          {busy ? 'Reading…' : 'Save and build the reading'}
+          {busy ? 'Reading…' : 'Save and read my sources'}
         </button>
 
         {saved !== '' && (

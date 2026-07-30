@@ -2,7 +2,6 @@ import { Role } from '../types';
 import {
   Archetype,
   ArtifactGroup,
-  BoardCard,
   BriefBandKey,
   CardState,
   CardType,
@@ -10,7 +9,6 @@ import {
   IngestState,
   QuestionStatus,
   QuestionTrack,
-  RelationKind,
   SourceType,
   SpecAiState,
   SpecQuestion,
@@ -99,11 +97,11 @@ export const activeStage = (state: SpecAiState): SpecStageKey =>
 
 export interface CardTypeMeta {
   /**
-   * Used in the inspector and the Stage 2 source map. Never printed on the board —
+   * Used in the Stage 2 source map. Never printed against a brief line —
    * a card names its source there, not what kind of thing it is.
    */
   label: string;
-  /** Lucide icon name resolved by the board component. */
+  /** Lucide icon name resolved by the consuming component. */
   icon: 'file' | 'split' | 'pencil' | 'file-check';
   /** Tailwind classes for the card border and its chip in the inspector. */
   border: string;
@@ -322,68 +320,6 @@ export const EVIDENCE_CLASSES: Record<EvidenceClass, { chip: string; short: stri
   'AI assumption': { chip: 'bg-amber-500 text-white', short: 'Assumption' },
 };
 
-export const RELATION_KINDS: RelationKind[] = [
-  'Supports',
-  'Contradicts',
-  'Depends on',
-  'Refines',
-  'Supersedes',
-];
-
-/**
- * Copilot prompt chips. Each one is a board action wearing a question, so the
- * conversational surface and the direct-manipulation surface can never drift:
- * asking "what is missing?" runs exactly what the Find-gaps button runs.
- */
-export interface CopilotSuggestion {
-  label: string;
-  /** Board action this dispatches. */
-  actionId: string;
-  /** What the user's turn reads as in the transcript. */
-  asks: string;
-}
-
-export const COPILOT_SUGGESTIONS: CopilotSuggestion[] = [
-  { label: 'What is missing?', actionId: 'gaps', asks: 'What is missing from this?' },
-  { label: 'Find evidence', actionId: 'summarize', asks: 'What evidence supports this?' },
-  { label: 'Draft requirement', actionId: 'draft', asks: 'Draft a requirement from this.' },
-  { label: 'Compare sources', actionId: 'conflicts', asks: 'Do these sources agree?' },
-];
-
-/**
- * Lanes group by what a piece of context tells you, not by which source it came
- * from — the source is already printed on every card, so grouping by it again
- * would say the same thing twice.
- */
-export const DEFAULT_LANES = [
-  { id: 'lane-current', name: 'How it works today' },
-  { id: 'lane-constraints', name: 'What we must work within' },
-  { id: 'lane-decisions', name: 'Decided, and disagreed' },
-  { id: 'lane-proposed', name: 'What we’re proposing' },
-];
-
-/**
- * Every source a card can be traced back to. A card that came straight off a
- * source names it; a disagreement names both sides; a seed or a note follows its
- * relations to whatever the claim actually rests on.
- */
-export const cardSources = (card: BoardCard, state: SpecAiState): string[] => {
-  if (card.sourceId) {
-    const direct = state.sources.find((s) => s.id === card.sourceId);
-    if (direct) return [direct.name];
-  }
-
-  if (card.conflict) return [card.conflict.claimASource, card.conflict.claimBSource];
-
-  const viaRelations = card.relations
-    .map((r) => state.cards.find((c) => c.id === r.toCardId))
-    .filter((c): c is BoardCard => Boolean(c))
-    .map((c) => state.sources.find((s) => s.id === c.sourceId)?.name)
-    .filter((n): n is string => Boolean(n));
-
-  return [...new Set(viaRelations)];
-};
-
 // ───────────────────────────── Readiness & gates ─────────────────────────────
 
 export interface Readiness {
@@ -398,21 +334,15 @@ export interface Readiness {
 }
 
 /**
- * Knowledge readiness combines source coverage, unresolved conflicts, open
+ * Knowledge readiness combines source coverage, unresolved disagreements, open
  * questions, and confirmed requirement seeds — the four things that decide
- * whether the board is safe to build an understanding from.
+ * whether the brief is safe to build an understanding from.
  */
 export const knowledgeReadiness = (state: SpecAiState): Readiness => {
   const sourcesReady = state.sources.filter((c) => c.ingest === 'Indexed').length;
   const conflicts = state.cards.filter((c) => c.type === 'Disagreement');
   const conflictsOpen = conflicts.filter((c) => c.state === 'Flagged').length;
   const conflictsResolved = conflicts.length - conflictsOpen;
-  /*
-   * Both surfaces count. A question sitting unanswered in the queue is exactly as
-   * unresolved as one on the board — promoted ones are skipped so they are not
-   * counted twice.
-   */
-  // Questions live in the rail now, so this is simply what is still unanswered.
   const openQuestions = state.questions.filter((q) => q.status === 'Open').length;
   const confirmedSeeds = state.cards.filter(
     (c) => c.type === 'Requirement seed' && c.state !== 'Superseded'
@@ -450,11 +380,10 @@ export const stageDetail = (key: SpecStageKey, state: SpecAiState): string => {
   switch (key) {
     case 'knowledge': {
       const r = knowledgeReadiness(state);
+      if (!state.brief) return `${r.sourcesReady} sources · not read yet`;
       return r.conflictsOpen > 0
-        ? `${state.cards.length} cards · ${r.conflictsOpen} conflict${
-            r.conflictsOpen === 1 ? '' : 's'
-          }`
-        : `${state.cards.length} cards · ${r.percent}% ready`;
+        ? `brief v${state.brief.version} · ${r.conflictsOpen} to decide`
+        : `brief v${state.brief.version} · ${r.percent}% ready`;
     }
     case 'understanding': {
       const filled = state.understanding.filter((s) => s.body.trim() !== '').length;
@@ -509,9 +438,12 @@ export const stageGateWarnings = (key: SpecStageKey, state: SpecAiState): string
         warnings.push(`${openProduct.length} product question${openProduct.length === 1 ? '' : 's'} unanswered`);
 
       if (state.cards.filter((c) => c.type === 'Requirement seed').length === 0)
-        warnings.push('No requirement seed yet, so nothing downstream has an anchor');
+        warnings.push(
+          'No requirement seed yet — promote a line of the brief so something downstream has an anchor'
+        );
 
-      if (state.brief?.stale) warnings.push('The project brief is out of date');
+      if (!state.brief) warnings.push('The agent has not read your sources yet');
+      else if (state.brief.stale) warnings.push('The project brief is out of date');
       break;
     }
     case 'understanding': {
@@ -584,17 +516,20 @@ export const storyTrackCounts = (state: SpecAiState): Record<StoryTrack, number>
 });
 
 /**
- * How much of the workspace has actually been looked at: every locked stage
- * counts in full, and the stage in hand counts for the share of its board cards
- * that have moved off Captured.
+ * How much of the workspace has actually been worked through: every locked stage
+ * counts in full, and the stage in hand counts for the share of the agent's
+ * questions that have been settled — which is the thing that decides whether
+ * what is here is safe to build on.
  */
 export const workspaceProgress = (state: SpecAiState): number => {
   const perStage = 1 / SPEC_STAGES.length;
   const locked = state.lockedStages.length * perStage;
-  const reviewed = state.cards.length
-    ? state.cards.filter((c) => c.state !== 'Captured').length / state.cards.length
+  const settled = state.questions.length
+    ? state.questions.filter((q) => q.status !== 'Open').length / state.questions.length
+    : state.brief
+    ? 1
     : 0;
-  const inFlight = state.lockedStages.length < SPEC_STAGES.length ? reviewed * perStage : 0;
+  const inFlight = state.lockedStages.length < SPEC_STAGES.length ? settled * perStage : 0;
   return Math.round(Math.min(1, locked + inFlight) * 100);
 };
 

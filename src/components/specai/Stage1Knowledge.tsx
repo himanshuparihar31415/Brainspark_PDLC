@@ -10,11 +10,10 @@ import {
   knowledgeReadiness,
   sourceGlyph,
 } from '../../data/specai';
-import { ChalkBoard } from './ChalkBoard';
-import { CardInspector } from './CardInspector';
+import { AgentTerminal } from './AgentTerminal';
+import { BriefPanel } from './BriefPanel';
 import { ConflictResolver } from './ConflictResolver';
 import { ProblemStatement } from './ProblemStatement';
-import { RightRail } from './RightRail';
 import { SourceDrawer } from './SourceDrawer';
 import { AlertTriangle, BookOpen, Link2, Loader2, Plus, Sparkles, Upload, X } from 'lucide-react';
 
@@ -27,22 +26,17 @@ const sizeLabel = (bytes: number): string =>
 /**
  * Stage 1 — Knowledge Creation & Contextualization.
  *
- * Two columns: the board, and something that can read across it. Sources sit in
- * a strip above both rather than in a column of their own — with the board
- * filling itself from them, a permanent list was repeating what every card
- * already says.
+ * Two columns: the terminal where the work happens, and the brief it produces.
+ * Sources sit in a strip above both rather than in a column of their own — the
+ * terminal names every source it opens, so a permanent list said it twice.
  */
 export const Stage1Knowledge: React.FC<{
   state: SpecAiState;
   readOnly: boolean;
   locked: boolean;
-  /** Owned by the shell, because the stage header acts on the same selection. */
-  selectedIds: string[];
-  onSelectionChange: (ids: string[]) => void;
-}> = ({ state, readOnly, locked, selectedIds, onSelectionChange }) => {
+}> = ({ state, readOnly, locked }) => {
   const { connectors, addSpecSource, applyArchetype, addToast } = useApp();
 
-  const [inspectId, setInspectId] = useState<string | null>(null);
   const [conflictId, setConflictId] = useState<string | null>(null);
   const [source, setSource] = useState<SpecSource | null>(null);
   const [adding, setAdding] = useState(false);
@@ -73,7 +67,7 @@ export const Stage1Knowledge: React.FC<{
       {/* What everything below is read against */}
       <ProblemStatement state={state} disabled={disabled} />
 
-      {/* The sources, and how ready they leave the board */}
+      {/* The sources, and how ready they leave the brief */}
       <div className="flex flex-wrap items-center gap-1.5">
         {state.sources.map((s) => {
           const ingest = INGEST_COPY[s.ingest];
@@ -227,50 +221,20 @@ export const Stage1Knowledge: React.FC<{
 
       {/*
         Each panel owns its height and its own scroll, so reading the brief never
-        moves the board and a long lane never pushes the rail off screen. Below lg
-        they stack and this column scrolls instead.
+        moves the terminal and a long transcript never pushes the brief off
+        screen. Below lg they stack and this column scrolls instead.
       */}
       <div className="flex min-h-0 flex-1 flex-col gap-2.5 overflow-y-auto lg:flex-row lg:overflow-hidden">
-        <ChalkBoard
-          state={state}
-          disabled={disabled}
-          selectedIds={selectedIds}
-          onSelectionChange={onSelectionChange}
-          onInspect={setInspectId}
-          onOpenConflict={(id) => {
-            setInspectId(null);
-            setConflictId(id);
-          }}
-        />
-
-        <RightRail
-          state={state}
-          disabled={disabled}
-          selectedIds={selectedIds}
-          onSelectionChange={onSelectionChange}
-        />
+        <AgentTerminal state={state} disabled={disabled} />
+        <BriefPanel state={state} disabled={disabled} onResolve={setConflictId} />
       </div>
 
-      {/* Right-drawer modes — only one open at a time */}
-      {conflictId ? (
-        <ConflictResolver
-          state={state}
-          cardId={conflictId}
-          readOnly={disabled}
-          onClose={() => setConflictId(null)}
-        />
-      ) : (
-        <CardInspector
-          state={state}
-          cardId={inspectId}
-          readOnly={disabled}
-          onClose={() => setInspectId(null)}
-          onOpenConflict={(id) => {
-            setInspectId(null);
-            setConflictId(id);
-          }}
-        />
-      )}
+      <ConflictResolver
+        state={state}
+        cardId={conflictId}
+        readOnly={disabled}
+        onClose={() => setConflictId(null)}
+      />
 
       <SourceDrawer source={source} onClose={() => setSource(null)} />
     </div>

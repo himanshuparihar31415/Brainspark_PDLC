@@ -16,7 +16,7 @@ import { Stage2Understanding } from '../specai/Stage2Understanding';
 import { Stage3Artifacts } from '../specai/Stage3Artifacts';
 import { Stage4Modules } from '../specai/Stage4Modules';
 import { Stage5Stories } from '../specai/Stage5Stories';
-import { Eye, GitBranch } from 'lucide-react';
+import { Eye } from 'lucide-react';
 
 const STAGE_ORDER: SpecStageKey[] = [
   'knowledge',
@@ -32,25 +32,12 @@ const STAGE_ORDER: SpecStageKey[] = [
  * because the strip already says where you are.
  */
 export const SpecAiView: React.FC = () => {
-  const {
-    currentScope,
-    currentRole,
-    projects,
-    specAiFor,
-    lockSpecStage,
-    goToSpecStage,
-    runBoardAction,
-  } = useApp();
+  const { currentScope, currentRole, projects, specAiFor, lockSpecStage, goToSpecStage } = useApp();
 
   const project = projects.find((p) => p.id === currentScope.projectId) ?? projects[0];
   const state = specAiFor(project?.id ?? '');
 
   const [viewing, setViewing] = useState<SpecStageKey>(state.currentStage);
-  /**
-   * Board selection lives here because the action row acts on it too — the agent,
-   * the selection bar, and Compare sources all reason over one selection.
-   */
-  const [selected, setSelected] = useState<string[]>([]);
   const [track, setTrack] = useState<StoryTrack | 'All'>('All');
 
   const readOnly = !canEditSpecAi(currentRole);
@@ -98,29 +85,6 @@ export const SpecAiView: React.FC = () => {
                 </span>
               )}
 
-              {viewing === 'knowledge' && !readOnly && (
-                <button
-                  onClick={() => {
-                    runBoardAction(state.projectId, 'conflicts', selected);
-                    setSelected([]);
-                  }}
-                  disabled={isLocked || selected.length < 2}
-                  title={
-                    selected.length < 2
-                      ? 'Select at least two cards — a disagreement is between two things you point at.'
-                      : 'Check whether the selected cards agree'
-                  }
-                  className={`rounded-lg border px-3 py-1.5 text-[11px] font-bold transition-colors ${
-                    isLocked || selected.length < 2
-                      ? 'cursor-not-allowed border-slate-200 bg-white text-slate-300'
-                      : 'cursor-pointer border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100'
-                  }`}
-                >
-                  <GitBranch className="mr-1.5 inline h-3 w-3" />
-                  Compare sources
-                </button>
-              )}
-
               {viewing !== 'stories' && (
                 <GateButton
                   label={stage.gateLabel}
@@ -154,13 +118,7 @@ export const SpecAiView: React.FC = () => {
           }
         >
           {viewing === 'knowledge' && (
-            <Stage1Knowledge
-              state={state}
-              readOnly={readOnly}
-              locked={isLocked}
-              selectedIds={selected}
-              onSelectionChange={setSelected}
-            />
+            <Stage1Knowledge state={state} readOnly={readOnly} locked={isLocked} />
           )}
           {viewing === 'understanding' && (
             <Stage2Understanding state={state} readOnly={readOnly} locked={isLocked} />

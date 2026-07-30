@@ -1,8 +1,10 @@
-import { DEFAULT_LANES } from './specai';
 import {
+  AgentToolCall,
+  AgentTurn,
   BoardCard,
   SpecAiState,
   SpecQuestion,
+  SpecSource,
   UnderstandingBrief,
   UnderstandingSection,
 } from '../types/specai';
@@ -17,7 +19,6 @@ const finEdgeCards: BoardCard[] = [
   {
     id: 'card-obs-login',
     sourceId: 'src-arch',
-    laneId: 'lane-current',
     type: 'Context',
     state: 'Confirmed',
     title: 'Every session starts with a PIN, and a new device also needs an OTP.',
@@ -36,7 +37,6 @@ const finEdgeCards: BoardCard[] = [
   {
     id: 'card-con-token',
     sourceId: 'src-arch',
-    laneId: 'lane-constraints',
     type: 'Context',
     state: 'Confirmed',
     title: 'Access tokens expire after 15 minutes, and web shares the same setting.',
@@ -56,7 +56,6 @@ const finEdgeCards: BoardCard[] = [
   {
     id: 'card-con-oauth',
     sourceId: 'src-confluence',
-    laneId: 'lane-constraints',
     type: 'Context',
     state: 'Confirmed',
     title: 'Every customer-facing channel must federate through the central OAuth gateway.',
@@ -74,7 +73,6 @@ const finEdgeCards: BoardCard[] = [
   {
     id: 'card-dec-fallback',
     sourceId: 'src-zoom',
-    laneId: 'lane-decisions',
     type: 'Context',
     state: 'Confirmed',
     title: 'Three failed biometric attempts fall back to PIN and raise a security event.',
@@ -91,7 +89,6 @@ const finEdgeCards: BoardCard[] = [
   },
   {
     id: 'card-conflict-priority',
-    laneId: 'lane-decisions',
     type: 'Disagreement',
     state: 'Flagged',
     title: 'Two sources disagree on when biometric login is needed.',
@@ -110,7 +107,6 @@ const finEdgeCards: BoardCard[] = [
   },
   {
     id: 'card-seed-bio',
-    laneId: 'lane-proposed',
     type: 'Requirement seed',
     state: 'Requirement seed',
     title: 'Returning customer can authenticate using registered device biometrics',
@@ -192,7 +188,7 @@ const finEdgeUnderstanding: UnderstandingSection[] = [
 const finEdgeBrief: UnderstandingBrief = {
   version: 1,
   summary:
-    'This project exists because returning customers abandon login when a PIN is demanded every single time. The goal is biometric login for customers who have already onboarded, without weakening device security or breaking the shared OAuth gateway.\n\nI read 4 sources against that — Jira, Confluence, the architecture files, and the Zoom scripts — and put 5 pieces of context on the board. The rest repeats the problem statement, corroborates something already there, or does not bear on it, so it stayed in the source.\n\nWhat is firm: four things are stated outright by a source — the PIN-then-OTP journey, the fifteen-minute token expiry shared with web, the mandatory central gateway, and the three-strikes fallback agreed in security review. Three more have been settled with me. Those are safe to build on.\n\nWhat is not firm: three things are my assumptions rather than anything a source states, and there is one place where your sources actively disagree — Jira phases biometrics into 2.1 while the discovery call treats it as needed at launch. That disagreement is on the board and holds the stage gate.\n\nThe architecture questions matter most. An unanswered “where does this live?” propagates into every artifact generated after this stage, so it is cheapest to settle here. Four are still open.',
+    'This project exists because returning customers abandon login when a PIN is demanded every single time. The goal is biometric login for customers who have already onboarded, without weakening device security or breaking the shared OAuth gateway.\n\nI read 4 sources against that — Jira, Confluence, the architecture files, and the Zoom scripts — and kept 5 pieces of context. The rest repeats the problem statement, corroborates something already there, or does not bear on it, so it stayed in the source.\n\nWhat is firm: four things are stated outright by a source — the PIN-then-OTP journey, the fifteen-minute token expiry shared with web, the mandatory central gateway, and the three-strikes fallback agreed in security review. Three more have been settled with me. Those are safe to build on.\n\nWhat is not firm: three things are my assumptions rather than anything a source states, and there is one place where your sources actively disagree — Jira phases biometrics into 2.1 while the discovery call treats it as needed at launch. That disagreement is listed in the brief and holds the stage gate.\n\nThe architecture questions matter most. An unanswered “where does this live?” propagates into every artifact generated after this stage, so it is cheapest to settle here. Four are still open.',
   generatedFrom: {
     problemStatement:
       'Returning customers abandon login because a PIN is demanded every single time. We want biometric login for customers who have already onboarded, without weakening device security or breaking the shared OAuth gateway.',
@@ -323,7 +319,7 @@ const finEdgeBrief: UnderstandingBrief = {
 /**
  * The queue as it stands: one product question already answered, the
  * architecture ones still open. Those open ones are what hold the stage gate,
- * alongside the unresolved priority conflict on the board.
+ * alongside the unresolved priority conflict.
  */
 const finEdgeQuestions: SpecQuestion[] = [
   {
@@ -408,6 +404,121 @@ const finEdgeQuestions: SpecQuestion[] = [
   },
 ];
 
+/**
+ * The opening read that produced the brief above — reconstructed from the
+ * extracts rather than written out.
+ *
+ * This workspace arrives mid-flight, with a brief already in hand. A brief with
+ * no visible retrieval behind it is exactly what the terminal exists to prevent,
+ * so each tool line is derived from the provenance on the extract it produced:
+ * the calls and the brief cannot describe different readings, because they are
+ * built from the same records.
+ */
+const openingRead = (
+  sources: SpecSource[],
+  cards: BoardCard[],
+  brief: UnderstandingBrief,
+  questionCount: number
+): AgentTurn => {
+  const conflict = cards.find((c) => c.type === 'Disagreement');
+  const conflictSources = conflict?.conflict
+    ? [conflict.conflict.claimASource, conflict.conflict.claimBSource]
+    : [];
+
+  const calls: AgentToolCall[] = [
+    {
+      id: 'seed-call-0',
+      name: 'list_sources',
+      argument: 'project',
+      status: 'ok',
+      durationMs: 96,
+      result: `${sources.length} readable, 0 still parsing, 0 failed.`,
+    },
+  ];
+
+  sources.forEach((source, i) => {
+    const extracts = cards.filter((c) => c.sourceId === source.id);
+    /* A source can matter without yielding an extract of its own — the backlog's
+       contribution here is one half of a disagreement. */
+    const inConflict = conflictSources.some((name) => name.includes(source.name));
+
+    calls.push({
+      id: `seed-call-${i + 1}`,
+      name: 'read_source',
+      argument: source.name,
+      sourceId: source.id,
+      status: extracts.length > 0 || inConflict ? 'ok' : 'empty',
+      durationMs: 210 + i * 137,
+      result:
+        extracts.length > 0
+          ? `${extracts.length} passage${extracts.length === 1 ? '' : 's'} bearing on the statement.`
+          : inConflict
+          ? 'Phasing found, but it contradicts another source.'
+          : 'Read. Nothing here bears on authentication.',
+      excerpt: extracts[0]?.provenance?.excerpt,
+    });
+  });
+
+  if (conflict?.conflict)
+    calls.push({
+      id: `seed-call-${sources.length + 1}`,
+      name: 'compare_sources',
+      argument: `${conflict.conflict.claimASource} ↔ ${conflict.conflict.claimBSource}`,
+      status: 'ok',
+      durationMs: 488,
+      result: conflict.title,
+      excerpt: `${conflict.conflict.claimA} / ${conflict.conflict.claimB}`,
+    });
+
+  calls.push({
+    id: `seed-call-${sources.length + 2}`,
+    name: 'check_coverage',
+    argument: 'acceptance',
+    status: 'empty',
+    durationMs: 74,
+    result: 'No source covers this.',
+  });
+
+  const kept = cards.filter((c) => c.type === 'Context').length;
+
+  return {
+    id: 'seed-turn-open',
+    from: 'agent',
+    text: `I read your statement against everything readable and kept only what bears on it. ${sources.length} sources read, ${kept} passages worth keeping — the quiet ones are listed above so you can see they were opened and had nothing to say about this. I raised ${questionCount} questions nothing indexed can answer, and one place where two sources contradict each other, which is a decision rather than a gap.`,
+    toolCalls: calls,
+    /* Tied to the brief this read produced, so the two can never disagree. */
+    briefEffect: {
+      version: brief.version,
+      added: Object.values(brief.bands).reduce((n, lines) => n + lines.length, 0),
+    },
+  };
+};
+
+const finEdgeSources: SpecSource[] = [
+  { id: 'src-jira', name: 'Jira', type: 'Jira', detail: '184 items', ingest: 'Indexed' },
+  {
+    id: 'src-confluence',
+    name: 'Confluence',
+    type: 'Confluence',
+    detail: '16 pages',
+    ingest: 'Indexed',
+  },
+  {
+    id: 'src-arch',
+    name: 'Architecture files',
+    type: 'PDF',
+    detail: '4 files',
+    ingest: 'Indexed',
+  },
+  {
+    id: 'src-zoom',
+    name: 'Zoom Scripts',
+    type: 'Transcript',
+    detail: '3 transcripts',
+    ingest: 'Indexed',
+  },
+];
+
 const finEdge: SpecAiState = {
   projectId: 'p-mobile-v2',
   specKey: 'FMB2',
@@ -415,33 +526,17 @@ const finEdge: SpecAiState = {
   lockedStages: [],
   problemStatement:
     'Returning customers abandon login because a PIN is demanded every single time. We want biometric login for customers who have already onboarded, without weakening device security or breaking the shared OAuth gateway.',
-  sources: [
-    { id: 'src-jira', name: 'Jira', type: 'Jira', detail: '184 items', ingest: 'Indexed' },
-    {
-      id: 'src-confluence',
-      name: 'Confluence',
-      type: 'Confluence',
-      detail: '16 pages',
-      ingest: 'Indexed',
-    },
-    {
-      id: 'src-arch',
-      name: 'Architecture files',
-      type: 'PDF',
-      detail: '4 files',
-      ingest: 'Indexed',
-    },
-    {
-      id: 'src-zoom',
-      name: 'Zoom Scripts',
-      type: 'Transcript',
-      detail: '3 transcripts',
-      ingest: 'Indexed',
-    },
-  ],
+  sources: finEdgeSources,
   brief: finEdgeBrief,
+  transcript: [
+    openingRead(
+      finEdgeSources,
+      finEdgeCards,
+      finEdgeBrief,
+      finEdgeQuestions.filter((q) => q.status === 'Open').length
+    ),
+  ],
   questions: finEdgeQuestions,
-  lanes: DEFAULT_LANES,
   cards: finEdgeCards,
   understanding: finEdgeUnderstanding,
   requirements: [
@@ -491,7 +586,7 @@ const finEdge: SpecAiState = {
         },
       ],
       evidenceCardIds: ['card-obs-login', 'card-con-token', 'card-dec-fallback'],
-      evidenceSummary: '3 board cards · 1 Jira issue · 1 meeting transcript · 1 code constraint',
+      evidenceSummary: '3 extracts · 1 Jira issue · 1 meeting transcript · 1 code constraint',
       confidence: 0.91,
       owner: 'Maya Kapoor',
     },
@@ -515,7 +610,7 @@ const finEdge: SpecAiState = {
         },
       ],
       evidenceCardIds: ['card-dec-fallback'],
-      evidenceSummary: '1 board decision · 1 security review',
+      evidenceSummary: '1 recorded decision · 1 security review',
       confidence: 0.88,
       owner: 'Arjun Mehta',
     },
@@ -551,8 +646,8 @@ const blank: SpecAiState = {
   lockedStages: [],
   problemStatement: '',
   sources: [],
+  transcript: [],
   questions: [],
-  lanes: DEFAULT_LANES,
   cards: [],
   understanding: (
     [
@@ -585,10 +680,10 @@ export const blankSpecAiState = (projectId: string): SpecAiState => ({
   projectId,
   specKey: projectId.replace(/^p-/, '').toUpperCase().slice(0, 4),
   understanding: blank.understanding.map((s) => ({ ...s })),
-  lanes: DEFAULT_LANES.map((l) => ({ ...l })),
   cards: [],
   problemStatement: '',
   sources: [],
   brief: undefined,
+  transcript: [],
   questions: [],
 });
