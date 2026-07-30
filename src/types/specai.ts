@@ -280,6 +280,33 @@ export type ArtifactStatus = 'Not generated' | 'Generated' | 'In review' | 'Appr
 /** Brownfield change bands. */
 export type ChangeTag = '+ New' | '~ Changed' | '− Deprecated';
 
+/** Node type for React Flow diagram rendering. */
+export type FlowNodeType = 'system' | 'container' | 'component' | 'actor' | 'decision' | 'topic' | 'default';
+
+export interface FlowNode {
+  id: string;
+  label: string;
+  type?: FlowNodeType;
+  x: number;
+  y: number;
+  /** Optional subtitle shown below the label. */
+  subtitle?: string;
+}
+
+export interface FlowEdge {
+  id: string;
+  source: string;
+  target: string;
+  label?: string;
+  animated?: boolean;
+}
+
+export interface FlowDiagram {
+  nodes: FlowNode[];
+  edges: FlowEdge[];
+  direction?: 'TB' | 'LR';
+}
+
 export interface ArchArtifact {
   id: string;
   group: ArtifactGroup;
@@ -294,8 +321,10 @@ export interface ArchArtifact {
   reviewComments: number;
   changeTag?: ChangeTag;
   note?: string;
-  /** Node chain rendered for diagram artifacts. */
+  /** Legacy flat node chain. */
   diagramFlow?: string[];
+  /** Rich React Flow diagram (nodes + edges with positions). */
+  flowDiagram?: FlowDiagram;
 }
 
 // ──────────────────── Stage 4: Modules, features, capabilities ────────────────────
