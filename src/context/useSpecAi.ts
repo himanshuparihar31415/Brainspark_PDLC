@@ -898,6 +898,53 @@ export const useSpecAiSlice = ({
     );
   };
 
+  /**
+   * Reopen a locked stage.
+   *
+   * Unlocking cascades forward, the mirror of how locking cascades back: every
+   * stage after this one was generated from the version you are about to edit, so
+   * leaving them locked would let you change the premise while its conclusions
+   * stayed sealed.
+   *
+   * Nothing generated is deleted. The artifacts and stories stay and are flagged
+   * for review instead, because the work in them is real even when its input has
+   * moved — and quietly discarding an afternoon of edits to enforce tidiness is
+   * the worse of the two failures.
+   */
+  const unlockSpecStage = (projectId: string, stage: SpecStageKey) => {
+    const from = stageIndex(stage);
+    const reopened = SPEC_STAGES.filter((s) => s.index >= from).map((s) => s.key);
+
+    patch(projectId, (s) => ({
+      ...s,
+      lockedStages: s.lockedStages.filter((k) => !reopened.includes(k)),
+      currentStage: stage,
+      /* Downstream now traces to an editable version. Saying so is the whole
+         point of the flag. */
+      artifacts: s.artifacts.map((a) => (from <= stageIndex('artifacts') ? { ...a, stale: true } : a)),
+      stories: s.stories.map((st) => (from <= stageIndex('stories') ? { ...st, stale: true } : st)),
+      brief:
+        s.brief && from <= stageIndex('knowledge')
+          ? { ...s.brief, stale: true, staleReason: 'Knowledge was reopened for editing.' }
+          : s.brief,
+    }));
+
+    const also = reopened.filter((k) => k !== stage).length;
+    addToast(
+      also > 0
+        ? `${stageDef(stage).title} reopened, along with ${also} stage${
+            also === 1 ? '' : 's'
+          } after it. Nothing was deleted; what was generated is flagged for review.`
+        : `${stageDef(stage).title} reopened.`
+    );
+    addAuditLog(
+      'Unlock Spec AI Stage',
+      `${stageDef(stage).title} · Project ${projectId}`,
+      `Reopened ${reopened.length} stage${reopened.length === 1 ? '' : 's'}`,
+      'Downstream retained and flagged for review'
+    );
+  };
+
   const goToSpecStage = (projectId: string, stage: SpecStageKey) => {
     patch(projectId, (s) => ({ ...s, currentStage: stage }));
   };
@@ -997,6 +1044,7 @@ export const useSpecAiSlice = ({
     mergeSpecModules,
     splitSpecModule,
     lockSpecStage,
+    unlockSpecStage,
     goToSpecStage,
     reviewStaleStory,
     setJiraMapping,

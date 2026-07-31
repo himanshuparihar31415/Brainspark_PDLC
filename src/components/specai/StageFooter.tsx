@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { AlertTriangle, ArrowRight, Check, Eye, X } from 'lucide-react';
+import { AlertTriangle, ArrowRight, Check, Eye, LockOpen, X } from 'lucide-react';
 
 /**
  * The forward action for every stage, in the same place on every stage:
@@ -27,6 +27,8 @@ export const StageFooter: React.FC<{
   onLockAndContinue: () => void;
   /** Moves on without locking — used when the stage is already locked. */
   onContinue: () => void;
+  /** Reopens this stage and everything after it. Absent means no unlocking. */
+  onUnlock?: () => void;
 }> = ({
   nextTitle,
   warnings,
@@ -35,6 +37,7 @@ export const StageFooter: React.FC<{
   confirm,
   onLockAndContinue,
   onContinue,
+  onUnlock,
 }) => {
   const [confirming, setConfirming] = useState(false);
 
@@ -50,6 +53,16 @@ export const StageFooter: React.FC<{
             <>
               <Check className="h-3 w-3 shrink-0 text-emerald-600" />
               <span className="font-semibold text-emerald-700">Locked</span>
+              {!readOnly && onUnlock && (
+                <button
+                  onClick={onUnlock}
+                  title="Reopen this stage for editing. Stages after it reopen too, and what was generated is kept and flagged for review."
+                  className="flex cursor-pointer items-center gap-1 rounded-lg border border-slate-200 px-2 py-0.5 text-[10px] font-bold text-slate-600 transition-colors hover:border-amber-300 hover:bg-amber-50 hover:text-amber-800"
+                >
+                  <LockOpen className="h-2.5 w-2.5" />
+                  Unlock
+                </button>
+              )}
             </>
           ) : readOnly ? (
             <>

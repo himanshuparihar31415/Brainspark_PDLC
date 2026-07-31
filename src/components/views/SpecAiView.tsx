@@ -34,7 +34,15 @@ const STAGE_ORDER: SpecStageKey[] = [
  * row, so every stage answers "and then?" in the same corner.
  */
 export const SpecAiView: React.FC = () => {
-  const { currentScope, currentRole, projects, specAiFor, lockSpecStage, goToSpecStage } = useApp();
+  const {
+    currentScope,
+    currentRole,
+    projects,
+    specAiFor,
+    lockSpecStage,
+    unlockSpecStage,
+    goToSpecStage,
+  } = useApp();
 
   const project = projects.find((p) => p.id === currentScope.projectId) ?? projects[0];
   const state = specAiFor(project?.id ?? '');
@@ -125,6 +133,7 @@ export const SpecAiView: React.FC = () => {
             if (next) select(next);
           }}
           onContinue={() => next && select(next)}
+          onUnlock={() => unlockSpecStage(state.projectId, viewing)}
         />
       </div>
 
