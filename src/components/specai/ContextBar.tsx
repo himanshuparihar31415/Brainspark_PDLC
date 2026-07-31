@@ -15,6 +15,7 @@ import {
   BookOpen,
   ChevronDown,
   Link2,
+  ListChecks,
   Loader2,
   Plus,
   Sparkles,
@@ -126,6 +127,17 @@ export const ContextBar: React.FC<{
           <span className="text-[9px] font-bold uppercase tracking-wider text-indigo-500">
             What problem are we solving?
           </span>
+
+          {/* The task this project was started from, so the direction stays visible */}
+          {state.intake?.task && !editing && (
+            <p className="mb-0.5 flex items-center gap-1 text-[10px] font-bold text-indigo-600">
+              <ListChecks className="h-2.5 w-2.5" />
+              {state.intake.task.title}
+              <span className="font-normal text-slate-400">
+                · read as {state.intake.kind.toLowerCase()}
+              </span>
+            </p>
+          )}
 
           {editing ? (
             <>

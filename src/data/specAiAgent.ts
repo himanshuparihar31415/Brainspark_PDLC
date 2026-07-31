@@ -396,7 +396,9 @@ const openingRun = (input: AgentRunInput): AgentRun => {
   if (statement)
     add({
       band: 'understood',
-      text: `The ask, as you stated it: ${statement.replace(/\s+/g, ' ')}`,
+      /* Worded to match the line the intake seeds, so a first read folds into it
+         rather than saying the same thing twice in different words. */
+      text: `The problem, as you stated it: ${statement.replace(/\s+/g, ' ')}`,
       evidenceClass: 'User decision',
       sourceIds: [],
       sourceSummary: 'Stated by you',

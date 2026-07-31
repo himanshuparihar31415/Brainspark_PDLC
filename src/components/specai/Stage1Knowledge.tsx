@@ -4,15 +4,21 @@ import { AgentTerminal } from './AgentTerminal';
 import { BriefPanel } from './BriefPanel';
 import { ConflictResolver } from './ConflictResolver';
 import { ContextBar } from './ContextBar';
+import { IntakeGate } from './IntakeGate';
 import { SourceDrawer } from './SourceDrawer';
 
 /**
  * Stage 1 — Knowledge Creation & Contextualization.
  *
- * Two columns: the conversation where the work happens, and the brief it
- * produces. The problem statement and the sources sit collapsed on one line above
- * both — setup you touch occasionally should not hold a banner for the rest of
- * the session.
+ * It begins with the question, not the workspace. Until a task has been accepted
+ * there is no direction to read anything against, and a workspace that opens
+ * before you have said what you are solving invites you to start collecting
+ * sources for a problem nobody has stated.
+ *
+ * After that: two columns — the conversation where the work happens, and the
+ * brief it produces. The statement and the sources sit collapsed on one line
+ * above both, since setup you touch occasionally should not hold a banner for the
+ * rest of the session.
  */
 export const Stage1Knowledge: React.FC<{
   state: SpecAiState;
@@ -23,6 +29,8 @@ export const Stage1Knowledge: React.FC<{
   const [source, setSource] = useState<SpecSource | null>(null);
 
   const disabled = readOnly || locked;
+
+  if (!state.intake?.acceptedAt) return <IntakeGate state={state} readOnly={readOnly} />;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2">

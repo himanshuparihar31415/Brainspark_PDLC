@@ -368,6 +368,7 @@ export const stageDetail = (key: SpecStageKey, state: SpecAiState): string => {
   switch (key) {
     case 'knowledge': {
       const r = knowledgeReadiness(state);
+      if (!state.intake?.acceptedAt) return 'start here';
       if (!state.brief) return `${r.sourcesReady} sources · not read yet`;
       return r.conflictsOpen > 0
         ? `brief v${state.brief.version} · ${r.conflictsOpen} to decide`
@@ -410,6 +411,11 @@ export const stageGateWarnings = (key: SpecStageKey, state: SpecAiState): string
 
   switch (key) {
     case 'knowledge': {
+      if (!state.intake?.acceptedAt) {
+        warnings.push('No task accepted yet, so nothing downstream has a direction');
+        return warnings;
+      }
+
       const open = state.cards.filter((c) => c.type === 'Disagreement' && c.state === 'Flagged');
       for (const c of open) warnings.push(`Unresolved: ${c.title}`);
 

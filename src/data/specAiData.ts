@@ -3,6 +3,7 @@ import {
   AgentTurn,
   BoardCard,
   SpecAiState,
+  SpecIntake,
   SpecQuestion,
   SpecSource,
   UnderstandingBrief,
@@ -519,13 +520,47 @@ const finEdgeSources: SpecSource[] = [
   },
 ];
 
+const FIN_EDGE_STATEMENT =
+  'Returning customers abandon login because a PIN is demanded every single time. We want biometric login for customers who have already onboarded, without weakening device security or breaking the shared OAuth gateway.';
+
+/**
+ * This workspace opens mid-flight, so its intake is already accepted — the
+ * statement below is what everything in it was read against. A blank project
+ * gets the intake screen instead, which is where a real project starts.
+ */
+const finEdgeIntake: SpecIntake = {
+  raw: FIN_EDGE_STATEMENT,
+  kind: 'Problem statement',
+  kindReason: 'prose describing intent',
+  conciseBrief: [
+    FIN_EDGE_STATEMENT,
+    'What I took from your input: subject — authentication.',
+    'I am treating this as authentication work, which comes with its own set of decisions I will put to you rather than assume.',
+  ].join('\n\n'),
+  signals: [{ label: 'Subject', value: 'authentication' }],
+  task: {
+    title: 'Specify the authentication change',
+    statement: FIN_EDGE_STATEMENT,
+    steps: [
+      'Read every indexed source against this statement and keep only what bears on it',
+      'Report what is stated outright, what I am inferring, and what nothing covers',
+      'Raise the authentication decisions that propagate into every downstream artifact',
+      'Build the project brief from that, with a source on every line',
+    ],
+    outOfScope:
+      'Anything no connected source speaks to — that becomes an open question rather than a requirement.',
+  },
+  needs: [],
+  acceptedAt: '2026-07-28T09:12:00.000Z',
+};
+
 const finEdge: SpecAiState = {
   projectId: 'p-mobile-v2',
   specKey: 'FMB2',
   currentStage: 'knowledge',
   lockedStages: [],
-  problemStatement:
-    'Returning customers abandon login because a PIN is demanded every single time. We want biometric login for customers who have already onboarded, without weakening device security or breaking the shared OAuth gateway.',
+  intake: finEdgeIntake,
+  problemStatement: FIN_EDGE_STATEMENT,
   sources: finEdgeSources,
   brief: finEdgeBrief,
   transcript: [
@@ -644,6 +679,7 @@ const blank: SpecAiState = {
   specKey: 'ACP',
   currentStage: 'knowledge',
   lockedStages: [],
+  intake: undefined,
   problemStatement: '',
   sources: [],
   transcript: [],
@@ -684,6 +720,7 @@ export const blankSpecAiState = (projectId: string): SpecAiState => ({
   problemStatement: '',
   sources: [],
   brief: undefined,
+  intake: undefined,
   transcript: [],
   questions: [],
 });

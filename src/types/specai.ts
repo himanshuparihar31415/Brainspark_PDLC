@@ -191,6 +191,65 @@ export interface AgentTurn {
   briefEffect?: { version: number; added: number };
 }
 
+// ──────────────────── Stage 0: the intake — what are we solving ────────────────────
+
+/**
+ * What kind of thing you pasted in. Detected rather than picked from a menu,
+ * because the answer changes what is worth extracting: logs give you error
+ * signatures and affected services, an issue gives you expected-versus-actual,
+ * prose gives you intent and nothing else.
+ */
+export type IntakeKind =
+  | 'Problem statement'
+  | 'System logs'
+  | 'Issue description'
+  | 'Meeting notes'
+  | 'Unclear';
+
+/**
+ * What the agent proposes to do next, stated before it does it.
+ *
+ * The intake's whole job is to turn "here is my problem" into a task with a
+ * scope, because every stage after this inherits its direction. Getting it wrong
+ * here is cheap to fix and expensive to discover four stages later.
+ */
+export interface AgentTask {
+  /** One line: what this run of the workflow is for. */
+  title: string;
+  /** The problem, restated in the form the rest of the pipeline reads. */
+  statement: string;
+  /** What the agent will actually do, in order. */
+  steps: string[];
+  /** Where this stops — stated so scope creep has something to push against. */
+  outOfScope: string;
+}
+
+/**
+ * The starting point for a project. Written once, then editable: everything
+ * downstream is read against it, so it is the one input worth being deliberate
+ * about.
+ */
+export interface SpecIntake {
+  /** Exactly what you pasted, kept verbatim. */
+  raw: string;
+  kind: IntakeKind;
+  /** Why it was read as that kind — shown so the classification is auditable. */
+  kindReason: string;
+  /** A few lines a person can read and know what this project is about. */
+  conciseBrief: string;
+  /** What the agent extracted, as short labelled facts. */
+  signals: { label: string; value: string }[];
+  /** The proposed task. Absent when the input was too thin to derive one. */
+  task?: AgentTask;
+  /**
+   * What the agent needs before it can propose a task. Non-empty means it is
+   * asking rather than guessing — the same rule the terminal follows.
+   */
+  needs: string[];
+  /** Set once you accept the task and the workflow starts from it. */
+  acceptedAt?: string;
+}
+
 // ──────────────── Stage 2: Understanding & formal requirements ────────────────
 
 export type UnderstandingKey =
@@ -457,7 +516,16 @@ export interface SpecAiState {
   specKey: string;
   currentStage: SpecStageKey;
   lockedStages: SpecStageKey[];
-  /** The high-level ask. What synthesis is aimed at, so a reading is targeted. */
+  /**
+   * Where the project starts. Until this is accepted there is no direction to
+   * read anything against, so Knowledge Creation asks for it before anything
+   * else.
+   */
+  intake?: SpecIntake;
+  /**
+   * The high-level ask, as the rest of the pipeline reads it. Derived from the
+   * intake and editable afterwards.
+   */
   problemStatement: string;
   sources: SpecSource[];
   /**
