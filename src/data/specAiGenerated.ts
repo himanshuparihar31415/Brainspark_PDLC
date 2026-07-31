@@ -1,4 +1,5 @@
 import { ArchArtifact, FlowDiagram, ModuleNode, UserStory } from '../types/specai';
+import { DELIVERY_STORIES } from './deliveryData';
 
 /**
  * Payloads produced when a stage locks. They live apart from the initial state
@@ -1151,163 +1152,14 @@ export const GENERATED_MODULES = (): ModuleNode[] => [
   },
 ];
 
-export const GENERATED_STORIES = (): UserStory[] => [
-  {
-    id: 'st-1',
-    key: 'FMB2-AUTH-031',
-    title: 'Authenticate using registered device biometrics',
-    storyType: 'User story',
-    role: 'returning retail customer',
-    goal: 'authenticate using device biometrics',
-    benefit: 'I can access my account without repeatedly entering my PIN',
-    acceptance: [
-      { given: 'a registered supported device', when: 'biometric verification succeeds', then: 'the customer is authenticated and reaches the dashboard' },
-      { given: 'three consecutive biometric failures', when: 'the customer retries', then: 'the app requires PIN authentication' },
-      { given: 'biometric capability is unavailable', when: 'the login screen opens', then: 'the biometric option is hidden and PIN remains available' },
-    ],
-    priority: 'P0',
-    points: 5,
-    moduleName: 'Authentication',
-    featureName: 'Biometric login',
-    linkedRequirementIds: ['REQ-AUTH-012', 'SEC-REQ-008'],
-    linkedArtifactIds: ['art-prd', 'art-hld', 'art-sequence', 'art-openapi'],
-    sourceEvidence: 'Jira FMB2-142 · Zoom workshop · live app observation · ADR-004',
-    stale: false,
-    deliveryStatus: 'Done',
-    exported: true,
-  },
-  {
-    id: 'st-2',
-    key: 'FMB2-AUTH-032',
-    title: 'Implement biometric capability detection and challenge exchange',
-    storyType: 'Technical story',
-    role: 'mobile engineer',
-    goal: 'native capability detection and a secure challenge exchange',
-    benefit: 'the app only offers biometrics where it can honour them',
-    acceptance: [
-      { given: 'an unsupported device', when: 'the app launches', then: 'no biometric prompt is registered' },
-      { given: 'a supported device', when: 'a challenge is requested', then: 'the assertion is verified server-side before a token is issued' },
-    ],
-    priority: 'P0',
-    points: 8,
-    moduleName: 'Authentication',
-    featureName: 'Biometric login',
-    linkedRequirementIds: ['REQ-AUTH-012'],
-    linkedArtifactIds: ['art-lld', 'art-c4'],
-    sourceEvidence: 'auth-service config · HLD 4.3',
-    stale: false,
-    deliveryStatus: 'Done',
-    exported: true,
-  },
-  {
-    id: 'st-3',
-    key: 'FMB2-AUTH-033',
-    title: 'Create biometric challenge and verification endpoints',
-    storyType: 'API story',
-    role: 'backend engineer',
-    goal: 'challenge and verify endpoints in Auth Service',
-    benefit: 'the client has a contract to build against',
-    acceptance: [
-      { given: 'a registered device', when: 'POST /auth/biometric/challenge is called', then: 'a single-use challenge is returned with a short TTL' },
-      { given: 'a signed assertion', when: 'POST /auth/biometric/verify is called', then: 'a session token is issued on success' },
-    ],
-    priority: 'P0',
-    points: 5,
-    moduleName: 'Authentication',
-    featureName: 'Biometric login',
-    linkedRequirementIds: ['REQ-AUTH-012'],
-    linkedArtifactIds: ['art-openapi'],
-    sourceEvidence: 'OpenAPI auth/biometric',
-    stale: false,
-    deliveryStatus: 'In progress',
-    exported: true,
-  },
-  {
-    id: 'st-4',
-    key: 'FMB2-SEC-014',
-    title: 'Enforce PIN fallback after three failed biometric attempts',
-    storyType: 'Security story',
-    role: 'security reviewer',
-    goal: 'a hard fallback and a recorded security event',
-    benefit: 'repeated failures are visible to fraud analysis',
-    acceptance: [
-      { given: 'three consecutive biometric failures', when: 'the third failure is recorded', then: 'PIN is required and a security event is published' },
-    ],
-    priority: 'P0',
-    points: 5,
-    moduleName: 'Authentication',
-    featureName: 'Biometric login',
-    linkedRequirementIds: ['SEC-REQ-008'],
-    linkedArtifactIds: ['art-rules', 'art-events'],
-    sourceEvidence: 'Security review 24 Jul 2026',
-    stale: false,
-    deliveryStatus: 'Exported',
-    exported: true,
-  },
-  {
-    id: 'st-5',
-    key: 'FMB2-DATA-009',
-    title: 'Create CustomerDevice and AuthAttempt persistence',
-    storyType: 'Data story',
-    role: 'data engineer',
-    goal: 'device and attempt tables with retention controls',
-    benefit: 'audit obligations are met without storing biometric data',
-    acceptance: [
-      { given: 'a completed authentication attempt', when: 'the record is written', then: 'it carries deviceId and occurredAt and no biometric template' },
-    ],
-    priority: 'P1',
-    points: 5,
-    moduleName: 'Audit & Compliance',
-    featureName: 'Authentication event logging',
-    linkedRequirementIds: ['SEC-REQ-008'],
-    linkedArtifactIds: ['art-er', 'art-schema'],
-    sourceEvidence: 'ER model · ADR-004',
-    stale: false,
-    deliveryStatus: 'Exported',
-    exported: true,
-  },
-  {
-    id: 'st-6',
-    key: 'FMB2-QA-021',
-    title: 'Validate biometric fallback scenarios',
-    storyType: 'Testing story',
-    role: 'QA engineer',
-    goal: 'coverage across Face ID, Touch ID, unsupported, lockout, fallback and revoked devices',
-    benefit: 'the fallback never leaks why authentication failed',
-    acceptance: [
-      { given: 'biometric authentication is unavailable', when: 'the customer attempts to log in', then: 'the configured fallback is presented without exposing sensitive detail' },
-    ],
-    priority: 'P1',
-    points: 5,
-    moduleName: 'Authentication',
-    featureName: 'Biometric login',
-    linkedRequirementIds: ['REQ-AUTH-012', 'SEC-REQ-008'],
-    linkedArtifactIds: ['art-nfr', 'art-sequence'],
-    sourceEvidence: 'FRD FR-04 · BR-01',
-    stale: false,
-    deliveryStatus: 'Draft',
-    exported: false,
-  },
-  {
-    id: 'st-7',
-    key: 'FMB2-MIG-004',
-    title: 'Backfill trusted-device records',
-    storyType: 'Migration story',
-    role: 'platform engineer',
-    goal: 'existing device-registration data migrated into CustomerDevice',
-    benefit: 'already-enrolled customers are not asked to register again',
-    acceptance: [
-      { given: 'a customer enrolled in the legacy device flow', when: 'the backfill runs', then: 'a CustomerDevice record exists with the original enrolment date' },
-    ],
-    priority: 'P2',
-    points: 8,
-    moduleName: 'Device Management',
-    featureName: 'Register device',
-    linkedRequirementIds: ['REQ-AUTH-012'],
-    linkedArtifactIds: ['art-er'],
-    sourceEvidence: 'Legacy authentication architecture.pdf',
-    stale: false,
-    deliveryStatus: 'Blocked',
-    exported: true,
-  },
-];
+/**
+ * Stories are delivery records, not Spec AI internals: the same thirty rows power
+ * Stage 5, the project delivery view, My Delivery and the Command Centre card.
+ * Locking the module map hands them over rather than minting a parallel set —
+ * there is one backlog, so there is one list of it.
+ *
+ * Copied on the way out so a mutation in the workspace cannot reach back into the
+ * seed.
+ */
+export const GENERATED_STORIES = (): UserStory[] =>
+  DELIVERY_STORIES.map((s) => ({ ...s, acceptance: s.acceptance.map((a) => ({ ...a })) }));

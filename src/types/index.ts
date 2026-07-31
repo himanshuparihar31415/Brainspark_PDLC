@@ -250,15 +250,35 @@ export interface NotificationItem {
   link?: string;
 }
 
+/**
+ * Why a task exists. This is what stops the delivery view calling every
+ * unlinked task a gap: an incident, a spike or a governance chore legitimately
+ * has no specification behind it, and only `story-work` without a story is
+ * evidence of something missing.
+ */
+export type TaskType = 'story-work' | 'bug' | 'operations' | 'spike' | 'governance';
+
 export interface Task {
   id: string;
+  /**
+   * Immutable join key. `project` below is the denormalised display name kept
+   * beside it, so renaming a project cannot break the join or rewrite history.
+   */
+  projectId: string;
+  /** The story this task delivers. Absent is meaningful — see `taskType`. */
+  storyId?: string;
   title: string;
   project: string;
   module: string;
+  /** Stable reference to a TeamMember; `assignee` is the display name. */
+  assigneeId?: string;
   assignee: string;
+  taskType: TaskType;
   priority: 'High' | 'Medium' | 'Low';
-  status: 'Pending' | 'In Progress' | 'Needs Approval' | 'Completed';
+  status: 'Pending' | 'In Progress' | 'Needs Approval' | 'Completed' | 'Blocked';
   dueDate: string;
+  createdAt: string;
+  updatedAt: string;
   artifactTitle?: string;
   artifactSummary?: string;
   /** Attributed AI spend / tokens — feeds the project-level cost + token axes. */

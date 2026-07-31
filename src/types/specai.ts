@@ -491,10 +491,17 @@ export interface UserStory {
   sourceEvidence: string;
   /** True when a linked requirement or artifact changed after generation. */
   stale: boolean;
+  /** Which upstream artifact moved, so a stale story can be reviewed against it. */
+  staleReason?: string;
   /** Where this story sits in delivery — source of truth for completion rollups. */
   deliveryStatus: StoryDeliveryStatus;
   /** True once pushed to the tracker (`deliveryStatus !== 'Draft'`). */
   exported: boolean;
+  /** Stable reference to a TeamMember; `owner` is the display name beside it. */
+  ownerId?: string;
+  owner?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 /** Field mapping applied before a Jira export. */

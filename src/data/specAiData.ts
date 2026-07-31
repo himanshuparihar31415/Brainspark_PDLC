@@ -9,6 +9,7 @@ import {
   UnderstandingBrief,
   UnderstandingSection,
 } from '../types/specai';
+import { DELIVERY_STORIES } from './deliveryData';
 
 /**
  * What the sources actually say about this problem. Five pieces, not forty — the
@@ -654,7 +655,9 @@ const finEdge: SpecAiState = {
   hasLegacyArchitecture: true,
   artifacts: [],
   modules: [],
-  stories: [],
+  /* The backlog already in delivery. Stage 5 and the project delivery view read
+     these same rows; locking the module map would hand over this very list. */
+  stories: DELIVERY_STORIES.map((x) => ({ ...x })),
   jiraMapping: {
     epic: 'FMB2 · Authentication modernization',
     release: '2.1',
