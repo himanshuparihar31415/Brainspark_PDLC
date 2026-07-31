@@ -1,15 +1,8 @@
 import React, { useState } from 'react';
 import { ModuleKey } from '../../types';
 import { MODULE_DEFS } from '../../data/modules';
-import { FileText, Pencil, SquareCode, CheckCircle2, Send, ChevronDown } from 'lucide-react';
-
-const MODULE_ICON: Record<ModuleKey, React.ElementType> = {
-  specai: FileText,
-  design: Pencil,
-  codeiq: SquareCode,
-  intelliqa: CheckCircle2,
-  release: Send,
-};
+import { ChevronDown } from 'lucide-react';
+import { ModuleIcon } from '../common/ModuleIcons';
 
 /**
  * Secondary navigation for direct jumps. The pipeline cards are the primary
@@ -43,7 +36,6 @@ export const WorkspaceNav: React.FC<{
       {open && (
         <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           {MODULE_DEFS.map((def) => {
-            const Icon = MODULE_ICON[def.key];
             const isEnabled = enabled.includes(def.key);
             const readOnly = isEnabled && !ownedModules.includes(def.key);
 
@@ -65,10 +57,8 @@ export const WorkspaceNav: React.FC<{
                     : 'cursor-not-allowed border-slate-200 bg-slate-50 opacity-50'
                 }`}
               >
-                <div className="flex items-center gap-2">
-                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100 text-slate-600">
-                    <Icon className="h-3.5 w-3.5" />
-                  </div>
+                <div className="flex items-center gap-2.5">
+                  <ModuleIcon module={def.key} size="sm" />
                   <span className="text-xs font-extrabold text-slate-900">{def.name}</span>
                 </div>
                 <p className="mt-2 text-[10px] leading-snug text-slate-500">
