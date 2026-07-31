@@ -12,11 +12,6 @@ import {
 } from '../../data/modules';
 import { canAccessNav } from '../../data/rbac';
 import {
-  FileText,
-  Pencil,
-  SquareCode,
-  CheckCircle2,
-  Send,
   TrendingUp,
   TrendingDown,
   ArrowRight,
@@ -25,14 +20,7 @@ import {
   FolderGit2,
   Layers,
 } from 'lucide-react';
-
-const MODULE_ICON: Record<ModuleKey, React.ElementType> = {
-  specai: FileText,
-  design: Pencil,
-  codeiq: SquareCode,
-  intelliqa: CheckCircle2,
-  release: Send,
-};
+import { ModuleIcon } from '../common/ModuleIcons';
 
 const Trend: React.FC<{ value: number }> = ({ value }) => {
   if (value === 0) return <span className="text-[10px] text-slate-400">flat</span>;
@@ -56,7 +44,6 @@ const ModuleCard: React.FC<{
   onOpen: () => void;
 }> = ({ rollup, contention, onOpen }) => {
   const { def } = rollup;
-  const Icon = MODULE_ICON[def.key];
 
   return (
     <button
@@ -69,10 +56,8 @@ const ModuleCard: React.FC<{
       }`}
     >
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100 text-slate-600">
-            <Icon className="h-3.5 w-3.5" />
-          </div>
+        <div className="flex items-center gap-2.5">
+          <ModuleIcon module={def.key} size="sm" />
           <span className="text-xs font-extrabold text-slate-900">{def.name}</span>
         </div>
         {contention > 0 && (
