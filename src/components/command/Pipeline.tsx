@@ -12,6 +12,84 @@ import {
   Play,
 } from 'lucide-react';
 
+/** Animated SVG icons for pipeline module cards */
+const PipelineModuleIcon: React.FC<{ module: string }> = ({ module }) => {
+  const size = 32;
+  const common = { width: size, height: size, viewBox: '0 0 32 32', fill: 'none', xmlns: 'http://www.w3.org/2000/svg' };
+
+  if (module === 'specai') return (
+    <svg {...common}>
+      <rect x="6" y="4" width="20" height="24" rx="3" fill="#eef2ff" stroke="#6366f1" strokeWidth="1.2" />
+      <path d="M10 10h12M10 14h10M10 18h7" stroke="#a5b4fc" strokeWidth="1.2" strokeLinecap="round">
+        <animate attributeName="opacity" values="0.4;1;0.4" dur="2.5s" repeatCount="indefinite" />
+      </path>
+      <circle cx="22" cy="22" r="5" fill="#e0e7ff" stroke="#6366f1" strokeWidth="1.2">
+        <animate attributeName="r" values="4.5;5.5;4.5" dur="2s" repeatCount="indefinite" />
+      </circle>
+      <path d="M20.5 22l1 1 2.5-2.5" stroke="#6366f1" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+
+  if (module === 'design') return (
+    <svg {...common}>
+      <rect x="4" y="6" width="24" height="20" rx="3" fill="#fef3c7" stroke="#f59e0b" strokeWidth="1.2" />
+      <rect x="8" y="10" width="7" height="5" rx="1" fill="#fde68a" stroke="#f59e0b" strokeWidth="0.8">
+        <animate attributeName="y" values="10;9;10" dur="3s" repeatCount="indefinite" />
+      </rect>
+      <rect x="17" y="10" width="7" height="5" rx="1" fill="#fde68a" stroke="#f59e0b" strokeWidth="0.8">
+        <animate attributeName="y" values="10;11;10" dur="3s" repeatCount="indefinite" />
+      </rect>
+      <path d="M11.5 18v3M20.5 18v3" stroke="#f59e0b" strokeWidth="1" strokeLinecap="round" strokeDasharray="1 1.5">
+        <animate attributeName="stroke-dashoffset" values="0;-5" dur="1.5s" repeatCount="indefinite" />
+      </path>
+      <circle cx="16" cy="23" r="2" fill="#fde68a" stroke="#f59e0b" strokeWidth="0.8" />
+    </svg>
+  );
+
+  if (module === 'codeiq') return (
+    <svg {...common}>
+      <rect x="5" y="5" width="22" height="22" rx="4" fill="#ecfdf5" stroke="#10b981" strokeWidth="1.2" />
+      <path d="M11 12l-3 4 3 4" stroke="#10b981" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+        <animate attributeName="opacity" values="0.5;1;0.5" dur="2s" repeatCount="indefinite" />
+      </path>
+      <path d="M21 12l3 4-3 4" stroke="#10b981" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+        <animate attributeName="opacity" values="1;0.5;1" dur="2s" repeatCount="indefinite" />
+      </path>
+      <path d="M18 9l-4 14" stroke="#6ee7b7" strokeWidth="1.2" strokeLinecap="round">
+        <animate attributeName="stroke-dashoffset" values="20;0" dur="2s" repeatCount="indefinite" />
+        <set attributeName="stroke-dasharray" to="20" />
+      </path>
+    </svg>
+  );
+
+  if (module === 'intelliqa') return (
+    <svg {...common}>
+      <circle cx="16" cy="16" r="11" fill="#faf5ff" stroke="#8b5cf6" strokeWidth="1.2" />
+      <path d="M12 16l2.5 2.5L20 13" stroke="#8b5cf6" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <animate attributeName="stroke-dashoffset" values="12;0" dur="1.5s" repeatCount="indefinite" />
+        <set attributeName="stroke-dasharray" to="12" />
+      </path>
+      <circle cx="16" cy="16" r="11" fill="none" stroke="#c4b5fd" strokeWidth="0.6" strokeDasharray="3 2">
+        <animateTransform attributeName="transform" type="rotate" values="0 16 16;360 16 16" dur="8s" repeatCount="indefinite" />
+      </circle>
+    </svg>
+  );
+
+  // release
+  return (
+    <svg {...common}>
+      <path d="M16 4l3 6h6l-5 4 2 6-6-4-6 4 2-6-5-4h6z" fill="#fef2f2" stroke="#ef4444" strokeWidth="1.2" strokeLinejoin="round" />
+      <circle cx="16" cy="16" r="3" fill="#fecaca" stroke="#ef4444" strokeWidth="0.8">
+        <animate attributeName="r" values="2.5;3.5;2.5" dur="2s" repeatCount="indefinite" />
+      </circle>
+      <circle cx="16" cy="16" r="8" fill="none" stroke="#fca5a5" strokeWidth="0.5" opacity="0.6">
+        <animate attributeName="r" values="8;10;8" dur="3s" repeatCount="indefinite" />
+        <animate attributeName="opacity" values="0.6;0.2;0.6" dur="3s" repeatCount="indefinite" />
+      </circle>
+    </svg>
+  );
+};
+
 const STATUS_PILL: Record<PhaseStatus, string> = {
   'In progress': 'bg-blue-50 text-blue-700 border-blue-200',
   Blocked: 'bg-rose-50 text-rose-700 border-rose-200',
@@ -70,7 +148,7 @@ const MovementLine: React.FC<{ phase: PipelinePhase; unit: string }> = ({ phase,
   );
 };
 
-/** One column in the pipeline row. */
+/** One column in the pipeline row — icon-centric card with flip-to-stats. */
 const PhaseCard: React.FC<{
   phase: PipelinePhase;
   focused: boolean;
@@ -82,147 +160,162 @@ const PhaseCard: React.FC<{
 }> = ({ phase, focused, isFirstEligible, expanded, annotation, onToggle, onOpen }) => {
   const def = moduleDef(phase.module);
   const { unit, completionPhrase } = def.pipeline;
+  const [showStats, setShowStats] = useState(false);
 
   const blockedCount = phase.items.filter((i) => i.status === 'Blocked').length;
   const pct = phase.total === 0 ? 0 : Math.round((phase.done / phase.total) * 100);
   const notStarted = phase.status === 'Not started';
 
+  const MODULE_SUBTITLES: Record<string, string> = {
+    specai: 'Requirements Intelligence Studio',
+    design: 'Design & Prototyping Hub',
+    codeiq: 'Intelligent Code Generation',
+    intelliqa: 'Autonomous Testing Studio',
+    release: 'Release Command Center',
+  };
+
+  const MODULE_DESCS: Record<string, string> = {
+    specai: 'Transforms business objectives into structured epics & user stories.',
+    design: 'Generates interactive flows to validate before code is written.',
+    codeiq: 'Produces production-ready, reusable code from validated designs.',
+    intelliqa: 'Enables Shift-Left quality engineering through AI-generated test scenarios.',
+    release: 'Orchestrates release readiness, deployment intelligence, environment validation.',
+  };
+
+  const borderColor =
+    phase.status === 'Blocked' ? 'border-rose-300/60'
+    : phase.status === 'Waiting' ? 'border-amber-300/60'
+    : phase.status === 'Complete' ? 'border-emerald-300/60'
+    : 'border-white/60';
+
   return (
     <div
-      className={`reveal-card card-interactive flex flex-col overflow-hidden rounded-2xl border ${
-        phase.status === 'Blocked'
-          ? 'border-rose-300/70 bg-rose-50/40 backdrop-blur-xl'
-          : phase.status === 'Waiting'
-          ? 'border-amber-300/70 bg-amber-50/40 backdrop-blur-xl'
-          : phase.status === 'Complete'
-          ? 'border-emerald-200/80 bg-emerald-50/35 backdrop-blur-xl'
-          : expanded
-          ? 'material-acrylic-strong border-indigo-400/60 elevation-hover'
-          : focused
-          ? 'material-acrylic border-indigo-300/50 elevation-hover ring-1 ring-indigo-200/60'
-          : notStarted
-          ? 'material-acrylic-thin border-white/40'
-          : 'material-acrylic border-white/60 elevation-rest'
+      className={`group relative flex flex-col overflow-hidden rounded-2xl border backdrop-blur-xl transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-indigo-500/10 ${borderColor} ${
+        notStarted ? 'opacity-60 bg-white/40' : 'bg-white/70'
       }`}
-      title={!focused ? 'Not your phase — open to view.' : undefined}
+      style={{ minHeight: '270px', perspective: '1000px' }}
     >
-      {/* Waiting banner replaces the movement line entirely */}
-      {phase.status === 'Waiting' && (
-        <div className="border-b border-amber-200 bg-amber-100/70 px-3 py-2">
-          <div className="flex items-start gap-1.5">
-            <AlertTriangle className="mt-px h-3 w-3 shrink-0 text-amber-700" />
-            <span className="text-[10px] font-bold leading-snug text-amber-900">
-              Waiting — {phase.unavailableCapability} unavailable
-            </span>
+      {/* Ambient glow on hover */}
+      <div className="pointer-events-none absolute -top-12 left-1/2 h-24 w-24 -translate-x-1/2 rounded-full bg-indigo-400/0 blur-2xl transition-all duration-500 group-hover:bg-indigo-400/15" />
+
+      <div
+        className="relative h-full w-full transition-transform duration-500"
+        style={{ transformStyle: 'preserve-3d', transform: showStats ? 'rotateY(180deg)' : 'none' }}
+      >
+        {/* ──── FRONT FACE ──── */}
+        <div className="absolute inset-0 flex flex-col p-4" style={{ backfaceVisibility: 'hidden' }}>
+          {/* Animated SVG Icon */}
+          <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-slate-50 to-slate-100/80 border border-slate-200/50 mx-auto mb-3 shadow-sm">
+            <PipelineModuleIcon module={phase.module} />
           </div>
-          <span className="mt-1 block text-[10px] font-bold text-amber-800">
-            Check My Services →
-          </span>
-        </div>
-      )}
 
-      <div className="flex flex-1 flex-col p-3.5">
-        {/* Name + status */}
-        <div className="flex items-start justify-between gap-2">
-          <h3 className="text-xs font-extrabold leading-tight text-slate-900">{def.name}</h3>
-          {focused && (
-            <span className="shrink-0 rounded bg-indigo-100 px-1.5 py-0.5 text-[9px] font-bold text-indigo-700">
-              Yours
-            </span>
-          )}
-        </div>
-        <span
-          className={`mt-1.5 w-fit rounded-md border px-1.5 py-0.5 text-[9px] font-bold ${
-            STATUS_PILL[phase.status]
-          }`}
-        >
-          {phase.status}
-        </span>
+          {/* Name + subtitle */}
+          <h3 className="text-center text-sm font-bold text-slate-900">{def.name}</h3>
+          <p className="text-center text-[10px] italic text-indigo-600 mt-0.5">{MODULE_SUBTITLES[def.key]}</p>
+          <p className="text-center text-[10px] text-slate-500 mt-2 leading-relaxed line-clamp-2">{MODULE_DESCS[def.key]}</p>
 
-        {/* Line order is fixed: movement, completion, health. */}
-        {phase.status !== 'Waiting' && (
-          <div className="mt-2.5 min-h-[2rem]">
-            <MovementLine phase={phase} unit={unit} />
-          </div>
-        )}
-
-        <div className="mt-2">
-          <div className="h-1.5 overflow-hidden rounded-full bg-slate-200/70">
-            <div
-              className={`h-full rounded-full ${
-                phase.status === 'Blocked'
-                  ? 'bg-rose-500'
-                  : phase.status === 'Waiting'
-                  ? 'bg-amber-500'
-                  : phase.status === 'Complete'
-                  ? 'bg-emerald-500'
-                  : 'bg-blue-500'
-              }`}
-              style={{ width: `${pct}%` }}
-            />
-          </div>
-          <div className="mt-1 font-mono text-[10px] leading-snug text-slate-600">
-            {phase.done} / {phase.total} {completionPhrase}
-          </div>
-        </div>
-
-        {/* Health — pinned to the card bottom so the row stays aligned */}
-        <div className="mt-auto space-y-1.5 border-t border-slate-100 pt-2.5">
-          {blockedCount > 0 && (
-            <span className="flex items-center gap-1 text-[10px] font-bold text-rose-600">
-              <AlertTriangle className="h-2.5 w-2.5" />
-              {blockedCount} blocked
-            </span>
-          )}
-
-          <div className="flex items-center justify-between gap-2">
-            <span className="truncate text-[10px] text-slate-500">{phase.ownerRole}</span>
-            {annotation && (
-              <span className="shrink-0 font-mono text-[10px] font-bold text-slate-700">
-                {annotation}
+          {/* Status + progress (compact) */}
+          <div className="mt-auto pt-3 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className={`rounded-md border px-1.5 py-0.5 text-[9px] font-bold ${STATUS_PILL[phase.status]}`}>
+                {phase.status}
               </span>
-            )}
+              {focused && (
+                <span className="rounded bg-indigo-100 px-1.5 py-0.5 text-[9px] font-bold text-indigo-700">Yours</span>
+              )}
+            </div>
+
+            <div className="h-1 overflow-hidden rounded-full bg-slate-100">
+              <div
+                className={`h-full rounded-full transition-all ${
+                  phase.status === 'Blocked' ? 'bg-rose-500'
+                  : phase.status === 'Complete' ? 'bg-emerald-500'
+                  : 'bg-indigo-500'
+                }`}
+                style={{ width: `${pct}%` }}
+              />
+            </div>
+            <div className="font-mono text-[10px] text-slate-500 text-center">{phase.done}/{phase.total} {completionPhrase}</div>
+
+            {/* Bottom actions */}
+            <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+              {notStarted && !isFirstEligible ? (
+                <span className="text-[10px] text-slate-300">—</span>
+              ) : (
+                <button
+                  onClick={onOpen}
+                  className="flex items-center gap-1 text-[10px] font-semibold text-indigo-600 hover:underline cursor-pointer"
+                >
+                  {notStarted && isFirstEligible ? <>Start <Play className="h-2.5 w-2.5" /></> : <>Open <ArrowRight className="h-2.5 w-2.5" /></>}
+                </button>
+              )}
+              <button
+                onClick={(e) => { e.stopPropagation(); setShowStats(true); }}
+                className="flex items-center gap-1 rounded-md bg-slate-100 px-2 py-1 text-[9px] font-semibold text-slate-600 hover:bg-indigo-50 hover:text-indigo-700 cursor-pointer transition-colors"
+              >
+                <TrendingUp className="h-2.5 w-2.5" /> Stats
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* ──── BACK FACE (Stats) ──── */}
+        <div
+          className="absolute inset-0 flex flex-col p-4 rounded-2xl bg-white/80 backdrop-blur-xl border border-white/60"
+          style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
+        >
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-xs font-bold text-slate-900">{def.name} Stats</span>
+            <button
+              onClick={() => setShowStats(false)}
+              className="rounded-md bg-white border border-slate-200 px-2 py-0.5 text-[9px] font-semibold text-slate-600 hover:bg-slate-50 cursor-pointer"
+            >
+              ← Card
+            </button>
           </div>
 
-          <div className="flex items-center justify-between gap-2">
-            {phase.items.length > 0 ? (
+          <div className="grid grid-cols-2 gap-2 flex-1">
+            <div className="rounded-lg bg-white border border-slate-100 px-2.5 py-2">
+              <div className="text-base font-black text-slate-900">{phase.done}</div>
+              <div className="text-[9px] text-slate-500">Completed</div>
+            </div>
+            <div className="rounded-lg bg-white border border-slate-100 px-2.5 py-2">
+              <div className="text-base font-black text-slate-900">{phase.total - phase.done}</div>
+              <div className="text-[9px] text-slate-500">Remaining</div>
+            </div>
+            <div className="rounded-lg bg-white border border-slate-100 px-2.5 py-2">
+              <div className="text-base font-black text-slate-900">{pct}%</div>
+              <div className="text-[9px] text-slate-500">Progress</div>
+            </div>
+            <div className="rounded-lg bg-white border border-slate-100 px-2.5 py-2">
+              <div className={`text-base font-black ${blockedCount > 0 ? 'text-rose-600' : 'text-emerald-600'}`}>{blockedCount}</div>
+              <div className="text-[9px] text-slate-500">Blocked</div>
+            </div>
+            <div className="rounded-lg bg-white border border-slate-100 px-2.5 py-2">
+              <div className="text-base font-black text-indigo-600">+{phase.movementThisWeek}</div>
+              <div className="text-[9px] text-slate-500">{unit}/week</div>
+            </div>
+            <div className="rounded-lg bg-white border border-slate-100 px-2.5 py-2">
+              <div className="text-base font-black text-slate-900">{phase.items.length}</div>
+              <div className="text-[9px] text-slate-500">Total items</div>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between pt-3 mt-2 border-t border-slate-100">
+            {phase.items.length > 0 && (
               <button
                 onClick={onToggle}
-                className="flex cursor-pointer items-center gap-0.5 text-[10px] font-bold text-slate-500 transition-colors hover:text-slate-800"
+                className="text-[10px] font-semibold text-slate-600 hover:text-slate-800 cursor-pointer"
               >
-                {expanded ? (
-                  <>
-                    Collapse <ChevronUp className="h-2.5 w-2.5" />
-                  </>
-                ) : (
-                  <>
-                    {phase.items.length} items <ChevronDown className="h-2.5 w-2.5" />
-                  </>
-                )}
-              </button>
-            ) : (
-              <span />
-            )}
-
-            {/* A later not-started phase has no door at all. */}
-            {notStarted && !isFirstEligible ? (
-              <span className="text-[10px] text-slate-300">—</span>
-            ) : (
-              <button
-                onClick={onOpen}
-                className="flex shrink-0 cursor-pointer items-center gap-0.5 text-[10px] font-bold text-indigo-600 transition-colors hover:text-indigo-800"
-              >
-                {notStarted && isFirstEligible ? (
-                  <>
-                    Start <Play className="h-2.5 w-2.5" />
-                  </>
-                ) : (
-                  <>
-                    Open <ArrowRight className="h-2.5 w-2.5" />
-                  </>
-                )}
+                {expanded ? 'Collapse' : `${phase.items.length} items ↓`}
               </button>
             )}
+            <button
+              onClick={onOpen}
+              className="flex items-center gap-1 text-[10px] font-semibold text-indigo-600 hover:underline cursor-pointer"
+            >
+              Open <ArrowRight className="h-2.5 w-2.5" />
+            </button>
           </div>
         </div>
       </div>

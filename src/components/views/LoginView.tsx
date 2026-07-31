@@ -75,36 +75,55 @@ const CapabilityCard: React.FC<{ capability: Capability }> = ({ capability }) =>
   );
 };
 
-/** Dotted spokes from the central hub out to each capability card. */
-const HubSpokes: React.FC = () => (
-  <svg
-    className="pointer-events-none absolute inset-0 h-full w-full"
-    viewBox="0 0 100 100"
-    preserveAspectRatio="none"
-    aria-hidden="true"
-  >
-    {[
-      [34, 18],
-      [66, 18],
-      [34, 50],
-      [66, 50],
-      [34, 82],
-      [66, 82],
-    ].map(([x, y]) => (
-      <line
-        key={`${x}-${y}`}
-        x1="50"
-        y1="50"
-        x2={x}
-        y2={y}
-        stroke="rgba(148,163,184,0.45)"
-        strokeWidth="0.4"
-        strokeDasharray="1.2 1.6"
-        vectorEffect="non-scaling-stroke"
-      />
-    ))}
-  </svg>
-);
+/** Solid white connector lines with traveling dots from brain to each module. */
+const HubSpokes: React.FC = () => {
+  const spokes = [
+    { x: 34, y: 18, delay: 0 },
+    { x: 66, y: 18, delay: 0.5 },
+    { x: 34, y: 50, delay: 1.0 },
+    { x: 66, y: 50, delay: 1.5 },
+    { x: 34, y: 82, delay: 2.0 },
+    { x: 66, y: 82, delay: 2.5 },
+  ];
+
+  return (
+    <svg
+      className="pointer-events-none absolute inset-0 h-full w-full"
+      viewBox="0 0 100 100"
+      preserveAspectRatio="none"
+      aria-hidden="true"
+    >
+      {spokes.map(({ x, y, delay }, i) => (
+        <g key={i}>
+          {/* Solid visible white connection line */}
+          <line
+            x1="50" y1="50" x2={x} y2={y}
+            stroke="rgba(255,255,255,0.6)"
+            strokeWidth="0.5"
+            vectorEffect="non-scaling-stroke"
+          />
+          {/* Traveling dot pulsing outward */}
+          <circle r="1" fill="white">
+            <animateMotion
+              dur="3s"
+              repeatCount="indefinite"
+              begin={`${delay}s`}
+              path={`M50,50 L${x},${y}`}
+            />
+            <animate
+              attributeName="opacity"
+              values="0;1;1;0"
+              keyTimes="0;0.05;0.7;1"
+              dur="3s"
+              repeatCount="indefinite"
+              begin={`${delay}s`}
+            />
+          </circle>
+        </g>
+      ))}
+    </svg>
+  );
+};
 
 const EMAIL_KEY = 'brainspark.rememberedEmail';
 
@@ -197,7 +216,7 @@ export const LoginView: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen font-sans antialiased lg:flex">
+    <div className="min-h-screen antialiased lg:flex" style={{ fontFamily: "'Poppins', sans-serif" }}>
       {/* ---------- Left: brand & platform story ---------- */}
       <div className="relative flex flex-col overflow-hidden bg-[#0b2148] px-8 py-10 lg:w-[58%] lg:px-14 lg:py-12">
         {/* Ambient glow */}
@@ -205,12 +224,12 @@ export const LoginView: React.FC = () => {
         <div className="pointer-events-none absolute -top-24 -left-16 h-72 w-72 rounded-full bg-indigo-500/10 blur-3xl" />
 
         <div className="relative flex flex-1 flex-col">
-          <Wordmark className="text-3xl text-white" />
-
-          <div className="mt-5 inline-flex w-fit items-center gap-2 rounded-full border border-white/15 bg-white/[0.06] px-4 py-1.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-orange-500" />
-            <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-200">
-              Brainspark · AI-Native PDLC Platform
+          {/* Minimal top bar */}
+          <div className="flex items-center gap-3">
+            <Wordmark className="text-2xl text-white" />
+            <span className="h-4 w-px bg-white/20" />
+            <span className="text-[10px] font-medium tracking-wide text-slate-400">
+              AI-Native PDLC Platform
             </span>
           </div>
 
@@ -236,8 +255,11 @@ export const LoginView: React.FC = () => {
                 ))}
               </div>
 
-              {/* Center hub */}
-              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white shadow-2xl shadow-blue-950/50 lg:h-24 lg:w-24">
+              {/* Center hub — gentle floating motion */}
+              <div
+                className="flex h-20 w-20 items-center justify-center rounded-full bg-white shadow-2xl shadow-blue-950/50 lg:h-24 lg:w-24"
+                style={{ animation: 'brain-float 3s ease-in-out infinite' }}
+              >
                 <Brain className="h-9 w-9 text-[#0b2148] lg:h-11 lg:w-11" />
               </div>
 
