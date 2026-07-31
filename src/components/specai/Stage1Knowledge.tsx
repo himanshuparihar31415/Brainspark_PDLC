@@ -3,22 +3,18 @@ import { SpecAiState, SpecSource } from '../../types/specai';
 import { AgentTerminal } from './AgentTerminal';
 import { BriefPanel } from './BriefPanel';
 import { ConflictResolver } from './ConflictResolver';
-import { ContextBar } from './ContextBar';
 import { IntakeGate } from './IntakeGate';
 import { SourceDrawer } from './SourceDrawer';
 
 /**
  * Stage 1 — Knowledge Creation & Contextualization.
  *
- * It begins with the question, not the workspace. Until a task has been accepted
- * there is no direction to read anything against, and a workspace that opens
- * before you have said what you are solving invites you to start collecting
- * sources for a problem nobody has stated.
- *
- * After that: two columns — the conversation where the work happens, and the
- * brief it produces. The statement and the sources sit collapsed on one line
- * above both, since setup you touch occasionally should not hold a banner for the
- * rest of the session.
+ * One question, then two panels: the conversation, and the brief it produces.
+ * Nothing else. The problem statement lives at the top of the brief because that
+ * is what it is — the first thing the brief says — and sources hang off the
+ * composer, where a chat already has a place for "here, look at this". Both used
+ * to hold bars of their own above the work, which is a permanent cost for
+ * something you touch a few times a session.
  */
 export const Stage1Knowledge: React.FC<{
   state: SpecAiState;
@@ -33,16 +29,14 @@ export const Stage1Knowledge: React.FC<{
   if (!state.intake?.acceptedAt) return <IntakeGate state={state} readOnly={readOnly} />;
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-2">
-      <ContextBar state={state} disabled={disabled} onOpenSource={setSource} />
-
+    <>
       {/*
         Each panel owns its height and its own scroll, so reading the brief never
         moves the conversation and a long transcript never pushes the brief off
         screen. Below lg they stack and this column scrolls instead.
       */}
       <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto lg:flex-row lg:overflow-hidden">
-        <AgentTerminal state={state} disabled={disabled} />
+        <AgentTerminal state={state} disabled={disabled} onOpenSource={setSource} />
         <BriefPanel state={state} disabled={disabled} onResolve={setConflictId} />
       </div>
 
@@ -54,6 +48,6 @@ export const Stage1Knowledge: React.FC<{
       />
 
       <SourceDrawer source={source} onClose={() => setSource(null)} />
-    </div>
+    </>
   );
 };

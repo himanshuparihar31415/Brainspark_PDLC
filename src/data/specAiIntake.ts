@@ -370,41 +370,47 @@ export const readIntake = (raw: string): IntakeReading => {
       }
     : undefined;
 
-  // ── The concise brief ─────────────────────────────────────────────────────
+  // ── What the agent says back ───────────────────────────────────────────────
+
+  /*
+   * There is no approval step any more: you enter the problem and you are in the
+   * workspace. So this is a first reply in a conversation, not a proposal awaiting
+   * sign-off — it says what was taken from your input, and what it still needs,
+   * and then gets on with reading.
+   */
+  const took =
+    signals.length > 0
+      ? `What I took from it: ${signals
+          .map((s) => `${s.label.toLowerCase()} — ${s.value}`)
+          .join('; ')}.`
+      : '';
 
   const conciseBrief = derivable
     ? [
-        statement,
-        signals.length > 0
-          ? `What I took from your input: ${signals
-              .map((s) => `${s.label.toLowerCase()} — ${s.value}`)
-              .join('; ')}.`
-          : '',
+        `Read as ${kind === 'Problem statement' ? 'a problem statement' : kind.toLowerCase()}.`,
+        took,
         subject
-          ? `I am treating this as ${subject} work, which comes with its own set of decisions I will put to you rather than assume.`
-          : 'I do not recognise the subject, so I will take my direction entirely from your sources rather than from a prior.',
+          ? `I am treating this as ${subject} work, which comes with decisions I will put to you rather than assume.`
+          : 'I do not recognise the subject, so I will take my direction from your sources rather than from a prior.',
       ]
         .filter(Boolean)
         .join('\n\n')
     : [
         kind === 'Unclear'
-          ? 'I cannot tell what problem this describes yet.'
-          : kind === 'Problem statement'
-          ? 'I read this as a problem statement, but there is not enough in it to aim anything at.'
-          : `I read this as ${kind.toLowerCase()}, which tells me what is happening but not what should happen instead.`,
-        signals.length > 0
-          ? `What I could take from it: ${signals
-              .map((s) => `${s.label.toLowerCase()} — ${s.value}`)
-              .join('; ')}.`
-          : '',
-        'Everything downstream is read against this, so I would rather ask than start in the wrong direction.',
+          ? 'I cannot tell much from this yet.'
+          : `Read as ${kind.toLowerCase()} — which tells me what is happening, but not what should happen instead.`,
+        took,
       ]
         .filter(Boolean)
         .join('\n\n');
 
   const reply = derivable
-    ? `${conciseBrief}\n\nHere is what I propose to do. Accept it and I will start reading; change the statement if I have aimed this wrong.`
-    : `${conciseBrief}\n\n${needs.length === 1 ? 'One thing first' : `${needs.length} things first`}: ${needs.join(' ')}`;
+    ? `${conciseBrief}\n\nIt is in the brief now, and I am reading your sources against it.`
+    : `${conciseBrief}\n\nI have put ${
+        needs.length === 1 ? 'a question' : `${needs.length} questions`
+      } in the queue rather than guess: ${needs.join(' ')} Answer ${
+        needs.length === 1 ? 'it' : 'them'
+      } here whenever you like — I will keep going in the meantime.`;
 
   return {
     intake: {

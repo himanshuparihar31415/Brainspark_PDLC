@@ -1,9 +1,17 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { SpecAiState } from '../../types/specai';
 import { BRIEF_BANDS, BRIEF_BAND_COPY, EVIDENCE_CLASSES, indexedSources } from '../../data/specai';
 import { QuestionQueue } from './QuestionQueue';
-import { AlertTriangle, ArrowUpRight, Loader2, RefreshCw, Scale, Sparkles } from 'lucide-react';
+import {
+  AlertTriangle,
+  ArrowUpRight,
+  Loader2,
+  RefreshCw,
+  Scale,
+  Sparkles,
+  Target,
+} from 'lucide-react';
 
 /**
  * The project brief — what the agent understands, written out of the conversation
@@ -19,7 +27,10 @@ export const BriefPanel: React.FC<{
   /** Opens a disagreement for resolution. */
   onResolve: (cardId: string) => void;
 }> = ({ state, disabled, onResolve }) => {
-  const { askAgent, promoteBriefLine } = useApp();
+  const { askAgent, promoteBriefLine, setProblemStatement } = useApp();
+
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(state.problemStatement);
 
   const brief = state.brief;
   const busy = Boolean(state.generating);
@@ -46,8 +57,54 @@ export const BriefPanel: React.FC<{
           </span>
         </>
       )}
+      {!disabled && (
+        <button
+          onClick={() => setEditing(!editing)}
+          title="Change the problem statement everything is read against"
+          className="ml-auto flex shrink-0 cursor-pointer items-center gap-1 text-[9.5px] font-bold text-slate-400 hover:text-indigo-700"
+        >
+          <Target className="h-2.5 w-2.5" />
+          {editing ? 'Cancel' : 'Problem'}
+        </button>
+      )}
     </div>
   );
+
+  /*
+   * The problem statement, edited in place at the top of the brief. It belongs
+   * here rather than in a bar of its own: it is the first thing the brief says,
+   * and changing it invalidates everything under it — which is exactly the
+   * context you want to be looking at while you change it.
+   */
+  const problemEditor = editing ? (
+    <div className="shrink-0 border-b border-indigo-100 bg-indigo-50/50 px-3.5 py-2.5">
+      <label className="text-[9px] font-bold uppercase tracking-wider text-indigo-500">
+        Problem statement
+      </label>
+      <textarea
+        autoFocus
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        rows={3}
+        className="mt-1 w-full resize-none rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] leading-relaxed outline-none focus:border-indigo-600"
+      />
+      <button
+        onClick={() => {
+          if (draft.trim() === '' || draft.trim() === state.problemStatement) {
+            setEditing(false);
+            return;
+          }
+          setProblemStatement(state.projectId, draft.trim());
+          setEditing(false);
+          askAgent(state.projectId, '');
+        }}
+        disabled={draft.trim() === ''}
+        className="mt-1.5 flex cursor-pointer items-center gap-1 rounded-lg bg-indigo-600 px-2.5 py-1 text-[10px] font-bold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400"
+      >
+        <RefreshCw className="h-2.5 w-2.5" /> Save and re-read
+      </button>
+    </div>
+  ) : null;
 
   if (busy && !brief)
     return (
@@ -77,6 +134,7 @@ export const BriefPanel: React.FC<{
   return (
     <aside className="flex min-h-0 w-full shrink-0 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white max-lg:h-[30rem] lg:h-full lg:w-72 xl:w-96">
       {header}
+      {problemEditor}
 
       <div className="min-h-0 flex-1 overflow-y-auto px-3.5 py-3">
         {brief.stale && (

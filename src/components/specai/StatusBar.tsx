@@ -1,11 +1,14 @@
 import React from 'react';
 import { SpecSource, SpecAiState } from '../../types/specai';
 import { workspaceStoryCompletion } from '../../data/completion';
-import { Check, Cloud, CloudOff, Loader2, RefreshCw } from 'lucide-react';
+import { Check, Cloud, CloudOff, Loader2 } from 'lucide-react';
 
 /**
- * Bottom status: autosave, indexing, generation and sync. Kept as a thin strip so
- * background state is always visible without competing with the workspace.
+ * Bottom status: autosave, indexing, and delivery rollup — background facts with
+ * nowhere else to live. Generation and brief freshness used to sit here too, until
+ * the terminal grew its own pending turn and the brief its own out-of-date banner;
+ * a status bar repeating the workspace is just a second place to read the same
+ * thing and doubt which is current.
  */
 export const StatusBar: React.FC<{ state: SpecAiState }> = ({ state }) => {
   const indexing: SpecSource[] = state.sources.filter(
@@ -61,18 +64,8 @@ export const StatusBar: React.FC<{ state: SpecAiState }> = ({ state }) => {
         )}
       </span>
 
-      {/* Generation */}
-      {state.generating && (
-        <span className="flex items-center gap-1.5">
-          <Loader2 className="h-3 w-3 animate-spin text-indigo-600" />
-          <span className="text-indigo-700">
-            Generating {state.generating}… you can leave this page.
-          </span>
-        </span>
-      )}
-
       {storyRollup.total > 0 && (
-        <span className="flex items-center gap-1.5 text-slate-500">
+        <span className="ml-auto flex items-center gap-1.5 text-slate-500">
           Module completion:{' '}
           <b className="text-slate-800">
             {storyRollup.done}/{storyRollup.total} · {storyRollup.percent}%
@@ -80,15 +73,6 @@ export const StatusBar: React.FC<{ state: SpecAiState }> = ({ state }) => {
         </span>
       )}
 
-      {/* Brief freshness — the one background fact that changes what you should do */}
-      {state.brief && (
-        <span className="ml-auto flex items-center gap-1.5 text-slate-400">
-          <RefreshCw className="h-3 w-3" />
-          {state.brief.stale
-            ? 'Brief is out of date'
-            : `Brief v${state.brief.version} up to date`}
-        </span>
-      )}
     </div>
   );
 };

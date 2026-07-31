@@ -1,7 +1,8 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import { AgentToolCall, AgentTurn, SpecAiState } from '../../types/specai';
+import { AgentToolCall, AgentTurn, SpecAiState, SpecSource } from '../../types/specai';
 import { indexedSources, openQuestionsIn } from '../../data/specai';
+import { SourceAttach } from './SourceAttach';
 import {
   ArrowUp,
   Check,
@@ -191,7 +192,9 @@ const prompts = (state: SpecAiState): string[] => {
 export const AgentTerminal: React.FC<{
   state: SpecAiState;
   disabled: boolean;
-}> = ({ state, disabled }) => {
+  /** Opens a source's detail, from the attach menu on the composer. */
+  onOpenSource: (source: SpecSource) => void;
+}> = ({ state, disabled, onOpenSource }) => {
   const { askAgent } = useApp();
 
   const [draft, setDraft] = useState('');
@@ -284,7 +287,8 @@ export const AgentTerminal: React.FC<{
           </div>
         )}
 
-        <div className="flex items-end gap-1.5 rounded-2xl border border-slate-200 bg-slate-50/60 px-3 py-2 transition-colors focus-within:border-indigo-500 focus-within:bg-white">
+        <div className="flex items-end gap-1 rounded-2xl border border-slate-200 bg-slate-50/60 pl-1.5 pr-3 py-2 transition-colors focus-within:border-indigo-500 focus-within:bg-white">
+          <SourceAttach state={state} disabled={disabled} onOpenSource={onOpenSource} />
           <textarea
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
@@ -311,10 +315,6 @@ export const AgentTerminal: React.FC<{
           </button>
         </div>
 
-        <p className="mt-1.5 px-1 text-[9px] leading-relaxed text-slate-400">
-          Questions no source answers become open questions, not answers. Statements are recorded as
-          your decisions.
-        </p>
       </footer>
     </section>
   );

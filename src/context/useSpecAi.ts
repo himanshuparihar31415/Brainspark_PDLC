@@ -150,21 +150,26 @@ export const useSpecAiSlice = ({
     }, 1400);
   };
 
-  // ── The intake: where a project starts ──────────────────────────────────────
+  // ── The intake: where a project starts ──────────────────────────
 
   /**
-   * Read whatever the user brought — a problem statement, a log paste, an issue,
-   * meeting notes — and write back a short brief plus the task it proposes.
+   * Start the project from a problem statement.
    *
-   * This lands as the first turn of the conversation rather than a separate
-   * ceremony, because that is what it is: the agent's first answer, with the
-   * classification and extraction visible as tool calls under it. The brief then
-   * accumulates from turn one, so nothing about the project's direction arrives
-   * without a traceable origin.
+   * One action, not a ceremony. The statement is recorded, the brief is seeded
+   * from it, and the agent starts reading — because a screen that reads your
+   * input, shows you a plan, and then asks you to approve the plan is three
+   * screens doing the work of one.
+   *
+   * Whatever you paste is still read: logs get their error signatures grouped,
+   * a ticket gets its expected-versus-actual, notes get what was decided. Those
+   * become the first lines of the brief. Anything the agent needs and cannot
+   * find becomes an open question in the queue rather than a gate you have to
+   * clear before the workspace will open.
    */
-  const submitIntake = (projectId: string, raw: string) => {
-    if (!raw.trim()) {
-      addToast('Describe the problem first — everything downstream is read against it.', 'error');
+  const startFromProblem = (projectId: string, raw: string) => {
+    const statement = raw.trim();
+    if (!statement) {
+      addToast('A problem statement is required — everything after this is read against it.', 'error');
       return;
     }
 
@@ -173,107 +178,69 @@ export const useSpecAiSlice = ({
     patch(projectId, (s) => ({
       ...s,
       generating: 'Reading what you brought…',
+      problemStatement: statement,
       transcript: [
         ...s.transcript,
-        { id: nid('turn'), from: 'you' as const, text: raw.trim() },
+        { id: nid('turn'), from: 'you' as const, text: statement },
         { id: turnId, from: 'agent' as const, text: '', toolCalls: [], pending: true },
       ],
     }));
 
     void (async () => {
-      const { readIntake } = await import('../data/specAiIntake');
-      const reading = readIntake(raw);
+      const { readIntake, seedBriefFromIntake } = await import('../data/specAiIntake');
+      const before = specAiFor(projectId);
+      const reading = readIntake(statement);
+
+      /* The statement is what you typed. The agent reads it for signals, but it
+         does not get to rewrite the one thing you were asked for. */
+      const intake = {
+        ...reading.intake,
+        task: reading.intake.task ? { ...reading.intake.task, statement } : undefined,
+        acceptedAt: new Date().toISOString(),
+      };
+
       const calls = reading.toolCalls.map((c, i) => ({ ...c, id: `${turnId}-t${i}` }));
-
-      window.setTimeout(() => {
-        patch(projectId, (s) => ({
-          ...s,
-          generating: undefined,
-          intake: reading.intake,
-          /* The derived statement is what the rest of the pipeline reads. */
-          problemStatement: reading.intake.task?.statement ?? s.problemStatement,
-          transcript: s.transcript.map((t) =>
-            t.id === turnId ? { ...t, text: reading.reply, pending: false, toolCalls: calls } : t
-          ),
-        }));
-
-        addAuditLog(
-          'Read Spec AI Intake',
-          `Project: ${projectId}`,
-          `${reading.intake.kind} · ${raw.trim().length} characters`,
-          reading.intake.task
-            ? `Task proposed: ${reading.intake.task.title}`
-            : `${reading.intake.needs.length} things needed before a task can be proposed`
-        );
-      }, 140 + calls.length * 190);
-    })();
-  };
-
-  /**
-   * Start gathering requirements.
-   *
-   * `statement` is the confirmed problem statement — the one thing this module
-   * refuses to proceed without, because it is what every later stage judges
-   * relevance against. It comes in as an argument rather than being read off the
-   * intake so the version you edited on screen is the version that governs.
-   *
-   * Three things happen at once, and they belong together: the direction is
-   * recorded, the brief is seeded with first-level information so it starts
-   * populated rather than empty, and the agent starts reading. Accepting a plan
-   * and then pressing a second button to run it is asking twice for the same
-   * thing.
-   */
-  const acceptIntake = (projectId: string, statement: string) => {
-    const state = specAiFor(projectId);
-    const confirmed = statement.trim();
-
-    if (!state.intake) return;
-    if (!confirmed) {
-      addToast('A problem statement is required — everything after this is read against it.', 'error');
-      return;
-    }
-
-    void (async () => {
-      const { seedBriefFromIntake } = await import('../data/specAiIntake');
-      const current = specAiFor(projectId);
-      if (!current.intake) return;
-
-      const seeded = seedBriefFromIntake(current.intake, confirmed, current.sources);
-
-      patch(projectId, (s) => ({
-        ...s,
-        intake: s.intake
-          ? { ...s.intake, acceptedAt: new Date().toISOString(), task: s.intake.task ? { ...s.intake.task, statement: confirmed } : s.intake.task }
-          : s.intake,
-        problemStatement: confirmed,
-        /* Only seed a brief that does not exist. Re-accepting must never discard
-           what the conversation has already established. */
-        brief: s.brief ?? seeded,
+      const seeded = seedBriefFromIntake(intake, statement, before.sources);
+      /* What it could not work out becomes a question, not a blocked screen. */
+      const gaps = intake.needs.map((text) => ({
+        id: nid('q'),
+        track: 'Product' as const,
+        text,
+        rationale: `Raised while reading the ${intake.kind.toLowerCase()} you started from.`,
+        owner: currentRole === 'Product Manager' ? currentUserName : 'Maya Kapoor',
+        status: 'Open' as const,
       }));
 
-      addToast(
-        current.sources.some((x) => x.ingest === 'Indexed')
-          ? 'Gathering requirements — reading your sources now.'
-          : 'Problem statement locked in. Add sources and the agent will read them against it.'
-      );
-      addAuditLog(
-        'Start Requirements Gathering',
-        `Project: ${projectId}`,
-        confirmed,
-        current.intake.task
-          ? `${current.intake.task.steps.length} steps · out of scope: ${current.intake.task.outOfScope}`
-          : 'No task derived; statement confirmed by hand'
-      );
+      window.setTimeout(() => {
+        patch(projectId, (s) => {
+          const asked = new Set(s.questions.map((q) => q.text.toLowerCase()));
+          return {
+            ...s,
+            generating: undefined,
+            intake,
+            problemStatement: statement,
+            brief: s.brief ?? seeded,
+            questions: [
+              ...s.questions,
+              ...gaps.filter((q) => !asked.has(q.text.toLowerCase())),
+            ],
+            transcript: s.transcript.map((t) =>
+              t.id === turnId ? { ...t, text: reading.reply, pending: false, toolCalls: calls } : t
+            ),
+          };
+        });
 
-      /* Only read if there is something to read. A project with no sources still
-         acquires its direction — the reading happens when sources arrive. */
-      if (current.sources.some((x) => x.ingest === 'Indexed')) askAgent(projectId, '');
+        addAuditLog(
+          'Start Spec AI From Problem',
+          `Project: ${projectId}`,
+          `${intake.kind}: ${statement.slice(0, 120)}`,
+          `Brief seeded, ${gaps.length} questions raised`
+        );
+
+        /* Read the sources against it straight away, if there are any. */
+        if (before.sources.some((x) => x.ingest === 'Indexed')) askAgent(projectId, '');
+      }, 140 + calls.length * 190);
     })();
-  };
-
-  /** Start over from a different input. The transcript keeps both attempts. */
-  const clearIntake = (projectId: string) => {
-    patch(projectId, (s) => ({ ...s, intake: undefined }));
   };
 
   // ── Problem statement & synthesis ───────────────────────────────────────────
@@ -1007,9 +974,7 @@ export const useSpecAiSlice = ({
     addSpecSource,
     removeSpecSource,
     retrySpecSource,
-    submitIntake,
-    acceptIntake,
-    clearIntake,
+    startFromProblem,
     setProblemStatement,
     askAgent,
     answerQuestion,
