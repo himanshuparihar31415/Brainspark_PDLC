@@ -89,7 +89,7 @@ const PhaseCard: React.FC<{
 
   return (
     <div
-      className={`flex flex-col overflow-hidden rounded-2xl border transition-all ${
+      className={`reveal-card card-interactive flex flex-col overflow-hidden rounded-2xl border ${
         phase.status === 'Blocked'
           ? 'border-rose-300/70 bg-rose-50/40 backdrop-blur-xl'
           : phase.status === 'Waiting'
@@ -97,12 +97,12 @@ const PhaseCard: React.FC<{
           : phase.status === 'Complete'
           ? 'border-emerald-200/80 bg-emerald-50/35 backdrop-blur-xl'
           : expanded
-          ? 'glass-strong border-indigo-400/60 shadow-md'
+          ? 'material-acrylic-strong border-indigo-400/60 elevation-hover'
           : focused
-          ? 'glass-panel border-indigo-300/50 shadow-md ring-1 ring-indigo-200/60'
+          ? 'material-acrylic border-indigo-300/50 elevation-hover ring-1 ring-indigo-200/60'
           : notStarted
-          ? 'glass border-white/40 bg-white/35'
-          : 'glass-panel border-white/60'
+          ? 'material-acrylic-thin border-white/40'
+          : 'material-acrylic border-white/60 elevation-rest'
       }`}
       title={!focused ? 'Not your phase — open to view.' : undefined}
     >

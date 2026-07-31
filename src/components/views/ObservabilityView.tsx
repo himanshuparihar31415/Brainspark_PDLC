@@ -94,7 +94,7 @@ export const ObservabilityView: React.FC = () => {
   if (drill.level === 'L5') crumbs.push({ level: 'L5', label: 'Event evidence', go: () => setDrill(drill) });
 
   return (
-    <div className="p-4 lg:p-6">
+    <div className="density-compact p-4 lg:p-6">
       <header className="mb-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">

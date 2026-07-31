@@ -21,6 +21,7 @@ import {
   Layers,
 } from 'lucide-react';
 import { ModuleIcon } from '../common/ModuleIcons';
+import { useReveal } from '../../hooks/useReveal';
 
 const Trend: React.FC<{ value: number }> = ({ value }) => {
   if (value === 0) return <span className="text-[10px] text-slate-400">flat</span>;
@@ -49,10 +50,10 @@ const ModuleCard: React.FC<{
     <button
       onClick={onOpen}
       disabled={rollup.empty}
-      className={`flex flex-col rounded-2xl border bg-white p-4 text-left shadow-xs transition-all ${
+      className={`reveal-card card-interactive flex flex-col rounded-2xl border p-4 text-left ${
         rollup.empty
-          ? 'cursor-default border-slate-200 opacity-60'
-          : 'cursor-pointer border-slate-200 hover:border-indigo-400 hover:shadow-md'
+          ? 'cursor-default border-slate-200 opacity-50'
+          : 'material-acrylic cursor-pointer border-white/60 elevation-rest'
       }`}
     >
       <div className="flex items-center justify-between">
@@ -224,6 +225,7 @@ const ModuleDetail: React.FC<{
  * project's phases" but "how is each capability performing across projects".
  */
 export const ModuleStrip: React.FC = () => {
+  const moduleRevealRef = useReveal<HTMLDivElement>();
   const {
     currentRole,
     currentScope,
@@ -296,7 +298,7 @@ export const ModuleStrip: React.FC = () => {
     <div className="space-y-4 border-t border-slate-200 pt-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h2 className="text-lg font-extrabold tracking-tight text-slate-900">
+          <h2 className="type-title text-slate-900">
             Where the projects stand now
           </h2>
           <p className="mt-0.5 text-xs text-slate-500">
@@ -357,7 +359,7 @@ export const ModuleStrip: React.FC = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+      <div ref={moduleRevealRef} className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         {rollups.map((r) => (
           <ModuleCard
             key={r.key}

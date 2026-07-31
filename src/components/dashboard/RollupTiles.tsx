@@ -1,6 +1,7 @@
 import React from 'react';
 import { Users, DollarSign, Cpu, TrendingUp, TrendingDown, ChevronRight, Filter } from 'lucide-react';
 import { formatTokens, formatUsd } from '../../data/modules';
+import { useReveal } from '../../hooks/useReveal';
 
 export type TileKey = 'headcount' | 'cost' | 'tokens' | 'completion';
 
@@ -50,10 +51,10 @@ const Tile: React.FC<{
   <button
     onClick={onClick}
     title={ACTION_HINT[spec.action]}
-    className={`glass-panel group relative cursor-pointer overflow-hidden rounded-2xl border p-5 text-left transition-all ${
+    className={`material-acrylic reveal-card card-interactive group relative cursor-pointer overflow-hidden rounded-2xl border p-5 text-left ${
       active
-        ? 'border-indigo-500/50 ring-2 ring-indigo-600/20'
-        : 'border-white/60 hover:border-indigo-200/80'
+        ? 'border-indigo-500/50 ring-2 ring-indigo-600/20 elevation-hover'
+        : 'border-white/60 elevation-rest'
     }`}
   >
     <div className="flex items-center justify-between">
@@ -97,9 +98,10 @@ export const RollupTiles: React.FC<RollupTilesProps> = ({
   const costUp = costDelta >= 0;
   const overBudget = budget !== undefined && cost > budget;
   const onTrack = completion >= 60;
+  const revealRef = useReveal<HTMLDivElement>();
 
   return (
-    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+    <div ref={revealRef} className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
       <Tile
         spec={{ key: 'headcount', label: 'Team headcount', action: specs.headcount }}
         value={`${headcount} people`}
