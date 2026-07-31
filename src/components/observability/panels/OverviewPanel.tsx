@@ -38,7 +38,7 @@ export const OverviewPanel: React.FC<{ onDrill: (d: Drill) => void }> = ({ onDri
       {/* KPI Strip */}
       <section className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
         {kpis.map((k) => (
-          <article key={k.label} className="glass-panel rounded-2xl border border-white/60 p-4">
+          <article key={k.label} className="material-acrylic elevation-rest rounded-2xl border border-white/60 p-4">
             <div className="flex items-center gap-2">
               <k.icon className={`h-4 w-4 ${k.color}`} />
               <span className="text-[9.5px] font-bold uppercase tracking-wider text-slate-400">
