@@ -440,3 +440,8 @@
     background: rgba(0, 0, 0, 0.08);
   }
 }
+
+@keyframes brain-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}

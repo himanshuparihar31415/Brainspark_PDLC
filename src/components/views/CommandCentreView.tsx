@@ -6,7 +6,6 @@ import { Pipeline } from '../command/Pipeline';
 import { MyTasksQueue, buildMyTasks } from '../command/MyTasksQueue';
 import { BlockersRail, buildBlockers } from '../command/BlockersRail';
 import { AwaitingReview, buildReviewQueue } from '../command/AwaitingReview';
-import { WorkspaceNav } from '../command/WorkspaceNav';
 import { CheckCircle2, RefreshCw, AlertTriangle, ArrowRight, FolderGit2 } from 'lucide-react';
 
 /**
@@ -201,11 +200,6 @@ export const CommandCentreView: React.FC = () => {
 
       <AwaitingReview rows={reviewRows} onReview={openWorkspace} />
 
-      <WorkspaceNav
-        enabled={enabledModules}
-        ownedModules={ownedModules}
-        onOpen={openWorkspace}
-      />
     </div>
   );
 };
