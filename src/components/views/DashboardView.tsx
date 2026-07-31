@@ -237,8 +237,8 @@ export const DashboardView: React.FC = () => {
   return (
     <div className="mx-auto max-w-7xl animate-in fade-in space-y-8 p-6 duration-200 md:p-8">
       <div>
-        <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 md:text-3xl">Dashboard</h1>
-        <p className="mt-1 text-xs text-slate-500 md:text-sm">{scopeTitle}</p>
+        <h1 className="type-headline text-slate-900">Dashboard</h1>
+        <p className="mt-1 type-body text-slate-500">{scopeTitle}</p>
       </div>
 
       {/* Tenant Admins own a spend envelope — the number they log in to check. */}

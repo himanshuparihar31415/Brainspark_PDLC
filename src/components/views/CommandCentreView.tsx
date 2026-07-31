@@ -99,7 +99,7 @@ export const CommandCentreView: React.FC = () => {
       {/* ── Zone header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 md:text-3xl">
+          <h1 className="type-headline text-slate-900">
             Command Centre
           </h1>
           <p className="mt-1 text-xs text-slate-500 md:text-sm">
