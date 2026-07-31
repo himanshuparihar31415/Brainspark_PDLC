@@ -12,12 +12,12 @@ export const ToastContainer: React.FC = () => {
       {toasts.map((toast) => (
         <div
           key={toast.id}
-          className={`pointer-events-auto flex items-start justify-between gap-3 rounded-2xl border p-4 text-sm font-medium shadow-lg transition-all duration-200 ${
+          className={`pointer-events-auto flex items-start justify-between gap-3 rounded-2xl border p-4 type-body-strong elevation-floating ${
             toast.type === 'success'
-              ? 'glass-strong border-emerald-200/60 text-slate-800'
+              ? 'material-acrylic-strong border-emerald-200/60 text-slate-800'
               : toast.type === 'error'
               ? 'border-rose-200/80 bg-rose-50/90 text-rose-900 backdrop-blur-xl'
-              : 'glass-strong border-indigo-200/60 text-slate-800'
+              : 'material-acrylic-strong border-indigo-200/60 text-slate-800'
           }`}
         >
           <div className="flex items-center gap-2.5">

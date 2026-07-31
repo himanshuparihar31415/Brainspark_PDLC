@@ -83,7 +83,7 @@ export const AgentRegistryView: React.FC = () => {
   };
 
   return (
-    <div className="p-6 md:p-8 space-y-6 max-w-7xl mx-auto animate-in fade-in duration-200">
+    <div className="density-compact p-6 md:p-8 space-y-6 max-w-7xl mx-auto animate-in fade-in duration-200">
       {/* Header */}
       <div>
         <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">Agent Registry</h1>

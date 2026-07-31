@@ -24,17 +24,18 @@ export const ObsDashboard: React.FC<{
   const [tab, setTab] = useState<DashboardTab>('overview');
 
   return (
-    <div className="space-y-5">
-      <nav className="flex flex-wrap gap-1.5" aria-label="Observability dashboard tabs">
+    <div className="density-compact space-y-5">
+      <nav className="flex flex-wrap gap-1" aria-label="Observability dashboard tabs">
         {TABS.map((t) => (
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
-            className={`cursor-pointer rounded-full border px-3.5 py-1.5 text-[11px] font-bold tracking-wide transition-all ${
+            className={`cursor-pointer rounded-lg border px-3 py-1.5 type-body-strong tracking-wide transition-all ${
               tab === t.id
-                ? 'border-indigo-600 bg-indigo-600 text-white shadow-sm'
-                : 'border-slate-200 bg-white/70 text-slate-600 hover:border-indigo-300 hover:bg-indigo-50/50'
+                ? 'border-indigo-600 bg-indigo-600 text-white elevation-rest'
+                : 'border-slate-200/60 bg-white/60 text-slate-600 hover:border-indigo-300 hover:bg-indigo-50/50'
             }`}
+            style={{ transition: `all var(--duration-fast) var(--ease-standard)` }}
           >
             {t.label}
           </button>

@@ -91,16 +91,14 @@ export const Header: React.FC = () => {
   };
 
   return (
-    // shrink-0 rather than sticky: the shell has a definite height now, so the
-    // header is genuinely fixed at the top instead of pretending to be.
-    <header className="glass z-30 flex h-16 shrink-0 items-center justify-between border-b border-white/50 px-4 md:px-6">
+    <header className="material-acrylic-thin z-30 flex h-14 shrink-0 items-center justify-between border-b border-white/50 px-4 md:px-6">
       {/* Left branding & Scope Selector */}
       <div className="flex items-center gap-4 lg:gap-6">
         {/* Nav collapse — pinned open or closed by the user, auto-set on entry */}
         <button
           onClick={() => setNavCollapsed(!navCollapsed)}
           title={navCollapsed ? 'Expand navigation' : 'Collapse navigation'}
-          className="shrink-0 cursor-pointer rounded-lg p-1.5 text-slate-500 transition-colors hover:bg-white/70 hover:text-slate-900"
+          className="icon-btn shrink-0 cursor-pointer text-slate-500"
         >
           {navCollapsed ? (
             <PanelLeftOpen className="h-4 w-4" />
@@ -190,7 +188,7 @@ export const Header: React.FC = () => {
 
           {/* Scope Dropdown */}
           {scopeDropdownOpen && (
-            <div className="glass-strong absolute top-full left-0 z-50 mt-2 w-64 animate-in fade-in slide-in-from-top-1 rounded-2xl border border-white/60 py-2 text-xs text-slate-700 shadow-xl">
+            <div className="material-acrylic-strong elevation-floating absolute top-full left-0 z-50 mt-2 w-64 animate-in fade-in slide-in-from-top-1 rounded-2xl border border-white/60 py-2 text-xs text-slate-700">
               <div className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
                 Scope Level
               </div>
@@ -260,9 +258,9 @@ export const Header: React.FC = () => {
         )}
       </div>
 
-      {/* Center Search Bar */}
+      {/* Center Search Bar — Fluent command bar search */}
       <div className="hidden md:flex items-center relative max-w-md w-full mx-4">
-        <Search className="w-4 h-4 text-slate-400 absolute left-3 pointer-events-none" />
+        <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 pointer-events-none" />
         <input
           type="text"
           value={searchQuery}
@@ -270,7 +268,8 @@ export const Header: React.FC = () => {
           onFocus={() => setSearchFocused(true)}
           onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
           placeholder="Search projects, agents, connectors, artifacts…"
-          className="w-full rounded-xl border border-white/60 bg-white/50 py-2 pr-8 pl-9 text-xs text-slate-800 outline-none transition-all placeholder:text-slate-400 hover:bg-white/70 focus:border-indigo-500 focus:bg-white/90 focus:ring-2 focus:ring-indigo-500/15"
+          className="w-full rounded-lg border border-slate-200/80 bg-slate-50/60 py-1.5 pr-8 pl-9 type-body text-slate-800 outline-none transition-all placeholder:text-slate-400 hover:bg-white/70 focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/10"
+          style={{ transition: `all var(--duration-fast) var(--ease-standard)` }}
         />
         {searchQuery && (
           <button
@@ -283,7 +282,7 @@ export const Header: React.FC = () => {
 
         {/* Live Search Quick Popover */}
         {searchFocused && searchQuery.length > 0 && (
-          <div className="glass-strong absolute top-full right-0 left-0 z-50 mt-2 animate-in fade-in slide-in-from-top-1 rounded-2xl border border-white/60 p-3 text-xs shadow-xl">
+          <div className="material-acrylic-strong elevation-floating absolute top-full right-0 left-0 z-50 mt-2 animate-in fade-in slide-in-from-top-1 rounded-2xl border border-white/60 p-3 text-xs">
             <div className="font-semibold text-slate-500 text-[10px] uppercase tracking-wider mb-2">
               Instant Search Matches for "{searchQuery}"
             </div>
@@ -314,8 +313,8 @@ export const Header: React.FC = () => {
         )}
       </div>
 
-      {/* Right controls */}
-      <div className="flex items-center gap-3">
+      {/* Right controls — Fluent command bar action group */}
+      <div className="flex items-center gap-2">
         {/* Active role — switchable only across the user's entitled roles */}
         <div className="relative">
           {rolesList.length > 1 ? (
@@ -342,7 +341,7 @@ export const Header: React.FC = () => {
 
           {/* Role Picker Menu */}
           {roleMenuOpen && rolesList.length > 1 && (
-            <div className="glass-strong absolute top-full right-0 z-50 mt-2 w-72 animate-in fade-in slide-in-from-top-1 rounded-2xl border border-white/60 py-2 text-xs shadow-2xl">
+            <div className="material-acrylic-strong elevation-floating absolute top-full right-0 z-50 mt-2 w-72 animate-in fade-in slide-in-from-top-1 rounded-2xl border border-white/60 py-2 text-xs">
               <div className="ios-hairline border-b bg-white/40 px-3 py-1.5">
                 <div className="font-bold text-slate-900">Switch Role</div>
                 <div className="text-[11px] text-slate-500 leading-tight mt-0.5">
@@ -385,11 +384,13 @@ export const Header: React.FC = () => {
           )}
         </div>
 
+        <div className="h-5 w-px bg-slate-200" />
+
         {/* Notifications */}
         <div className="relative">
           <button
             onClick={() => setNotifOpen(!notifOpen)}
-            className="p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors relative cursor-pointer"
+            className="icon-btn relative cursor-pointer text-slate-600"
           >
             <Bell className="w-4 h-4" />
             {unreadNotifs.length > 0 && (
@@ -398,7 +399,7 @@ export const Header: React.FC = () => {
           </button>
 
           {notifOpen && (
-            <div className="glass-strong absolute top-full right-0 z-50 mt-2 w-80 animate-in fade-in slide-in-from-top-1 rounded-2xl border border-white/60 py-2 text-xs shadow-2xl">
+            <div className="material-acrylic-strong elevation-floating absolute top-full right-0 z-50 mt-2 w-80 animate-in fade-in slide-in-from-top-1 rounded-2xl border border-white/60 py-2 text-xs">
               <div className="ios-hairline flex items-center justify-between border-b bg-white/40 px-3 py-2">
                 <span className="font-bold text-slate-900">Notifications</span>
                 <span className="text-[10px] bg-slate-100 px-2 py-0.5 rounded-full font-medium text-slate-600">
@@ -462,7 +463,7 @@ export const Header: React.FC = () => {
           <button
             onClick={logout}
             title="Sign out"
-            className="p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+            className="icon-btn cursor-pointer text-slate-600"
           >
             <LogOut className="w-4 h-4" />
           </button>
