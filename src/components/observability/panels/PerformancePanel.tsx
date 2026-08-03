@@ -18,21 +18,21 @@ export const PerformancePanel: React.FC<{ onDrill: (d: Drill) => void }> = ({ on
     <div className="space-y-5">
       {/* KPI Strip */}
       <section className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        <article className="glass-panel rounded-2xl border border-white/60 p-4">
+        <article className="platform-card p-4">
           <div className="flex items-center gap-2">
             <Gauge className="h-4 w-4 text-indigo-600" />
             <span className="text-[9.5px] font-bold uppercase tracking-wider text-slate-400">Global p50</span>
           </div>
           <div className="mt-2 font-mono text-2xl font-extrabold text-slate-900">{(globalP50 / 1000).toFixed(1)}s</div>
         </article>
-        <article className="glass-panel rounded-2xl border border-white/60 p-4">
+        <article className="platform-card p-4">
           <div className="flex items-center gap-2">
             <Timer className="h-4 w-4 text-rose-600" />
             <span className="text-[9.5px] font-bold uppercase tracking-wider text-slate-400">Worst p95</span>
           </div>
           <div className="mt-2 font-mono text-2xl font-extrabold text-slate-900">{(globalP95 / 1000).toFixed(1)}s</div>
         </article>
-        <article className="glass-panel rounded-2xl border border-white/60 p-4">
+        <article className="platform-card p-4">
           <div className="flex items-center gap-2">
             <Clock className="h-4 w-4 text-emerald-600" />
             <span className="text-[9.5px] font-bold uppercase tracking-wider text-slate-400">Total Calls</span>
@@ -43,7 +43,7 @@ export const PerformancePanel: React.FC<{ onDrill: (d: Drill) => void }> = ({ on
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_20rem]">
         {/* Agent Latency Table */}
-        <section className="glass-panel rounded-2xl border border-white/60 p-5">
+        <section className="platform-card p-5">
           <h2 className="text-sm font-extrabold tracking-tight text-slate-900">Latency by Agent</h2>
           <p className="mt-0.5 text-[11px] text-slate-500">Percentile latencies (ms) per agent slug.</p>
           <div className="mt-4 overflow-x-auto">
@@ -86,7 +86,7 @@ export const PerformancePanel: React.FC<{ onDrill: (d: Drill) => void }> = ({ on
         </section>
 
         {/* Bottleneck Highlight */}
-        <section className="glass-panel rounded-2xl border border-white/60 p-5">
+        <section className="platform-card p-5">
           <h2 className="text-sm font-extrabold tracking-tight text-slate-900">Top Bottlenecks</h2>
           <p className="mt-0.5 text-[11px] text-slate-500">Slowest spans in the most recent run.</p>
           <div className="mt-4 space-y-2.5">

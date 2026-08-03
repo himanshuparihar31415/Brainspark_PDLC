@@ -190,13 +190,13 @@ const PhaseCard: React.FC<{
 
   return (
     <div
-      className={`group relative flex flex-col overflow-hidden rounded-2xl border backdrop-blur-xl transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-indigo-500/10 ${borderColor} ${
-        notStarted ? 'opacity-60 bg-white/40' : 'bg-white/70'
+      className={`platform-card group relative flex flex-col overflow-hidden ${borderColor} ${
+        notStarted ? 'opacity-60' : ''
       }`}
-      style={{ minHeight: '270px', perspective: '1000px' }}
+      style={{ minHeight: '270px', perspective: '1000px', background: 'linear-gradient(135deg, rgba(219,234,254,0.55) 0%, rgba(255,237,213,0.45) 100%)' }}
     >
       {/* Ambient glow on hover */}
-      <div className="pointer-events-none absolute -top-12 left-1/2 h-24 w-24 -translate-x-1/2 rounded-full bg-indigo-400/0 blur-2xl transition-all duration-500 group-hover:bg-indigo-400/15" />
+      <div className="pointer-events-none absolute -top-12 left-1/2 h-24 w-24 -translate-x-1/2 rounded-full bg-indigo-400/0 blur-2xl transition-all duration-500 group-hover:bg-indigo-400/20" />
 
       <div
         className="relative h-full w-full transition-transform duration-500"
@@ -204,8 +204,8 @@ const PhaseCard: React.FC<{
       >
         {/* ──── FRONT FACE ──── */}
         <div className="absolute inset-0 flex flex-col p-4" style={{ backfaceVisibility: 'hidden' }}>
-          {/* Animated SVG Icon */}
-          <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-slate-50 to-slate-100/80 border border-slate-200/50 mx-auto mb-3 shadow-sm">
+          {/* Animated SVG Icon — circular container like reference */}
+          <div className="flex items-center justify-center w-16 h-16 rounded-full bg-white border border-slate-200/60 mx-auto mb-3 shadow-md shadow-slate-200/50">
             <PipelineModuleIcon module={phase.module} />
           </div>
 

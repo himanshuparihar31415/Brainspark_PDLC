@@ -565,7 +565,7 @@ export const ProjectsView: React.FC = () => {
       />
 
       {/* Projects Table */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+      <div className="platform-card overflow-hidden">
         {filteredProjects.length === 0 ? (
           <div className="p-12 text-center text-slate-500 text-xs">
             {moduleIntent

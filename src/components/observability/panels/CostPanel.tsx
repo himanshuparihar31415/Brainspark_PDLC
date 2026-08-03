@@ -17,7 +17,7 @@ export const CostPanel: React.FC = () => {
     <div className="space-y-5">
       {/* KPI Strip */}
       <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <article className="glass-panel rounded-2xl border border-white/60 p-4">
+        <article className="platform-card p-4">
           <div className="flex items-center gap-2">
             <DollarSign className="h-4 w-4 text-amber-600" />
             <span className="text-[9.5px] font-bold uppercase tracking-wider text-slate-400">Total Spend</span>
@@ -25,7 +25,7 @@ export const CostPanel: React.FC = () => {
           <div className="mt-2 font-mono text-2xl font-extrabold text-slate-900">${totalCost.toFixed(2)}</div>
           <p className="mt-0.5 text-[10px] text-slate-400">{totalTokens.toLocaleString()} tokens</p>
         </article>
-        <article className="glass-panel rounded-2xl border border-white/60 p-4">
+        <article className="platform-card p-4">
           <div className="flex items-center gap-2">
             <PiggyBank className="h-4 w-4 text-emerald-600" />
             <span className="text-[9.5px] font-bold uppercase tracking-wider text-slate-400">Cache Savings</span>
@@ -33,7 +33,7 @@ export const CostPanel: React.FC = () => {
           <div className="mt-2 font-mono text-2xl font-extrabold text-emerald-700">${cache.estimated_savings_usd.toFixed(3)}</div>
           <p className="mt-0.5 text-[10px] text-slate-400">{cache.cache_hit_rate_pct}% hit rate</p>
         </article>
-        <article className="glass-panel rounded-2xl border border-white/60 p-4">
+        <article className="platform-card p-4">
           <div className="flex items-center gap-2">
             <TrendingDown className="h-4 w-4 text-sky-600" />
             <span className="text-[9.5px] font-bold uppercase tracking-wider text-slate-400">Cached Calls</span>
@@ -41,7 +41,7 @@ export const CostPanel: React.FC = () => {
           <div className="mt-2 font-mono text-2xl font-extrabold text-slate-900">{cache.cached_calls}</div>
           <p className="mt-0.5 text-[10px] text-slate-400">of {cache.total_llm_calls} total</p>
         </article>
-        <article className="glass-panel rounded-2xl border border-white/60 p-4">
+        <article className="platform-card p-4">
           <div className="flex items-center gap-2">
             <DollarSign className="h-4 w-4 text-indigo-600" />
             <span className="text-[9.5px] font-bold uppercase tracking-wider text-slate-400">Avg per Call</span>
@@ -55,7 +55,7 @@ export const CostPanel: React.FC = () => {
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         {/* Cost by Module */}
-        <section className="glass-panel rounded-2xl border border-white/60 p-5">
+        <section className="platform-card p-5">
           <h2 className="text-sm font-extrabold tracking-tight text-slate-900">By Module</h2>
           <p className="mt-0.5 text-[11px] text-slate-500">LLM cost breakdown grouped by platform module.</p>
           <div className="mt-4 space-y-2">
@@ -83,7 +83,7 @@ export const CostPanel: React.FC = () => {
         </section>
 
         {/* Cost by Agent */}
-        <section className="glass-panel rounded-2xl border border-white/60 p-5">
+        <section className="platform-card p-5">
           <h2 className="text-sm font-extrabold tracking-tight text-slate-900">By Agent</h2>
           <p className="mt-0.5 text-[11px] text-slate-500">Cost per agent slug, ranked by total spend.</p>
           <div className="mt-4 overflow-x-auto">

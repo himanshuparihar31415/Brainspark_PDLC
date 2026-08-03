@@ -50,12 +50,12 @@ export const StageStrip: React.FC<{
              * of them is more important than the others until you are standing on
              * it, and equal segments make progress readable at a glance.
              */
-            className={`flex min-w-[8.5rem] flex-1 cursor-pointer flex-col justify-center gap-1 rounded-2xl border px-2.5 py-2 text-left transition-colors ${
+            className={`platform-card flex min-w-[8.5rem] flex-1 cursor-pointer flex-col justify-center gap-1 px-2.5 py-2 text-left ${
               isActive
-                ? 'glass-panel border-indigo-300/70 bg-indigo-50/70'
+                ? '!border-indigo-300/70 !bg-indigo-50/70'
                 : ahead
-                ? 'glass border-dashed border-slate-200/80 text-slate-400 hover:border-slate-300 hover:bg-white/70'
-                : 'glass-panel border-white/60 hover:border-indigo-200/70'
+                ? '!border-dashed !border-slate-200/80 text-slate-400'
+                : ''
             }`}
           >
             <span className="flex items-center gap-1.5">
@@ -129,7 +129,7 @@ export const StageStrip: React.FC<{
 
       {/* Progress, sized to sit as one more segment rather than crowd a corner */}
       <div
-        className="glass-panel hidden w-24 shrink-0 flex-col justify-center gap-1 rounded-2xl border border-white/60 px-2.5 py-2 xl:flex"
+        className="platform-card hidden w-24 shrink-0 flex-col justify-center gap-1 px-2.5 py-2 xl:flex"
         title={`${progress}% of the pipeline reviewed`}
       >
         <span className="text-[9px] font-bold text-slate-500">{progress}% reviewed</span>

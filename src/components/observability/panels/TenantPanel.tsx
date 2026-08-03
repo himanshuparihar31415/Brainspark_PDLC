@@ -14,21 +14,21 @@ export const TenantPanel: React.FC<{ onDrill: (d: Drill) => void }> = ({ onDrill
     <div className="space-y-5">
       {/* KPI Strip */}
       <section className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        <article className="glass-panel rounded-2xl border border-white/60 p-4">
+        <article className="platform-card p-4">
           <div className="flex items-center gap-2">
             <Building2 className="h-4 w-4 text-indigo-600" />
             <span className="text-[9.5px] font-bold uppercase tracking-wider text-slate-400">Active Tenants</span>
           </div>
           <div className="mt-2 font-mono text-2xl font-extrabold text-slate-900">{consumers.length}</div>
         </article>
-        <article className="glass-panel rounded-2xl border border-white/60 p-4">
+        <article className="platform-card p-4">
           <div className="flex items-center gap-2">
             <DollarSign className="h-4 w-4 text-amber-600" />
             <span className="text-[9.5px] font-bold uppercase tracking-wider text-slate-400">Total Spend</span>
           </div>
           <div className="mt-2 font-mono text-2xl font-extrabold text-slate-900">${totalCost.toFixed(2)}</div>
         </article>
-        <article className="glass-panel rounded-2xl border border-white/60 p-4">
+        <article className="platform-card p-4">
           <div className="flex items-center gap-2">
             <Users className="h-4 w-4 text-sky-600" />
             <span className="text-[9.5px] font-bold uppercase tracking-wider text-slate-400">Total Runs</span>
@@ -38,7 +38,7 @@ export const TenantPanel: React.FC<{ onDrill: (d: Drill) => void }> = ({ onDrill
       </section>
 
       {/* Top Consumers Leaderboard */}
-      <section className="glass-panel rounded-2xl border border-white/60 p-5">
+      <section className="platform-card p-5">
         <h2 className="text-sm font-extrabold tracking-tight text-slate-900">Top Consumers</h2>
         <p className="mt-0.5 text-[11px] text-slate-500">Tenants ranked by LLM cost — chargeback basis.</p>
         <div className="mt-4 space-y-2.5">
@@ -90,7 +90,7 @@ export const TenantPanel: React.FC<{ onDrill: (d: Drill) => void }> = ({ onDrill
           const obs = getTenantObservability(c.tenant_id);
           const failureRate = obs.recent_run_count === 0 ? 0 : (obs.recent_run_failures / obs.recent_run_count) * 100;
           return (
-            <article key={c.tenant_id} className="glass-panel rounded-2xl border border-white/60 p-4">
+            <article key={c.tenant_id} className="platform-card p-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-[12px] font-bold text-slate-800">
                   {c.tenant_schema.replace('tenant_', '').replace(/_/g, ' ')}
