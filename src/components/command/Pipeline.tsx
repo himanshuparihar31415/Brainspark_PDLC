@@ -193,7 +193,7 @@ const PhaseCard: React.FC<{
       className={`platform-card group relative flex flex-col overflow-hidden ${borderColor} ${
         notStarted ? 'opacity-60' : ''
       }`}
-      style={{ minHeight: '270px', perspective: '1000px', background: 'linear-gradient(135deg, rgba(219,234,254,0.55) 0%, rgba(255,237,213,0.45) 100%)' }}
+      style={{ minHeight: '300px', perspective: '1000px', background: 'linear-gradient(135deg, rgba(219,234,254,0.55) 0%, rgba(255,237,213,0.45) 100%)' }}
     >
       {/* Ambient glow on hover */}
       <div className="pointer-events-none absolute -top-12 left-1/2 h-24 w-24 -translate-x-1/2 rounded-full bg-indigo-400/0 blur-2xl transition-all duration-500 group-hover:bg-indigo-400/20" />
@@ -211,8 +211,8 @@ const PhaseCard: React.FC<{
 
           {/* Name + subtitle */}
           <h3 className="text-center text-sm font-bold text-slate-900">{def.name}</h3>
-          <p className="text-center text-[10px] italic text-indigo-600 mt-0.5">{MODULE_SUBTITLES[def.key]}</p>
-          <p className="text-center text-[10px] text-slate-500 mt-2 leading-relaxed line-clamp-2">{MODULE_DESCS[def.key]}</p>
+          <p className="text-center text-[10px] font-medium text-slate-600 mt-0.5">{MODULE_SUBTITLES[def.key]}</p>
+          <p className="text-center text-[10px] text-slate-500 mt-2 leading-relaxed">{MODULE_DESCS[def.key]}</p>
 
           {/* Status + progress (compact) */}
           <div className="mt-auto pt-3 space-y-2">
@@ -235,7 +235,7 @@ const PhaseCard: React.FC<{
                 style={{ width: `${pct}%` }}
               />
             </div>
-            <div className="font-mono text-[10px] text-slate-500 text-center">{phase.done}/{phase.total} {completionPhrase}</div>
+            <div className="font-mono text-[10px] text-slate-700 text-center">{phase.done}/{phase.total} {completionPhrase}</div>
 
             {/* Bottom actions */}
             <div className="flex items-center justify-between pt-2 border-t border-slate-100">
@@ -261,7 +261,7 @@ const PhaseCard: React.FC<{
 
         {/* ──── BACK FACE (Stats) ──── */}
         <div
-          className="absolute inset-0 flex flex-col p-4 rounded-2xl bg-white/80 backdrop-blur-xl border border-white/60"
+          className="absolute inset-0 flex flex-col p-4 rounded-2xl bg-white/95 border border-slate-200/80"
           style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
         >
           <div className="flex items-center justify-between mb-3">

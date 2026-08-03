@@ -3,7 +3,6 @@ import { useApp } from '../../context/AppContext';
 import { Role } from '../../types';
 import { isGovernanceRole, isModuleWorkspace } from '../../data/rbac';
 import {
-  Brain,
   Search,
   Bell,
   ChevronDown,
@@ -21,6 +20,23 @@ import {
   PanelLeftOpen,
   ChevronRight as Chevron,
 } from 'lucide-react';
+
+import incedoLogoSrc from '../../assets/incedo-logo.png';
+
+const BrainSparkLogo: React.FC<{ className?: string }> = ({ className }) => (
+  <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+    <circle cx="16" cy="16" r="15" fill="#EEF2FF" stroke="#6366f1" strokeWidth="1.2" />
+    <path d="M11 12c0-2.2 2.2-4 5-4s5 1.8 5 4c0 1.5-1 2.8-2.5 3.5.3.8.5 1.7.5 2.5 0 2.8-1.3 5-3 5s-3-2.2-3-5c0-.8.2-1.7.5-2.5C12 14.8 11 13.5 11 12z" fill="#c7d2fe" stroke="#6366f1" strokeWidth="1" strokeLinejoin="round" />
+    <circle cx="14" cy="12" r="1" fill="#6366f1" />
+    <circle cx="18" cy="12" r="1" fill="#6366f1" />
+    <circle cx="16" cy="15" r="0.8" fill="#6366f1" />
+    <path d="M14 12l2 3m2-3l-2 3" stroke="#6366f1" strokeWidth="0.7" strokeLinecap="round" />
+    <path d="M13 10.5c-1.2.3-2 1-2 1.8" stroke="#818cf8" strokeWidth="0.6" strokeLinecap="round" />
+    <path d="M19 10.5c1.2.3 2 1 2 1.8" stroke="#818cf8" strokeWidth="0.6" strokeLinecap="round" />
+    <circle cx="16" cy="18.5" r="0.6" fill="#818cf8" />
+    <path d="M15 17l1 1.5 1-1.5" stroke="#818cf8" strokeWidth="0.5" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
 
 export const Header: React.FC = () => {
   const {
@@ -102,11 +118,15 @@ export const Header: React.FC = () => {
           {navCollapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
         </button>
 
-        <div className="flex items-center gap-2">
-          <Brain className="h-5 w-5 text-indigo-600" />
-          <span className="text-sm font-bold tracking-tight text-slate-900">
-            br<span className="text-indigo-600">AI</span>nspark
-          </span>
+        <div className="flex items-center gap-2.5">
+          <img src={incedoLogoSrc} alt="Incedo" className="h-5 w-auto object-contain" />
+          <span className="h-5 w-px bg-slate-200" />
+          <div className="flex items-center gap-1.5">
+            <BrainSparkLogo className="h-6 w-6" />
+            <span className="text-sm font-bold tracking-tight text-slate-900">
+              br<span className="text-orange-500">AI</span>nspark
+            </span>
+          </div>
         </div>
 
         <span className="h-4 w-px bg-slate-200" />
