@@ -51,10 +51,10 @@ const Tile: React.FC<{
   <button
     onClick={onClick}
     title={ACTION_HINT[spec.action]}
-    className={`material-acrylic reveal-card card-interactive group relative cursor-pointer overflow-hidden rounded-2xl border p-5 text-left ${
+    className={`platform-card group relative cursor-pointer overflow-hidden p-5 text-left ${
       active
-        ? 'border-indigo-500/50 ring-2 ring-indigo-600/20 elevation-hover'
-        : 'border-white/60 elevation-rest'
+        ? '!border-indigo-500/50 ring-2 ring-indigo-600/20'
+        : ''
     }`}
   >
     <div className="flex items-center justify-between">

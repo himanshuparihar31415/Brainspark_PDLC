@@ -110,7 +110,7 @@ export const AgentRegistryView: React.FC = () => {
       )}
 
       {/* Filters bar */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs">
+      <div className="platform-card flex flex-col sm:flex-row items-center justify-between gap-3 p-3.5">
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <div className="relative w-full sm:w-64">
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
@@ -155,7 +155,7 @@ export const AgentRegistryView: React.FC = () => {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+      <div className="platform-card overflow-hidden">
         {filteredAgents.length === 0 ? (
           <div className="p-12 text-center text-slate-500 text-xs">
             No agent services registered in this scope.

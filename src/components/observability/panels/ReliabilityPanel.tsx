@@ -16,7 +16,7 @@ export const ReliabilityPanel: React.FC = () => {
     <div className="space-y-5">
       {/* KPI Strip */}
       <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <article className="glass-panel rounded-2xl border border-white/60 p-4">
+        <article className="platform-card p-4">
           <div className="flex items-center gap-2">
             <AlertOctagon className="h-4 w-4 text-rose-600" />
             <span className="text-[9.5px] font-bold uppercase tracking-wider text-slate-400">Error Rate</span>
@@ -26,7 +26,7 @@ export const ReliabilityPanel: React.FC = () => {
           </div>
           <p className="mt-0.5 text-[10px] text-slate-400">{totalErrors} errors / {totalCalls} calls</p>
         </article>
-        <article className="glass-panel rounded-2xl border border-white/60 p-4">
+        <article className="platform-card p-4">
           <div className="flex items-center gap-2">
             <HeartPulse className="h-4 w-4 text-emerald-600" />
             <span className="text-[9.5px] font-bold uppercase tracking-wider text-slate-400">Providers</span>
@@ -34,7 +34,7 @@ export const ReliabilityPanel: React.FC = () => {
           <div className="mt-2 font-mono text-2xl font-extrabold text-slate-900">{providers.length}</div>
           <p className="mt-0.5 text-[10px] text-slate-400">{providers.filter((p) => p.error_count === 0).length} fully healthy</p>
         </article>
-        <article className="glass-panel rounded-2xl border border-white/60 p-4">
+        <article className="platform-card p-4">
           <div className="flex items-center gap-2">
             <Shield className="h-4 w-4 text-amber-600" />
             <span className="text-[9.5px] font-bold uppercase tracking-wider text-slate-400">Fallback Rate</span>
@@ -44,7 +44,7 @@ export const ReliabilityPanel: React.FC = () => {
           </div>
           <p className="mt-0.5 text-[10px] text-slate-400">{fallback.fallback_hits} of {fallback.total_llm_calls} calls</p>
         </article>
-        <article className="glass-panel rounded-2xl border border-white/60 p-4">
+        <article className="platform-card p-4">
           <div className="flex items-center gap-2">
             <HeartPulse className="h-4 w-4 text-sky-600" />
             <span className="text-[9.5px] font-bold uppercase tracking-wider text-slate-400">Avg Latency</span>
@@ -58,7 +58,7 @@ export const ReliabilityPanel: React.FC = () => {
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         {/* Error Rate per Agent */}
-        <section className="glass-panel rounded-2xl border border-white/60 p-5">
+        <section className="platform-card p-5">
           <h2 className="text-sm font-extrabold tracking-tight text-slate-900">Error Rate by Agent</h2>
           <p className="mt-0.5 text-[11px] text-slate-500">Per-agent error distribution with volume context.</p>
           <div className="mt-4 space-y-2">
@@ -96,7 +96,7 @@ export const ReliabilityPanel: React.FC = () => {
 
         <div className="space-y-4">
           {/* Provider Health */}
-          <section className="glass-panel rounded-2xl border border-white/60 p-5">
+          <section className="platform-card p-5">
             <h2 className="text-sm font-extrabold tracking-tight text-slate-900">Provider Health</h2>
             <p className="mt-0.5 text-[11px] text-slate-500">LLM provider uptime and average latency.</p>
             <div className="mt-4 space-y-2">
@@ -126,7 +126,7 @@ export const ReliabilityPanel: React.FC = () => {
           </section>
 
           {/* Fallback Breakdown */}
-          <section className="glass-panel rounded-2xl border border-white/60 p-5">
+          <section className="platform-card p-5">
             <h2 className="text-sm font-extrabold tracking-tight text-slate-900">Fallback Breakdown</h2>
             <p className="mt-0.5 text-[11px] text-slate-500">Which agents triggered provider fallbacks.</p>
             <div className="mt-3 space-y-1.5">

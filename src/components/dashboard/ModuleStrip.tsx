@@ -50,10 +50,10 @@ const ModuleCard: React.FC<{
     <button
       onClick={onOpen}
       disabled={rollup.empty}
-      className={`reveal-card card-interactive flex flex-col rounded-2xl border p-4 text-left ${
+      className={`platform-card flex flex-col p-4 text-left ${
         rollup.empty
-          ? 'cursor-default border-slate-200 opacity-50'
-          : 'material-acrylic cursor-pointer border-white/60 elevation-rest'
+          ? 'cursor-default opacity-50'
+          : 'cursor-pointer'
       }`}
     >
       <div className="flex items-center justify-between">

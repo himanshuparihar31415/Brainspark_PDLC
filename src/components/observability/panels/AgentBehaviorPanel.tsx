@@ -37,7 +37,7 @@ export const AgentBehaviorPanel: React.FC = () => {
 
       {/* KPI Strip */}
       <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <article className="glass-panel rounded-2xl border border-white/60 p-4">
+        <article className="platform-card p-4">
           <div className="flex items-center gap-2">
             <TrendingUp className="h-4 w-4 text-indigo-600" />
             <span className="text-[9.5px] font-bold uppercase tracking-wider text-slate-400">Avg Tokens</span>
@@ -46,7 +46,7 @@ export const AgentBehaviorPanel: React.FC = () => {
             {Math.round(tokenTrend.reduce((s, t) => s + t.avg_tokens, 0) / Math.max(tokenTrend.length, 1)).toLocaleString()}
           </div>
         </article>
-        <article className="glass-panel rounded-2xl border border-white/60 p-4">
+        <article className="platform-card p-4">
           <div className="flex items-center gap-2">
             <Wrench className="h-4 w-4 text-sky-600" />
             <span className="text-[9.5px] font-bold uppercase tracking-wider text-slate-400">Tool Calls/Run</span>
@@ -55,7 +55,7 @@ export const AgentBehaviorPanel: React.FC = () => {
             {toolUsage.avg_tool_calls_per_run.toFixed(1)}
           </div>
         </article>
-        <article className="glass-panel rounded-2xl border border-white/60 p-4">
+        <article className="platform-card p-4">
           <div className="flex items-center gap-2">
             <RefreshCw className="h-4 w-4 text-amber-600" />
             <span className="text-[9.5px] font-bold uppercase tracking-wider text-slate-400">Retry Rate</span>
@@ -64,7 +64,7 @@ export const AgentBehaviorPanel: React.FC = () => {
             {retryRate.retry_rate_pct.toFixed(1)}%
           </div>
         </article>
-        <article className="glass-panel rounded-2xl border border-white/60 p-4">
+        <article className="platform-card p-4">
           <div className="flex items-center gap-2">
             <RefreshCw className="h-4 w-4 text-slate-500" />
             <span className="text-[9.5px] font-bold uppercase tracking-wider text-slate-400">Max Attempts</span>
@@ -77,7 +77,7 @@ export const AgentBehaviorPanel: React.FC = () => {
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         {/* Token Trend */}
-        <section className="glass-panel rounded-2xl border border-white/60 p-5">
+        <section className="platform-card p-5">
           <h2 className="text-sm font-extrabold tracking-tight text-slate-900">Token Trend</h2>
           <p className="mt-0.5 text-[11px] text-slate-500">
             Daily average token usage for <span className="font-semibold">{selectedAgent.replace(/_/g, ' ')}</span>.
@@ -118,7 +118,7 @@ export const AgentBehaviorPanel: React.FC = () => {
         </section>
 
         {/* Tool Usage */}
-        <section className="glass-panel rounded-2xl border border-white/60 p-5">
+        <section className="platform-card p-5">
           <h2 className="text-sm font-extrabold tracking-tight text-slate-900">Tool Usage</h2>
           <p className="mt-0.5 text-[11px] text-slate-500">
             Tool call breakdown for <span className="font-semibold">{selectedAgent.replace(/_/g, ' ')}</span>.

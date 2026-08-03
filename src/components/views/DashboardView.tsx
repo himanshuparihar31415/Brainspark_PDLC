@@ -244,12 +244,12 @@ export const DashboardView: React.FC = () => {
       {/* Tenant Admins own a spend envelope — the number they log in to check. */}
       {persona === 'tenant' && budget !== undefined && (
         <div
-          className={`flex flex-col gap-3 rounded-2xl border px-5 py-4 sm:flex-row sm:items-center sm:justify-between ${
+          className={`platform-card flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between ${
             budgetTone === 'bad'
-              ? 'border-rose-200 bg-rose-50/80 backdrop-blur-md'
+              ? '!border-rose-200 !bg-rose-50/80'
               : budgetTone === 'warn'
-              ? 'border-amber-200 bg-amber-50/80 backdrop-blur-md'
-              : 'glass-panel border-white/60'
+              ? '!border-amber-200 !bg-amber-50/80'
+              : ''
           }`}
         >
           <div className="flex items-center gap-3">
