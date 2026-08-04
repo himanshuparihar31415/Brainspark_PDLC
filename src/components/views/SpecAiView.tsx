@@ -11,6 +11,7 @@ import {
 import { StageStrip } from '../specai/StageStrip';
 import { StageFooter } from '../specai/StageFooter';
 import { StatusBar } from '../specai/StatusBar';
+import { HistoryPanel } from '../specai/HistoryPanel';
 import { Stage1Knowledge } from '../specai/Stage1Knowledge';
 import { Stage2Understanding } from '../specai/Stage2Understanding';
 import { Stage3Artifacts } from '../specai/Stage3Artifacts';
@@ -83,6 +84,8 @@ export const SpecAiView: React.FC = () => {
           largest thing on screen saying the least.
         */}
         <StageStrip state={state} activeKey={viewing} onSelect={select} activeTrack={track} />
+
+        <HistoryPanel projectId={project.id} />
 
         <div
           className={

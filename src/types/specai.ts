@@ -565,3 +565,26 @@ export interface SpecAiState {
   /** Set while a background generation job is running. */
   generating?: string;
 }
+
+// ───────────────────── Spec AI History ─────────────────────
+
+export type HistoryEntryType = 'generation' | 'decision' | 'version';
+
+export interface SpecHistoryEntry {
+  id: string;
+  type: HistoryEntryType;
+  timestamp: string;
+  stage: SpecStageKey;
+  sessionId: string;
+  projectId: string;
+  artifactId?: string;
+  artifactName?: string;
+  actor?: string;
+  actorRole?: string;
+  summary: string;
+  detail?: string;
+  model?: string;
+  durationMs?: number;
+  action?: 'approved' | 'rejected' | 'commented' | 'reopened';
+  diffSummary?: { added: number; removed: number; modified: number };
+}
