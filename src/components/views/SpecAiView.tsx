@@ -77,6 +77,8 @@ export const SpecAiView: React.FC = () => {
 
   return (
     <div className="flex h-full min-h-0 flex-col">
+      <HistoryPanel projectId={project.id} />
+
       <div className="flex min-h-0 flex-1 flex-col gap-2 p-3 lg:p-4">
         {/*
           The strip is the only thing that always holds a row. No stage title — it
@@ -84,8 +86,6 @@ export const SpecAiView: React.FC = () => {
           largest thing on screen saying the least.
         */}
         <StageStrip state={state} activeKey={viewing} onSelect={select} activeTrack={track} />
-
-        <HistoryPanel projectId={project.id} />
 
         <div
           className={
