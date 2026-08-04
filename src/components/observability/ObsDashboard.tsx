@@ -4,10 +4,10 @@ import { CostPanel } from './panels/CostPanel';
 import { PerformancePanel } from './panels/PerformancePanel';
 import { ReliabilityPanel } from './panels/ReliabilityPanel';
 import { AgentBehaviorPanel } from './panels/AgentBehaviorPanel';
-import { TenantPanel } from './panels/TenantPanel';
+import { DepartmentPanel } from './panels/DepartmentPanel';
 import { Drill } from '../views/ObservabilityView';
 
-export type DashboardTab = 'overview' | 'cost' | 'performance' | 'reliability' | 'agents' | 'tenants';
+export type DashboardTab = 'overview' | 'cost' | 'performance' | 'reliability' | 'agents' | 'departments';
 
 const TABS: { id: DashboardTab; label: string }[] = [
   { id: 'overview', label: 'Overview' },
@@ -15,7 +15,7 @@ const TABS: { id: DashboardTab; label: string }[] = [
   { id: 'performance', label: 'Performance' },
   { id: 'reliability', label: 'Reliability' },
   { id: 'agents', label: 'Agents' },
-  { id: 'tenants', label: 'Tenants' },
+  { id: 'departments', label: 'Departments' },
 ];
 
 export const ObsDashboard: React.FC<{
@@ -47,7 +47,7 @@ export const ObsDashboard: React.FC<{
       {tab === 'performance' && <PerformancePanel onDrill={onDrill} />}
       {tab === 'reliability' && <ReliabilityPanel />}
       {tab === 'agents' && <AgentBehaviorPanel />}
-      {tab === 'tenants' && <TenantPanel onDrill={onDrill} />}
+      {tab === 'departments' && <DepartmentPanel onDrill={onDrill} />}
     </div>
   );
 };

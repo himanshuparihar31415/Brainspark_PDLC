@@ -11,9 +11,9 @@ import { Wallet, AlertTriangle } from 'lucide-react';
 
 /** Tile behaviour per tier. Admin tiers redirect (detail lives on other
  *  screens); the Project Admin filters in place (detail is co-located). */
-const TILE_SPECS: Record<'platform' | 'tenant' | 'project', Record<TileKey, TileAction>> = {
-  platform: { headcount: 'redirect', cost: 'modal', tokens: 'modal', completion: 'redirect' },
+const TILE_SPECS: Record<'tenant' | 'department' | 'project', Record<TileKey, TileAction>> = {
   tenant: { headcount: 'redirect', cost: 'modal', tokens: 'modal', completion: 'redirect' },
+  department: { headcount: 'redirect', cost: 'modal', tokens: 'modal', completion: 'redirect' },
   project: { headcount: 'filter', cost: 'modal', tokens: 'modal', completion: 'filter' },
 };
 
@@ -24,7 +24,7 @@ export const DashboardView: React.FC = () => {
   const {
     currentScope,
     currentRole,
-    tenants,
+    departments,
     projects,
     teamMembers,
     tasks,
@@ -41,29 +41,29 @@ export const DashboardView: React.FC = () => {
    * Two different axes, deliberately kept separate:
    *
    * `persona` decides the *layout* — which tile behaviours apply and which lower
-   * strip renders. Keyed on role so they can never diverge: a Tenant Admin who
+   * strip renders. Keyed on role so they can never diverge: a Department Admin who
    * narrows scope to one project must not get project-tier tiles that filter a
    * module strip which cannot respond to them.
    *
    * `tier` decides the *numbers and breakdown axes* — keyed on scope, because if
-   * only one tenant is in scope there is no point ranking by tenant.
+   * only one department is in scope there is no point ranking by department.
    */
-  const persona: 'platform' | 'tenant' | 'project' =
-    currentRole === 'Super Admin' ? 'platform' : currentRole === 'Tenant Admin' ? 'tenant' : 'project';
+  const persona: 'tenant' | 'department' | 'project' =
+    currentRole === 'Tenant Admin' ? 'tenant' : currentRole === 'Department Admin' ? 'department' : 'project';
 
   const tier = currentScope.type;
 
-  // ── Scope resolution: which tenants / projects this dashboard totals over
-  const scopeTenants = useMemo(
-    () => (tier === 'platform' ? tenants : tenants.filter((t) => t.id === currentScope.tenantId)),
-    [tier, tenants, currentScope.tenantId]
+  // ── Scope resolution: which departments / projects this dashboard totals over
+  const scopeDepartments = useMemo(
+    () => (tier === 'tenant' ? departments : departments.filter((t) => t.id === currentScope.departmentId)),
+    [tier, departments, currentScope.departmentId]
   );
 
   const scopeProjects = useMemo(() => {
-    if (tier === 'platform') return projects;
-    if (tier === 'tenant') return projects.filter((p) => p.tenantId === currentScope.tenantId);
+    if (tier === 'tenant') return projects;
+    if (tier === 'department') return projects.filter((p) => p.departmentId === currentScope.departmentId);
     return projects.filter((p) => p.id === currentScope.projectId);
-  }, [tier, projects, currentScope.tenantId, currentScope.projectId]);
+  }, [tier, projects, currentScope.departmentId, currentScope.projectId]);
 
   const scopeProjectIds = scopeProjects.map((p) => p.id);
   const scopeActivity = moduleActivity.filter((a) => scopeProjectIds.includes(a.projectId));
@@ -78,48 +78,48 @@ export const DashboardView: React.FC = () => {
 
   // ── Tile values, aggregated rather than hardcoded
   const headcount =
-    tier === 'platform'
-      ? scopeTenants.reduce((a, t) => a + t.headcount, 0)
-      : tier === 'tenant'
-      ? scopeTenants.reduce((a, t) => a + t.headcount, 0)
+    tier === 'tenant'
+      ? scopeDepartments.reduce((a, t) => a + t.headcount, 0)
+      : tier === 'department'
+      ? scopeDepartments.reduce((a, t) => a + t.headcount, 0)
       : teamMembers.filter((m) => m.projectId === currentScope.projectId).length;
 
   const cost =
     tier === 'project'
       ? scopeProjects.reduce((a, p) => a + p.spend30d, 0)
-      : scopeTenants.reduce((a, t) => a + t.spend30d, 0);
+      : scopeDepartments.reduce((a, t) => a + t.spend30d, 0);
 
   const costPrev =
     tier === 'project'
       ? scopeProjects.reduce((a, p) => a + p.spendPrev30d, 0)
-      : scopeTenants.reduce((a, t) => a + t.spendPrev30d, 0);
+      : scopeDepartments.reduce((a, t) => a + t.spendPrev30d, 0);
 
   const tokens =
     tier === 'project'
       ? scopeProjects.reduce((a, p) => a + p.tokens30d, 0)
-      : scopeTenants.reduce((a, t) => a + t.tokens30d, 0);
+      : scopeDepartments.reduce((a, t) => a + t.tokens30d, 0);
 
   const completion = scopeProjects.length
     ? Math.round(scopeProjects.reduce((a, p) => a + p.completion, 0) / scopeProjects.length)
     : 0;
 
-  const budget = persona === 'tenant' ? scopeTenants.reduce((a, t) => a + t.budget30d, 0) : undefined;
+  const budget = persona === 'department' ? scopeDepartments.reduce((a, t) => a + t.budget30d, 0) : undefined;
 
   const scopeLabel =
-    tier === 'platform'
-      ? 'Platform'
-      : tier === 'tenant'
-      ? `Tenant: ${currentScope.tenantName}`
+    tier === 'tenant'
+      ? 'All Departments'
+      : tier === 'department'
+      ? `Department: ${currentScope.departmentName}`
       : `Project: ${currentScope.projectName}`;
 
   const scopeTitle =
-    tier === 'platform'
-      ? 'Platform-wide roll-up across all tenants'
-      : tier === 'tenant'
-      ? `${currentScope.tenantName} — all projects`
+    tier === 'tenant'
+      ? 'Tenant-wide roll-up across every department'
+      : tier === 'department'
+      ? `${currentScope.departmentName} — all projects`
       : `${currentScope.projectName} — unified project view`;
 
-  // ── Breakdown axes, re-axised per tier: by tenant → by project → by task/person
+  // ── Breakdown axes, re-axised per tier: by department → by project → by task/person
   const moduleRows = (metric: 'spend30d' | 'tokens30d'): BreakdownRow[] =>
     rank(
       MODULE_DEFS.map((def) => ({
@@ -156,14 +156,14 @@ export const DashboardView: React.FC = () => {
   };
 
   const costSections: BreakdownSection[] =
-    tier === 'platform'
+    tier === 'tenant'
       ? [
-          { title: 'By tenant', rows: rank(scopeTenants.map((t) => ({ label: t.name, value: t.spend30d }))) },
+          { title: 'By department', rows: rank(scopeDepartments.map((t) => ({ label: t.name, value: t.spend30d }))) },
           { title: 'By module', rows: moduleRows('spend30d') },
         ]
-      : tier === 'tenant'
+      : tier === 'department'
       ? [
-          // A Tenant Admin acts at project level, so projects lead here.
+          // A Department Admin acts at project level, so projects lead here.
           { title: 'By project', rows: rank(scopeProjects.map((p) => ({ label: p.name, value: p.spend30d }))) },
           { title: 'By module', rows: moduleRows('spend30d') },
         ]
@@ -175,13 +175,13 @@ export const DashboardView: React.FC = () => {
         ];
 
   const tokenSections: BreakdownSection[] =
-    tier === 'platform'
+    tier === 'tenant'
       ? [
-          { title: 'By tenant', rows: rank(scopeTenants.map((t) => ({ label: t.name, value: t.tokens30d }))) },
+          { title: 'By department', rows: rank(scopeDepartments.map((t) => ({ label: t.name, value: t.tokens30d }))) },
           { title: 'By module', rows: moduleRows('tokens30d') },
           { title: 'By agent service (top 5)', rows: agentRows('tokens30d') },
         ]
-      : tier === 'tenant'
+      : tier === 'department'
       ? [
           { title: 'By project', rows: rank(scopeProjects.map((p) => ({ label: p.name, value: p.tokens30d }))) },
           { title: 'By module', rows: moduleRows('tokens30d') },
@@ -209,18 +209,18 @@ export const DashboardView: React.FC = () => {
     // Redirects: land on the screen that already owns this data, pre-filtered.
     if (key === 'headcount') {
       navigateTo('Team', {
-        // The Tenant Admin's lever is the cross-project pool, not the flat roster.
-        teamTab: persona === 'tenant' ? 'shared' : 'roster',
+        // The Department Admin's lever is the cross-project pool, not the flat roster.
+        teamTab: persona === 'department' ? 'shared' : 'roster',
         note:
-          persona === 'tenant'
-            ? "Showing your tenant's shared team."
+          persona === 'department'
+            ? "Showing your department's shared team."
             : 'Showing all people across the platform.',
       });
     } else if (key === 'completion') {
       navigateTo('Projects', {
         projectSort: 'completion-asc',
         note:
-          persona === 'tenant'
+          persona === 'department'
             ? 'Your projects, furthest behind first.'
             : 'Sorted by completion — furthest behind first.',
       });
@@ -241,8 +241,8 @@ export const DashboardView: React.FC = () => {
         <p className="mt-1 type-body text-slate-500">{scopeTitle}</p>
       </div>
 
-      {/* Tenant Admins own a spend envelope — the number they log in to check. */}
-      {persona === 'tenant' && budget !== undefined && (
+      {/* Department Admins own a spend envelope — the number they log in to check. */}
+      {persona === 'department' && budget !== undefined && (
         <div
           className={`platform-card flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between ${
             budgetTone === 'bad'
@@ -319,7 +319,7 @@ export const DashboardView: React.FC = () => {
       <BreakdownModal
         open={openModal === 'cost'}
         title={`Cost breakdown — ${
-          tier === 'platform' ? 'Platform' : currentScope.projectName ?? currentScope.tenantName
+          tier === 'tenant' ? 'All Departments' : currentScope.projectName ?? currentScope.departmentName
         }`}
         scopeLabel={scopeLabel}
         total={cost}
@@ -356,7 +356,7 @@ export const DashboardView: React.FC = () => {
       <BreakdownModal
         open={openModal === 'tokens'}
         title={`Token consumption — ${
-          tier === 'platform' ? 'Platform' : currentScope.projectName ?? currentScope.tenantName
+          tier === 'tenant' ? 'All Departments' : currentScope.projectName ?? currentScope.departmentName
         }`}
         scopeLabel={scopeLabel}
         total={tokens}

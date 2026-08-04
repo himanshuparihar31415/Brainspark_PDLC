@@ -34,7 +34,7 @@ export const CommandCentreView: React.FC = () => {
   const reachableProjects = projects.filter((p) =>
     currentScope.type === 'project'
       ? p.id === currentScope.projectId
-      : p.tenantId === currentScope.tenantId || currentScope.type === 'platform'
+      : p.departmentId === currentScope.departmentId || currentScope.type === 'tenant'
   );
   const activeProject =
     projects.find((p) => p.id === currentScope.projectId) ?? reachableProjects[0] ?? projects[0];
@@ -118,8 +118,8 @@ export const CommandCentreView: React.FC = () => {
                   if (next)
                     setCurrentScope({
                       type: 'project',
-                      tenantId: next.tenantId,
-                      tenantName: next.tenantName,
+                      departmentId: next.departmentId,
+                      departmentName: next.departmentName,
                       projectId: next.id,
                       projectName: next.name,
                     });

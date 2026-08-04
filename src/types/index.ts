@@ -1,6 +1,6 @@
 export type Role =
-  | 'Super Admin'
   | 'Tenant Admin'
+  | 'Department Admin'
   | 'Project Admin'
   | 'Product Manager'
   | 'Architect'
@@ -11,19 +11,19 @@ export type Role =
   | 'QA Engineer'
   | 'Release Manager';
 
-export type ScopeType = 'platform' | 'tenant' | 'project';
+export type ScopeType = 'tenant' | 'department' | 'project';
 
 export interface ScopeContext {
   type: ScopeType;
-  tenantId?: string;
+  departmentId?: string;
   projectId?: string;
-  tenantName?: string;
+  departmentName?: string;
   projectName?: string;
 }
 
 export type NavView =
   | 'Dashboard'
-  | 'Tenants'
+  | 'Departments'
   | 'Projects'
   | 'Team'
   | 'Connectors'
@@ -60,9 +60,9 @@ export interface UserAccount {
   lastLogin: string;
 }
 
-export type TenantStatus = 'Active' | 'Suspended' | 'Deactivated';
+export type DepartmentStatus = 'Active' | 'Suspended' | 'Deactivated';
 
-export interface Tenant {
+export interface Department {
   id: string;
   name: string;
   projectsCount: number;
@@ -71,9 +71,9 @@ export interface Tenant {
   /** Prior period spend — powers the "vs last period" trend in breakdowns. */
   spendPrev30d: number;
   tokens30d: number;
-  /** Spend envelope the Tenant Admin is accountable to. */
+  /** Spend envelope the Department Admin is accountable to. */
   budget30d: number;
-  status: TenantStatus;
+  status: DepartmentStatus;
   adminEmail: string;
   createdAt: string;
   inheritDefaults: boolean;
@@ -84,8 +84,8 @@ export type ProjectLifecycle = 'Active' | 'Paused' | 'Closed';
 export interface Project {
   id: string;
   name: string;
-  tenantId: string;
-  tenantName: string;
+  departmentId: string;
+  departmentName: string;
   admins: string[];
   phase: string;
   completion: number;
@@ -115,7 +115,7 @@ export interface TeamMember {
   email: string;
   avatar: string;
   roles: Role[];
-  tenantId: string;
+  departmentId: string;
   projectId?: string;
   moduleAccess: string[];
   status: 'Assigned' | 'Unassigned' | 'Available';
@@ -132,9 +132,9 @@ export interface Connector {
   name: string;
   category: ConnectorCategory;
   usedByModules: string[];
-  /** Set by a Super Admin. When false, no tenant may enable this connector. */
-  platformAvailable: boolean;
-  enabledTenant: boolean;
+  /** Set by a Tenant Admin. When false, no department may enable this connector. */
+  tenantAvailable: boolean;
+  enabledDepartment: boolean;
   activatedProject: boolean;
   health: '● Connected' | '⚠ Last sync failed' | '○ Not connected';
   syncType: SyncType;

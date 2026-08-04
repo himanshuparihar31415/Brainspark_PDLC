@@ -78,8 +78,8 @@ export interface ObservabilityRun {
   id: string;
   /** The business record holding the actual output. */
   runId: string;
-  tenantId: string;
-  tenantName: string;
+  departmentId: string;
+  departmentName: string;
   userId: string;
   userName: string;
   sessionId?: string;
@@ -308,7 +308,7 @@ export interface EvidenceAccessLog {
 /** One answer card in the ops cockpit — maps a platform question to a reading. */
 export interface OpsAnswer {
   id: string;
-  domain: 'reliability' | 'tenant' | 'drift' | 'security' | 'trends' | 'debug';
+  domain: 'reliability' | 'department' | 'drift' | 'security' | 'trends' | 'debug';
   question: string;
   answer: string;
   detail: string;
@@ -316,14 +316,14 @@ export interface OpsAnswer {
   /** Optional drill target. */
   runId?: string;
   moduleName?: string;
-  tenantId?: string;
+  departmentId?: string;
 }
 
 // ─────────────────── API Response Types (API_ENDPOINTS_1346.md) ───────────────
 
 export interface PlatformAppMetrics {
-  total_tenants: number;
-  active_tenants: number;
+  total_departments: number;
+  active_departments: number;
   total_users: number;
   recent_auth_success: number;
   recent_auth_failure: number;
@@ -331,8 +331,8 @@ export interface PlatformAppMetrics {
   recent_schema_provision_failures: number;
 }
 
-export interface TenantObservability {
-  tenant_id: string;
+export interface DepartmentObservability {
+  department_id: string;
   active_member_count: number;
   project_count: number;
   enabled_tool_count: number;
@@ -413,8 +413,8 @@ export interface FallbackRateResponse {
 }
 
 export interface TopConsumerItem {
-  tenant_id: string;
-  tenant_schema: string;
+  department_id: string;
+  department_schema: string;
   total_cost_usd: number;
   run_count: number;
   total_tokens: number;

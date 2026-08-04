@@ -26,17 +26,17 @@ export const TeamView: React.FC = () => {
   const [scopeFilter, setScopeFilter] = useScopeFilter();
 
   // Roster is scoped twice over: the header scope sets the ceiling, the filter
-  // narrows within it. A Super Admin's ceiling is everything.
+  // narrows within it. A Tenant Admin's ceiling is everything.
   const teamMembers = allTeamMembers.filter((m) => {
-    if (currentScope.type === 'tenant' && m.tenantId !== currentScope.tenantId) return false;
+    if (currentScope.type === 'department' && m.departmentId !== currentScope.departmentId) return false;
     if (currentScope.type === 'project' && m.projectId !== currentScope.projectId) return false;
-    if (currentRole === 'Super Admin' && scopeFilter.tenantId !== 'all' && m.tenantId !== scopeFilter.tenantId)
+    if (currentRole === 'Tenant Admin' && scopeFilter.departmentId !== 'all' && m.departmentId !== scopeFilter.departmentId)
       return false;
     if (scopeFilter.projectId !== 'all' && m.projectId !== scopeFilter.projectId) return false;
     return true;
   });
 
-  // A Tenant Admin arriving from the headcount tile lands on the shared pool —
+  // A Department Admin arriving from the headcount tile lands on the shared pool —
   // the cross-project lever they uniquely own — not the flat roster.
   const [activeTab, setActiveTab] = useState<'roster' | 'shared'>(navIntent?.teamTab ?? 'roster');
   const [assignModalOpen, setAssignModalOpen] = useState(false);
@@ -58,7 +58,7 @@ export const TeamView: React.FC = () => {
     'Release Manager',
   ];
 
-  const isTenantAdmin = ['Super Admin', 'Tenant Admin'].includes(currentRole);
+  const isDepartmentAdmin = ['Tenant Admin', 'Department Admin'].includes(currentRole);
 
   const handleAssignSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,7 +67,7 @@ export const TeamView: React.FC = () => {
       name: memberName.trim(),
       email: memberEmail.trim() || `${memberName.toLowerCase().replace(/\s+/g, '')}@incedolabs.com`,
       roles: [selectedRole],
-      tenantId: currentScope.tenantId || 't-incedo',
+      departmentId: currentScope.departmentId || 'd-engineering',
       projectId: currentScope.projectId || 'p-mobile-v2',
     });
     setMemberName('');
@@ -82,7 +82,7 @@ export const TeamView: React.FC = () => {
         <div>
           <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">Team</h1>
           <p className="text-xs md:text-sm text-slate-500 mt-1">
-            Manage project roster role assignments and shared tenant engineering resource allocation
+            Manage project roster role assignments and shared department engineering resource allocation
           </p>
         </div>
         <button
@@ -115,7 +115,7 @@ export const TeamView: React.FC = () => {
         >
           Project roster
         </button>
-        {isTenantAdmin && (
+        {isDepartmentAdmin && (
           <button
             onClick={() => setActiveTab('shared')}
             className={`px-4 py-2.5 text-xs font-bold border-b-2 transition-all cursor-pointer ${
@@ -218,7 +218,7 @@ export const TeamView: React.FC = () => {
           <div className="p-4 bg-indigo-50/80 border border-indigo-100 rounded-2xl flex items-start gap-3">
             <Info className="w-5 h-5 text-indigo-600 shrink-0 mt-0.5" />
             <div className="text-xs text-indigo-950 leading-relaxed">
-              <span className="font-bold">Tenant-level shared team:</span> People here can be drawn on by any project in the tenant. How shared-member time and cost are apportioned across projects is governed by tenant policy.
+              <span className="font-bold">Department-level shared team:</span> People here can be drawn on by any project in the department. How shared-member time and cost are apportioned across projects is governed by department policy.
             </div>
           </div>
 

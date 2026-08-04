@@ -25,7 +25,7 @@ export const OverviewPanel: React.FC<{ onDrill: (d: Drill) => void }> = ({ onDri
   const maxModuleCost = Math.max(...costByModule.map((m) => m.total_cost_usd), 0.01);
 
   const kpis = [
-    { label: 'Active Tenants', value: `${platform.active_tenants}/${platform.total_tenants}`, icon: Users, color: 'text-indigo-600' },
+    { label: 'Active Departments', value: `${platform.active_departments}/${platform.total_departments}`, icon: Users, color: 'text-indigo-600' },
     { label: 'Total Users', value: String(platform.total_users), icon: Users, color: 'text-sky-600' },
     { label: 'Total Runs', value: String(totalRuns), icon: Activity, color: 'text-emerald-600' },
     { label: 'Total Spend', value: `$${totalCost.toFixed(2)}`, icon: DollarSign, color: 'text-amber-600' },

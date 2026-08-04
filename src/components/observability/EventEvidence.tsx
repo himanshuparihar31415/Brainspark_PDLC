@@ -30,7 +30,7 @@ const Row: React.FC<{ label: string; value: React.ReactNode; mono?: boolean }> =
  * L5 — event evidence. The deepest level, and the only one where prompt and
  * response content appears at all.
  *
- * Two independent gates decide what is shown: the tenant's capture policy, which
+ * Two independent gates decide what is shown: the department's capture policy, which
  * decided whether content was ever written; and the viewer's payload right, which
  * decides whether they may read what was written. Reaching this screen satisfies
  * neither on its own.

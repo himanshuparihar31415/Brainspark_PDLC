@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import {
   Role,
   ScopeContext,
-  Tenant,
+  Department,
   Project,
   TeamMember,
   Connector,
@@ -33,7 +33,7 @@ import {
 } from '../data/rbac';
 import {
   INITIAL_USERS,
-  INITIAL_TENANTS,
+  INITIAL_DEPARTMENTS,
   INITIAL_PROJECTS,
   INITIAL_TEAM_MEMBERS,
   INITIAL_CONNECTORS,
@@ -119,7 +119,7 @@ interface AppContextType extends SpecAiSlice {
   removeToast: (id: string) => void;
 
   // Data collections
-  tenants: Tenant[];
+  departments: Department[];
   projects: Project[];
   teamMembers: TeamMember[];
   connectors: Connector[];
@@ -137,13 +137,13 @@ interface AppContextType extends SpecAiSlice {
   pipeline: PipelinePhase[];
 
   // Mutations
-  createTenant: (name: string, adminEmail: string, inheritDefaults: boolean) => void;
-  deactivateTenant: (id: string) => void;
-  suspendTenant: (id: string) => void;
+  createDepartment: (name: string, adminEmail: string, inheritDefaults: boolean) => void;
+  deactivateDepartment: (id: string) => void;
+  suspendDepartment: (id: string) => void;
   createProject: (data: Partial<Project>) => void;
   closeProject: (id: string) => void;
   assignTeamMember: (data: Partial<TeamMember>) => void;
-  setConnectorPlatformAvailability: (id: string, available: boolean) => void;
+  setConnectorTenantAvailability: (id: string, available: boolean) => void;
   toggleConnectorEnabled: (id: string) => void;
   activateConnectorProject: (id: string, endpoint?: string, repo?: string) => void;
   registerAgent: (payload: AgentRegistration) => boolean;
@@ -168,10 +168,10 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<UserAccount | null>(null);
   const [users] = useState<UserAccount[]>(INITIAL_USERS);
-  const [currentRole, setCurrentRoleState] = useState<Role>('Super Admin');
+  const [currentRole, setCurrentRoleState] = useState<Role>('Tenant Admin');
   const [currentScope, setCurrentScope] = useState<ScopeContext>({
-    type: 'platform',
-    tenantName: 'All Tenants',
+    type: 'tenant',
+    departmentName: 'All Departments',
   });
   const [activeNav, setActiveNavState] = useState<NavView>('Dashboard');
   const [navIntent, setNavIntent] = useState<NavIntent | null>(null);
@@ -180,7 +180,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
   // State collections
-  const [tenants, setTenants] = useState<Tenant[]>(INITIAL_TENANTS);
+  const [departments, setDepartments] = useState<Department[]>(INITIAL_DEPARTMENTS);
   const [projects, setProjects] = useState<Project[]>(INITIAL_PROJECTS);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>(INITIAL_TEAM_MEMBERS);
   const [connectors, setConnectors] = useState<Connector[]>(INITIAL_CONNECTORS);
@@ -242,13 +242,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19),
       actor: currentUser
         ? `${currentUser.name} (${currentRole})`
-        : currentRole === 'Super Admin'
-        ? 'Platform Super Admin'
+        : currentRole === 'Tenant Admin'
+        ? 'Tenant Admin'
         : 'Current User (' + currentRole + ')',
       actorType: 'user',
       action,
       targetArtifact: target,
-      context: `Scope: ${currentScope.type.toUpperCase()} - ${currentScope.tenantName || 'All'}`,
+      context: `Scope: ${currentScope.type.toUpperCase()} - ${currentScope.departmentName || 'All'}`,
       input,
       output,
     };
@@ -336,7 +336,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     if (method === 'sso') {
       if (!account.ssoEnabled) {
-        return { ok: false, error: 'SSO is not enabled for this tenant. Sign in with your password.' };
+        return { ok: false, error: 'SSO is not enabled for this department. Sign in with your password.' };
       }
     } else if (password !== account.password) {
       return { ok: false, error: 'Incorrect password. Please try again.' };
@@ -367,14 +367,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       'Session terminated'
     );
     setCurrentUser(null);
-    setCurrentRoleState('Super Admin');
-    setCurrentScope({ type: 'platform', tenantName: 'All Tenants' });
+    setCurrentRoleState('Tenant Admin');
+    setCurrentScope({ type: 'tenant', departmentName: 'All Departments' });
     setActiveNavState('Dashboard');
   };
 
   /**
    * Corporate-email sign-up. Provisioning is governed, so this raises an access
-   * request for a Tenant Admin rather than minting a session.
+   * request rather than minting a session.
+   *
+   * Every department now shares the tenant's mail domain, so the domain can no
+   * longer identify which one the requester belongs to — it only tells us they
+   * are inside the tenant. The request therefore goes to the Tenant Admin, who
+   * assigns the department on approval.
    */
   const requestAccess = (email: string): AuthResult => {
     const normalized = email.trim().toLowerCase();
@@ -387,13 +392,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return { ok: false, error: 'An account already exists for that email. Try signing in.' };
     }
 
-    const tenant = tenants.find((t) => normalized.endsWith(t.adminEmail.split('@')[1]));
-    addToast(`Access request sent to ${tenant ? tenant.name : 'the platform'} admin for approval.`, 'info');
+    const domain = normalized.split('@')[1];
+    const insideTenant = departments.some((d) => d.adminEmail.split('@')[1] === domain);
+
+    addToast(
+      insideTenant
+        ? 'Access request sent to the Tenant Admin for approval.'
+        : 'Access request raised — that domain is outside the tenant, so it needs manual review.',
+      'info'
+    );
     addAuditLog(
       'Request Workspace Access',
       `Prospective user: ${normalized}`,
-      `Detected tenant: ${tenant ? tenant.name : 'Unmatched domain'}`,
-      'Pending Tenant Admin approval'
+      insideTenant ? `Recognised tenant domain: ${domain}` : `Unrecognised domain: ${domain}`,
+      'Pending Tenant Admin approval — department assigned on approval'
     );
 
     return { ok: true };
@@ -416,8 +428,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   // Operations
-  const createTenant = (name: string, adminEmail: string, inheritDefaults: boolean) => {
-    const newTenant: Tenant = {
+  const createDepartment = (name: string, adminEmail: string, inheritDefaults: boolean) => {
+    const newDepartment: Department = {
       id: 't-' + Date.now().toString(36),
       name,
       projectsCount: 0,
@@ -431,35 +443,35 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       createdAt: new Date().toISOString().split('T')[0],
       inheritDefaults,
     };
-    setTenants((prev) => [newTenant, ...prev]);
-    addToast(`Tenant "${name}" created. Invite sent to ${adminEmail}.`);
-    addAuditLog('Create Tenant', `Tenant: ${name}`, `Admin Email: ${adminEmail}`, 'Tenant Created Successfully');
+    setDepartments((prev) => [newDepartment, ...prev]);
+    addToast(`Department "${name}" created. Invite sent to ${adminEmail}.`);
+    addAuditLog('Create Department', `Department: ${name}`, `Admin Email: ${adminEmail}`, 'Department Created Successfully');
   };
 
-  const deactivateTenant = (id: string) => {
-    const target = tenants.find((t) => t.id === id);
-    setTenants((prev) =>
+  const deactivateDepartment = (id: string) => {
+    const target = departments.find((t) => t.id === id);
+    setDepartments((prev) =>
       prev.map((t) => (t.id === id ? { ...t, status: 'Deactivated' as const } : t))
     );
-    addToast(`Tenant "${target?.name || id}" deactivated.`);
-    addAuditLog('Deactivate Tenant', `Tenant ID: ${id}`, 'Deactivation confirm', 'Status set to Deactivated');
+    addToast(`Department "${target?.name || id}" deactivated.`);
+    addAuditLog('Deactivate Department', `Department ID: ${id}`, 'Deactivation confirm', 'Status set to Deactivated');
   };
 
-  const suspendTenant = (id: string) => {
-    const target = tenants.find((t) => t.id === id);
-    setTenants((prev) =>
+  const suspendDepartment = (id: string) => {
+    const target = departments.find((t) => t.id === id);
+    setDepartments((prev) =>
       prev.map((t) => (t.id === id ? { ...t, status: 'Suspended' as const } : t))
     );
-    addToast(`Tenant "${target?.name || id}" suspended.`);
-    addAuditLog('Suspend Tenant', `Tenant ID: ${id}`, 'Suspension confirm', 'Status set to Suspended');
+    addToast(`Department "${target?.name || id}" suspended.`);
+    addAuditLog('Suspend Department', `Department ID: ${id}`, 'Suspension confirm', 'Status set to Suspended');
   };
 
   const createProject = (data: Partial<Project>) => {
     const newProj: Project = {
       id: 'p-' + Date.now().toString(36),
       name: data.name || 'New Project',
-      tenantId: data.tenantId || 't-incedo',
-      tenantName: data.tenantName || 'Incedo Labs',
+      departmentId: data.departmentId || 'd-engineering',
+      departmentName: data.departmentName || 'Engineering',
       admins: data.admins && data.admins.length > 0 ? data.admins : ['Current User'],
       phase: 'SpecAI Requirements',
       completion: 5,
@@ -493,7 +505,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       email: data.email || 'member@incedolabs.com',
       avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
       roles: data.roles || ['Developer'],
-      tenantId: data.tenantId || 't-incedo',
+      departmentId: data.departmentId || 'd-engineering',
       projectId: data.projectId || 'p-mobile-v2',
       moduleAccess: ['CodeIQ', 'My Tasks'],
       status: 'Assigned',
@@ -506,14 +518,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   /**
-   * Top of the connector ladder: whether a connector exists for tenants at all.
-   * Withdrawing availability cascades down — the tenant baseline and every
+   * Top of the connector ladder: whether a connector exists for departments at all.
+   * Withdrawing availability cascades down — the department baseline and every
    * project activation beneath it are cleared, so no project keeps a live
    * binding to something the platform has retired.
    */
-  const setConnectorPlatformAvailability = (id: string, available: boolean) => {
-    if (!canManageConnector(currentRole, 'platform-availability')) {
-      addToast(connectorDeniedReason('platform-availability'), 'error');
+  const setConnectorTenantAvailability = (id: string, available: boolean) => {
+    if (!canManageConnector(currentRole, 'tenant-availability')) {
+      addToast(connectorDeniedReason('tenant-availability'), 'error');
       return;
     }
 
@@ -522,11 +534,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       prev.map((c) =>
         c.id === id
           ? available
-            ? { ...c, platformAvailable: true }
+            ? { ...c, tenantAvailable: true }
             : {
                 ...c,
-                platformAvailable: false,
-                enabledTenant: false,
+                tenantAvailable: false,
+                enabledDepartment: false,
                 activatedProject: false,
                 health: '○ Not connected' as const,
               }
@@ -536,26 +548,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     addToast(
       available
-        ? `${target?.name || 'Connector'} is now available to tenants.`
-        : `${target?.name || 'Connector'} withdrawn platform-wide. Tenant and project bindings cleared.`,
+        ? `${target?.name || 'Connector'} is now available to departments.`
+        : `${target?.name || 'Connector'} withdrawn platform-wide. Department and project bindings cleared.`,
       available ? 'success' : 'info'
     );
     addAuditLog(
       'Set Connector Platform Availability',
       `Connector: ${target?.name || id}`,
       `Available: ${available}`,
-      available ? 'Available to tenants' : 'Withdrawn; downstream bindings cleared'
+      available ? 'Available to departments' : 'Withdrawn; downstream bindings cleared'
     );
   };
 
   const toggleConnectorEnabled = (id: string) => {
-    if (!canManageConnector(currentRole, 'tenant-baseline')) {
-      addToast(connectorDeniedReason('tenant-baseline'), 'error');
+    if (!canManageConnector(currentRole, 'department-baseline')) {
+      addToast(connectorDeniedReason('department-baseline'), 'error');
       return;
     }
 
     const target = connectors.find((c) => c.id === id);
-    if (target && !target.platformAvailable) {
+    if (target && !target.tenantAvailable) {
       addToast(`${target.name} is not available on this platform.`, 'error');
       return;
     }
@@ -563,15 +575,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setConnectors((prev) =>
       prev.map((c) =>
         c.id === id
-          ? c.enabledTenant
+          ? c.enabledDepartment
             ? // Disabling the baseline also drops project activations beneath it.
-              { ...c, enabledTenant: false, activatedProject: false, health: '○ Not connected' as const }
-            : { ...c, enabledTenant: true }
+              { ...c, enabledDepartment: false, activatedProject: false, health: '○ Not connected' as const }
+            : { ...c, enabledDepartment: true }
           : c
       )
     );
-    addToast(`Updated connector tenant status.`);
-    addAuditLog('Toggle Connector Baseline', `Connector ID: ${id}`, 'Tenant enable toggle', 'Updated connector status');
+    addToast(`Updated connector department status.`);
+    addAuditLog('Toggle Connector Baseline', `Connector ID: ${id}`, 'Department enable toggle', 'Updated connector status');
   };
 
   const activateConnectorProject = (id: string, endpoint?: string, repo?: string) => {
@@ -581,8 +593,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
 
     const gate = connectors.find((c) => c.id === id);
-    if (gate && !gate.enabledTenant) {
-      addToast(`${gate.name} is not enabled for this tenant.`, 'error');
+    if (gate && !gate.enabledDepartment) {
+      addToast(`${gate.name} is not enabled for this department.`, 'error');
       return;
     }
 
@@ -612,7 +624,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
    */
   const registerAgent = (payload: AgentRegistration): boolean => {
     if (!canManageAgents(currentRole)) {
-      addToast(`Registering an agent is a tenant-level action — not available to ${currentRole}.`, 'error');
+      addToast(`Registering an agent is a department-level action — not available to ${currentRole}.`, 'error');
       return false;
     }
 
@@ -640,7 +652,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const updateAgent = (id: string, patch: AgentUpdate) => {
     if (!canManageAgents(currentRole)) {
-      addToast(`Editing an agent is a tenant-level action — not available to ${currentRole}.`, 'error');
+      addToast(`Editing an agent is a department-level action — not available to ${currentRole}.`, 'error');
       return;
     }
 
@@ -658,7 +670,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   /** Soft delete. The row stays visible so historical runs still resolve it. */
   const deactivateAgent = (id: string) => {
     if (!canManageAgents(currentRole)) {
-      addToast(`Deactivation is a tenant-level action — not available to ${currentRole}.`, 'error');
+      addToast(`Deactivation is a department-level action — not available to ${currentRole}.`, 'error');
       return;
     }
 
@@ -842,7 +854,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         toasts,
         addToast,
         removeToast,
-        tenants,
+        departments,
         projects,
         teamMembers,
         connectors,
@@ -859,13 +871,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         agentUsage,
         pipeline,
         ...spec,
-        createTenant,
-        deactivateTenant,
-        suspendTenant,
+        createDepartment,
+        deactivateDepartment,
+        suspendDepartment,
         createProject,
         closeProject,
         assignTeamMember,
-        setConnectorPlatformAvailability,
+        setConnectorTenantAvailability,
         toggleConnectorEnabled,
         activateConnectorProject,
         registerAgent,

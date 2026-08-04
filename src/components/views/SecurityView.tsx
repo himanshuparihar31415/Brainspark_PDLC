@@ -28,7 +28,7 @@ export const SecurityView: React.FC = () => {
     auditLogs,
     exportEvidencePackage,
     currentScope,
-    tenants,
+    departments,
   } = useApp();
 
   const [scopeFilter, setScopeFilter] = useScopeFilter();
@@ -40,8 +40,8 @@ export const SecurityView: React.FC = () => {
   const [auditSearch, setAuditSearch] = useState('');
 
   const rbacMatrix: { role: Role; view: boolean; create: boolean; edit: boolean; approve: boolean; export: boolean }[] = [
-    { role: 'Super Admin', view: true, create: true, edit: true, approve: true, export: true },
     { role: 'Tenant Admin', view: true, create: true, edit: true, approve: true, export: true },
+    { role: 'Department Admin', view: true, create: true, edit: true, approve: true, export: true },
     { role: 'Project Admin', view: true, create: true, edit: true, approve: true, export: true },
     { role: 'Product Manager', view: true, create: true, edit: true, approve: true, export: false },
     { role: 'Architect', view: true, create: false, edit: true, approve: true, export: false },
@@ -55,10 +55,10 @@ export const SecurityView: React.FC = () => {
 
   const filteredAuditLogs = auditLogs.filter((entry) => {
     // Audit context carries the scope the action was taken at, so the same
-    // tenant / project filter narrows the trail.
-    if (scopeFilter.tenantId !== 'all') {
-      const tenantName = tenants.find((t) => t.id === scopeFilter.tenantId)?.name;
-      if (tenantName && !entry.context.includes(tenantName)) return false;
+    // department / project filter narrows the trail.
+    if (scopeFilter.departmentId !== 'all') {
+      const departmentName = departments.find((t) => t.id === scopeFilter.departmentId)?.name;
+      if (departmentName && !entry.context.includes(departmentName)) return false;
     }
     if (actorFilter !== 'All' && entry.actorType !== actorFilter) return false;
     if (auditSearch) {
@@ -82,7 +82,7 @@ export const SecurityView: React.FC = () => {
         </p>
       </div>
 
-      {/* Scope narrows the audit trail; the other tabs are policy, not per-tenant records. */}
+      {/* Scope narrows the audit trail; the other tabs are policy, not per-department records. */}
       <ScopeFilterBar
         value={scopeFilter}
         onChange={setScopeFilter}
@@ -139,7 +139,7 @@ export const SecurityView: React.FC = () => {
       {activeTab === 'rbac' && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-bold text-slate-900">Role permissions in {currentScope.tenantName || 'Platform'}</h2>
+            <h2 className="text-sm font-bold text-slate-900">Role permissions in {currentScope.departmentName || 'the tenant'}</h2>
             <button
               onClick={() => setExplainUserDrawer('Sarah Jenkins')}
               className="text-xs text-indigo-600 font-bold hover:underline cursor-pointer"
@@ -198,7 +198,7 @@ export const SecurityView: React.FC = () => {
                   <option value={60}>1 hour</option>
                   <option value={240}>4 hours</option>
                 </select>
-                <p className="text-[11px] text-slate-400 mt-1">Applies to all users in this tenant.</p>
+                <p className="text-[11px] text-slate-400 mt-1">Applies to all users in this department.</p>
               </div>
 
               <div className="flex items-center justify-between p-3.5 bg-slate-50 rounded-xl border border-slate-100">
@@ -445,7 +445,7 @@ export const SecurityView: React.FC = () => {
                   <li className="flex items-center gap-2">✓ Read/Write access to SpecAI module</li>
                   <li className="flex items-center gap-2">✓ Can approve human-in-the-loop task artifacts</li>
                   <li className="flex items-center gap-2">✓ Can submit prompt candidates</li>
-                  <li className="flex items-center gap-2 text-rose-600">✗ Cannot deactivate tenant</li>
+                  <li className="flex items-center gap-2 text-rose-600">✗ Cannot deactivate department</li>
                 </ul>
               </div>
             </div>

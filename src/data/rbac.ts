@@ -1,6 +1,6 @@
 import { NavView, Role, ScopeContext, UserAccount } from '../types';
 
-export const GOVERNANCE_ROLES: Role[] = ['Super Admin', 'Tenant Admin', 'Project Admin'];
+export const GOVERNANCE_ROLES: Role[] = ['Tenant Admin', 'Department Admin', 'Project Admin'];
 
 export const PDLC_ROLES: Role[] = [
   'Product Manager',
@@ -16,11 +16,11 @@ export const PDLC_ROLES: Role[] = [
 export const ALL_ROLES: Role[] = [...GOVERNANCE_ROLES, ...PDLC_ROLES];
 
 /**
- * Roles that own tenant-level governed assets — prompt versions, golden
+ * Roles that own department-level governed assets — prompt versions, golden
  * evaluations, session/API policy. A Project Admin runs a project; it does not
  * set the baselines the project inherits.
  */
-export const TENANT_ROLES: Role[] = ['Super Admin', 'Tenant Admin'];
+export const BASELINE_ROLES: Role[] = ['Tenant Admin', 'Department Admin'];
 
 /**
  * Single source of truth for subtractive navigation. The sidebar renders from
@@ -29,21 +29,21 @@ export const TENANT_ROLES: Role[] = ['Super Admin', 'Tenant Admin'];
  */
 export const NAV_VISIBILITY: Record<NavView, Role[]> = {
   Dashboard: GOVERNANCE_ROLES,
-  Tenants: ['Super Admin'],
-  Projects: ['Super Admin', 'Tenant Admin'],
+  Departments: ['Tenant Admin'],
+  Projects: ['Tenant Admin', 'Department Admin'],
   Team: GOVERNANCE_ROLES,
   Connectors: GOVERNANCE_ROLES,
   // Visible to a Project Admin, but read-only — see canManageAgents.
   'Agent Registry': GOVERNANCE_ROLES,
-  Evaluation: TENANT_ROLES,
+  Evaluation: BASELINE_ROLES,
   /*
    * All three governance tiers see it; scope decides what the numbers cover, so a
-   * Tenant Admin's "enterprise" view is their own tenant. Reading payload content
+   * Department Admin's "enterprise" view is their own department. Reading payload content
    * at L5 is a separate right — see canViewPayloads in data/observability.
    */
   Observability: GOVERNANCE_ROLES,
-  'Prompt Controls': TENANT_ROLES,
-  Security: TENANT_ROLES,
+  'Prompt Controls': BASELINE_ROLES,
+  Security: BASELINE_ROLES,
   'My Services': PDLC_ROLES,
   'Command Centre': ['Project Admin', ...PDLC_ROLES],
   'My Tasks': ['Project Admin', ...PDLC_ROLES],
@@ -66,28 +66,28 @@ export const isGovernanceRole = (role: Role) => GOVERNANCE_ROLES.includes(role);
 /**
  * A Project Admin can browse the agent catalogue but cannot change it —
  * registering, editing routing or deactivating an agent affects every project on
- * the tenant baseline.
+ * the department baseline.
  */
-export const canManageAgents = (role: Role) => TENANT_ROLES.includes(role);
+export const canManageAgents = (role: Role) => BASELINE_ROLES.includes(role);
 
 /**
  * Connector authority, as a strict ladder. Each tier holds everything below it:
  *
- *   platform-availability — decide which connectors exist for tenants at all.
- *                           Super Admin only; revoking it cascades downward.
- *   tenant-baseline       — enable an available connector for one tenant.
+ *   tenant-availability   — decide which connectors exist for departments at all.
+ *                           Tenant Admin only; revoking it cascades downward.
+ *   department-baseline       — enable an available connector for one department.
  *                           Projects can activate only what is enabled here.
  *   project-activation    — bind an enabled connector to a project with
  *                           project credentials.
  */
 export type ConnectorCapability =
-  | 'platform-availability'
-  | 'tenant-baseline'
+  | 'tenant-availability'
+  | 'department-baseline'
   | 'project-activation';
 
 const CONNECTOR_LADDER: Record<Role, ConnectorCapability[]> = {
-  'Super Admin': ['platform-availability', 'tenant-baseline', 'project-activation'],
-  'Tenant Admin': ['tenant-baseline', 'project-activation'],
+  'Tenant Admin': ['tenant-availability', 'department-baseline', 'project-activation'],
+  'Department Admin': ['department-baseline', 'project-activation'],
   'Project Admin': ['project-activation'],
   'Product Manager': [],
   Architect: [],
@@ -108,10 +108,10 @@ export const canManageConnector = (role: Role, capability: ConnectorCapability):
 /** Human-readable reason a control is unavailable, used in disabled tooltips. */
 export const connectorDeniedReason = (capability: ConnectorCapability): string => {
   switch (capability) {
-    case 'platform-availability':
-      return 'Platform availability is set by a Super Admin.';
-    case 'tenant-baseline':
-      return 'Tenant enablement is set by a Tenant Admin.';
+    case 'tenant-availability':
+      return 'Tenant-wide availability is set by a Tenant Admin.';
+    case 'department-baseline':
+      return 'Department enablement is set by a Department Admin.';
     default:
       return 'You do not have permission to change this.';
   }
@@ -127,26 +127,26 @@ export const landingNavForRole = (role: Role): NavView =>
 
 /**
  * Scope a role operates at, narrowed to whatever the signed-in identity is
- * bound to. Super Admin sees the whole platform; everyone else inherits their
- * account's tenant / project.
+ * bound to. Tenant Admin sees every department; everyone else inherits their
+ * account's department / project.
  */
 export const scopeForRole = (role: Role, user: UserAccount | null): ScopeContext => {
-  if (role === 'Super Admin') {
-    return { type: 'platform', tenantName: 'All Tenants' };
+  if (role === 'Tenant Admin') {
+    return { type: 'tenant', departmentName: 'All Departments' };
   }
 
   const bound = user?.scope;
-  const tenantId = bound?.tenantId ?? 't-incedo';
-  const tenantName = bound?.tenantName ?? 'Incedo Labs';
+  const departmentId = bound?.departmentId ?? 'd-engineering';
+  const departmentName = bound?.departmentName ?? 'Engineering';
 
-  if (role === 'Tenant Admin') {
-    return { type: 'tenant', tenantId, tenantName };
+  if (role === 'Department Admin') {
+    return { type: 'department', departmentId, departmentName };
   }
 
   return {
     type: 'project',
-    tenantId,
-    tenantName,
+    departmentId,
+    departmentName,
     projectId: bound?.projectId ?? 'p-mobile-v2',
     projectName: bound?.projectName ?? 'Mobile Banking V2',
   };

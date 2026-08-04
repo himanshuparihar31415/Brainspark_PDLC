@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import { Project, Tenant } from '../../types';
+import { Project, Department } from '../../types';
 import { LandingNote } from '../common/LandingNote';
 import { ScopeFilterBar, useScopeFilter } from '../common/ScopeFilterBar';
 import {
@@ -72,10 +72,10 @@ interface CreateProjectModalProps {
   setAssignedAdmin: (v: string) => void;
   selectedTemplate: string;
   setSelectedTemplate: (v: string) => void;
-  selectedTenantId: string;
-  setSelectedTenantId: (v: string) => void;
-  tenants: Tenant[];
-  canFilterByTenant: boolean;
+  selectedDepartmentId: string;
+  setSelectedDepartmentId: (v: string) => void;
+  departments: Department[];
+  canFilterByDepartment: boolean;
   onSubmit: (e: React.FormEvent) => void;
   onClose: () => void;
 }
@@ -87,8 +87,8 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
   targetReleaseDate, setTargetReleaseDate,
   assignedAdmin, setAssignedAdmin,
   selectedTemplate, setSelectedTemplate,
-  selectedTenantId, setSelectedTenantId,
-  tenants, canFilterByTenant,
+  selectedDepartmentId, setSelectedDepartmentId,
+  departments, canFilterByDepartment,
   onSubmit, onClose,
 }) => {
   const [phase, setPhase] = useState(0);
@@ -206,11 +206,11 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                     </select>
                   </div>
                 </div>
-                {canFilterByTenant && (
+                {canFilterByDepartment && (
                   <div>
-                    <label className={labelClass}>Tenant</label>
-                    <select value={selectedTenantId} onChange={(e) => setSelectedTenantId(e.target.value)} className={selectClass}>
-                      {tenants.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+                    <label className={labelClass}>Department</label>
+                    <select value={selectedDepartmentId} onChange={(e) => setSelectedDepartmentId(e.target.value)} className={selectClass}>
+                      {departments.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
                     </select>
                   </div>
                 )}
@@ -312,7 +312,7 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
               <>
                 <div>
                   <label className={labelClass}>Git repository</label>
-                  <input type="text" value={gitRepo} onChange={(e) => setGitRepo(e.target.value)} placeholder="org/repo-name (from tenant connectors)" className={inputClass} />
+                  <input type="text" value={gitRepo} onChange={(e) => setGitRepo(e.target.value)} placeholder="org/repo-name (from department connectors)" className={inputClass} />
                 </div>
                 <div>
                   <label className={labelClass}>Jira / Azure DevOps board</label>
@@ -456,7 +456,7 @@ export const ProjectsView: React.FC = () => {
     closeProject,
     setCurrentScope,
     setActiveNav,
-    tenants,
+    departments,
     currentScope,
     currentRole,
     navIntent,
@@ -474,15 +474,15 @@ export const ProjectsView: React.FC = () => {
   const [targetReleaseDate, setTargetReleaseDate] = useState('2026-12-31');
   const [assignedAdmin, setAssignedAdmin] = useState('Sarah Jenkins');
   const [selectedTemplate, setSelectedTemplate] = useState('None (blank project)');
-  const [selectedTenantId, setSelectedTenantId] = useState(currentScope.tenantId || 't-incedo');
+  const [selectedDepartmentId, setSelectedDepartmentId] = useState(currentScope.departmentId || 'd-engineering');
 
-  const canFilterByTenant = currentRole === 'Super Admin';
+  const canFilterByDepartment = currentRole === 'Tenant Admin';
   const [scopeFilter, setScopeFilter] = useScopeFilter();
 
   const scopedProjects = projects.filter((p) => {
     // Header scope is the ceiling; the filter bar narrows within it.
-    if (currentScope.type === 'tenant' && p.tenantId !== currentScope.tenantId) return false;
-    if (canFilterByTenant && scopeFilter.tenantId !== 'all' && p.tenantId !== scopeFilter.tenantId)
+    if (currentScope.type === 'department' && p.departmentId !== currentScope.departmentId) return false;
+    if (canFilterByDepartment && scopeFilter.departmentId !== 'all' && p.departmentId !== scopeFilter.departmentId)
       return false;
     if (scopeFilter.projectId !== 'all' && p.id !== scopeFilter.projectId) return false;
     return true;
@@ -504,17 +504,17 @@ export const ProjectsView: React.FC = () => {
       return 0;
     });
 
-  const filterLabel = canFilterByTenant
-    ? scopeFilter.tenantId === 'all'
-      ? 'All Tenants'
-      : tenants.find((t) => t.id === scopeFilter.tenantId)?.name ?? 'Tenant'
-    : currentScope.tenantName || 'All Tenants';
+  const filterLabel = canFilterByDepartment
+    ? scopeFilter.departmentId === 'all'
+      ? 'All Departments'
+      : departments.find((t) => t.id === scopeFilter.departmentId)?.name ?? 'Department'
+    : currentScope.departmentName || 'All Departments';
 
   const handleCreateSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!projectName.trim()) return;
 
-    const t = tenants.find((x) => x.id === selectedTenantId);
+    const t = departments.find((x) => x.id === selectedDepartmentId);
 
     createProject({
       name: projectName.trim(),
@@ -522,8 +522,8 @@ export const ProjectsView: React.FC = () => {
       startDate,
       targetReleaseDate,
       admins: [assignedAdmin],
-      tenantId: selectedTenantId,
-      tenantName: t?.name || 'Incedo Labs',
+      departmentId: selectedDepartmentId,
+      departmentName: t?.name || 'Engineering',
       template: selectedTemplate,
     });
 
@@ -570,9 +570,9 @@ export const ProjectsView: React.FC = () => {
           <div className="p-12 text-center text-slate-500 text-xs">
             {moduleIntent
               ? 'No projects in this scope use that module.'
-              : canFilterByTenant && scopeFilter.tenantId !== 'all'
+              : canFilterByDepartment && scopeFilter.departmentId !== 'all'
               ? `No projects in ${filterLabel} yet.`
-              : 'No projects in this tenant yet.'}
+              : 'No projects in this department yet.'}
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -598,7 +598,7 @@ export const ProjectsView: React.FC = () => {
                         </div>
                         <div>
                           <div className="font-bold text-slate-900">{p.name}</div>
-                          <div className="text-[11px] text-slate-400">{p.tenantName}</div>
+                          <div className="text-[11px] text-slate-400">{p.departmentName}</div>
                         </div>
                       </div>
                     </td>
@@ -660,9 +660,9 @@ export const ProjectsView: React.FC = () => {
                             onClick={() => {
                               setCurrentScope({
                                 type: 'project',
-                                tenantId: p.tenantId,
+                                departmentId: p.departmentId,
                                 projectId: p.id,
-                                tenantName: p.tenantName,
+                                departmentName: p.departmentName,
                                 projectName: p.name,
                               });
                               setActiveNav('Dashboard');
@@ -707,10 +707,10 @@ export const ProjectsView: React.FC = () => {
           setAssignedAdmin={setAssignedAdmin}
           selectedTemplate={selectedTemplate}
           setSelectedTemplate={setSelectedTemplate}
-          selectedTenantId={selectedTenantId}
-          setSelectedTenantId={setSelectedTenantId}
-          tenants={tenants}
-          canFilterByTenant={canFilterByTenant}
+          selectedDepartmentId={selectedDepartmentId}
+          setSelectedDepartmentId={setSelectedDepartmentId}
+          departments={departments}
+          canFilterByDepartment={canFilterByDepartment}
           onSubmit={handleCreateSubmit}
           onClose={() => setCreateModalOpen(false)}
         />
