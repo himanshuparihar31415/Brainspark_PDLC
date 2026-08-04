@@ -13,8 +13,8 @@ import { ToastContainer } from './components/common/Toast';
 const DashboardView = lazy(() =>
   import('./components/views/DashboardView').then((m) => ({ default: m.DashboardView }))
 );
-const TenantsView = lazy(() =>
-  import('./components/views/TenantsView').then((m) => ({ default: m.TenantsView }))
+const DepartmentsView = lazy(() =>
+  import('./components/views/DepartmentsView').then((m) => ({ default: m.DepartmentsView }))
 );
 const ProjectsView = lazy(() =>
   import('./components/views/ProjectsView').then((m) => ({ default: m.ProjectsView }))
@@ -73,8 +73,8 @@ const AppContent: React.FC = () => {
     switch (activeNav) {
       case 'Dashboard':
         return <DashboardView />;
-      case 'Tenants':
-        return <TenantsView />;
+      case 'Departments':
+        return <DepartmentsView />;
       case 'Projects':
         return <ProjectsView />;
       case 'Team':

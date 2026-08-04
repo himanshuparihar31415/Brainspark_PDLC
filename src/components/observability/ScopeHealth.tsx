@@ -19,30 +19,30 @@ import { RunList } from './RunList';
 import { AlertTriangle, ShieldCheck } from 'lucide-react';
 
 /**
- * L3 — tenant and project operations. Consumption, cost, data policy, failures and
+ * L3 — department and project operations. Consumption, cost, data policy, failures and
  * dependency health for one account. This is the level an account conversation is
- * had at, so it leads with spend and with what the tenant's own capture policy
+ * had at, so it leads with spend and with what the department's own capture policy
  * permits.
  */
 export const ScopeHealth: React.FC<{
   runs: ObservabilityRun[];
-  tenantId: string;
+  departmentId: string;
   from: Drill;
   onDrill: (d: Drill) => void;
-}> = ({ runs, tenantId, from, onDrill }) => {
-  const tenantRuns = runs.filter((r) => r.tenantId === tenantId);
-  const r = rollup(tenantRuns, OBSERVABILITY_EVENTS);
-  const tenantName = tenantRuns[0]?.tenantName ?? 'Tenant';
+}> = ({ runs, departmentId, from, onDrill }) => {
+  const departmentRuns = runs.filter((r) => r.departmentId === departmentId);
+  const r = rollup(departmentRuns, OBSERVABILITY_EVENTS);
+  const departmentName = departmentRuns[0]?.departmentName ?? 'Department';
 
-  const runIds = new Set(tenantRuns.map((x) => x.id));
+  const runIds = new Set(departmentRuns.map((x) => x.id));
   const events = OBSERVABILITY_EVENTS.filter((e) => runIds.has(e.observabilityRunId));
 
-  const projects = groupByProject(tenantRuns, events);
-  const modules = groupByModule(tenantRuns, events);
+  const projects = groupByProject(departmentRuns, events);
+  const modules = groupByModule(departmentRuns, events);
 
   /* Capture policy in force. An absent payload should read as a policy decision,
-     never as data loss, so the tenant's own setting is stated plainly here. */
-  const policies = distinctPayloadPolicies(tenantRuns);
+     never as data loss, so the department's own setting is stated plainly here. */
+  const policies = distinctPayloadPolicies(departmentRuns);
   const restricted = policies.some((p) => p === 'metadata_only' || p === 'disabled');
 
   /* Dependency failures are attributed upstream, kept distinct from our own faults. */
@@ -51,10 +51,10 @@ export const ScopeHealth: React.FC<{
   for (const e of dependencyFailures)
     byTool.set(e.toolSlug ?? 'unknown', (byTool.get(e.toolSlug ?? 'unknown') ?? 0) + 1);
 
-  if (tenantRuns.length === 0)
+  if (departmentRuns.length === 0)
     return (
       <p className="rounded-2xl border border-slate-200 bg-white px-4 py-10 text-center text-xs text-slate-500">
-        No runs recorded for this tenant in your scope.
+        No runs recorded for this department in your scope.
       </p>
     );
 
@@ -103,7 +103,7 @@ export const ScopeHealth: React.FC<{
         <div className="space-y-4">
           <section className="rounded-2xl border border-slate-200 bg-white p-4">
             <h2 className="text-sm font-extrabold tracking-tight text-slate-900">
-              {tenantName} by project
+              {departmentName} by project
             </h2>
             <div className="mt-3 space-y-1.5">
               {projects.map((p) => (
@@ -175,7 +175,7 @@ export const ScopeHealth: React.FC<{
             {restricted && (
               <p className="mt-2 flex items-start gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-2 text-[10px] leading-relaxed text-amber-900">
                 <AlertTriangle className="mt-px h-3 w-3 shrink-0" />
-                Some runs cannot be replayed. That is this tenant's own setting, not a gap in
+                Some runs cannot be replayed. That is this department's own setting, not a gap in
                 capture.
               </p>
             )}
@@ -215,8 +215,8 @@ export const ScopeHealth: React.FC<{
       </div>
 
       <RunList
-        runs={tenantRuns}
-        title={`${tenantName} runs`}
+        runs={departmentRuns}
+        title={`${departmentName} runs`}
         onOpen={(runId) => onDrill({ level: 'L4', runId, from })}
       />
     </div>

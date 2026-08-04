@@ -33,8 +33,8 @@ export const SourceDrawer: React.FC<{
       value: connector
         ? connector.activatedProject
           ? 'Activated for this project'
-          : connector.enabledTenant
-          ? 'Enabled for tenant, not activated'
+          : connector.enabledDepartment
+          ? 'Enabled for department, not activated'
           : 'Not enabled'
         : 'Local to this workspace',
     },

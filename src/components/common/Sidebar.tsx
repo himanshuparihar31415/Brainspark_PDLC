@@ -33,7 +33,7 @@ export const Sidebar: React.FC = () => {
 
   const navItems: NavItemDef[] = [
     { label: 'Dashboard', icon: LayoutDashboard },
-    { label: 'Tenants', icon: Building2 },
+    { label: 'Departments', icon: Building2 },
     { label: 'Projects', icon: FolderGit2 },
     { label: 'Team', icon: Users },
     { label: 'Connectors', icon: Plug },

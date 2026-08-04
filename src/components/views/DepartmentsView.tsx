@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import { Tenant } from '../../types';
+import { Department } from '../../types';
 import {
   Building2,
   Plus,
@@ -15,12 +15,12 @@ import {
   SlidersHorizontal,
 } from 'lucide-react';
 
-export const TenantsView: React.FC = () => {
-  const { tenants, createTenant, deactivateTenant, suspendTenant, setCurrentScope, setActiveNav } = useApp();
+export const DepartmentsView: React.FC = () => {
+  const { departments, createDepartment, deactivateDepartment, suspendDepartment, setCurrentScope, setActiveNav } = useApp();
 
   const [createModalOpen, setCreateModalOpen] = useState(false);
-  const [deactivateModalTarget, setDeactivateModalTarget] = useState<Tenant | null>(null);
-  const [selectedTenantIds, setSelectedTenantIds] = useState<string[]>([]);
+  const [deactivateModalTarget, setDeactivateModalTarget] = useState<Department | null>(null);
+  const [selectedDepartmentIds, setSelectedDepartmentIds] = useState<string[]>([]);
   const [openActionId, setOpenActionId] = useState<string | null>(null);
 
   // Form state
@@ -32,11 +32,16 @@ export const TenantsView: React.FC = () => {
   const handleCreateSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
-    if (tenants.some((t) => t.name.toLowerCase() === name.trim().toLowerCase())) {
-      setErrorMsg('A tenant with this name already exists.');
+    if (departments.some((t) => t.name.toLowerCase() === name.trim().toLowerCase())) {
+      setErrorMsg('A department with this name already exists.');
       return;
     }
-    createTenant(name.trim(), email.trim() || 'admin@' + name.toLowerCase().replace(/\s+/g, '') + '.com', inheritDefaults);
+    // Departments share the tenant's mail domain, so the fallback address is a
+    // department-prefixed mailbox on it rather than a domain of its own.
+    const fallbackEmail =
+      name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '.').replace(/^\.|\.$/g, '') +
+      '.admin@incedolabs.com';
+    createDepartment(name.trim(), email.trim() || fallbackEmail, inheritDefaults);
     setName('');
     setEmail('');
     setErrorMsg('');
@@ -45,17 +50,17 @@ export const TenantsView: React.FC = () => {
 
   const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.checked) {
-      setSelectedTenantIds(tenants.map((t) => t.id));
+      setSelectedDepartmentIds(departments.map((t) => t.id));
     } else {
-      setSelectedTenantIds([]);
+      setSelectedDepartmentIds([]);
     }
   };
 
   const handleSelectOne = (id: string) => {
-    if (selectedTenantIds.includes(id)) {
-      setSelectedTenantIds(selectedTenantIds.filter((x) => x !== id));
+    if (selectedDepartmentIds.includes(id)) {
+      setSelectedDepartmentIds(selectedDepartmentIds.filter((x) => x !== id));
     } else {
-      setSelectedTenantIds([...selectedTenantIds, id]);
+      setSelectedDepartmentIds([...selectedDepartmentIds, id]);
     }
   };
 
@@ -64,9 +69,10 @@ export const TenantsView: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">Tenants</h1>
+          <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">Departments</h1>
           <p className="text-xs md:text-sm text-slate-500 mt-1">
-            Manage top-level organizational tenants and platform tenant administrative credentials
+            The delivery departments inside this tenant, the spend envelope each is accountable to,
+            and who administers them.
           </p>
         </div>
         <button
@@ -74,19 +80,19 @@ export const TenantsView: React.FC = () => {
           className="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-md shadow-indigo-600/20 transition-all cursor-pointer shrink-0"
         >
           <Plus className="w-4 h-4" />
-          <span>+ Create tenant</span>
+          <span>+ Create department</span>
         </button>
       </div>
 
       {/* Bulk bar */}
-      {selectedTenantIds.length > 0 && (
+      {selectedDepartmentIds.length > 0 && (
         <div className="bg-slate-900 text-white p-3 px-5 rounded-xl flex items-center justify-between text-xs animate-in fade-in">
-          <span className="font-semibold">{selectedTenantIds.length} selected</span>
+          <span className="font-semibold">{selectedDepartmentIds.length} selected</span>
           <div className="flex items-center gap-2">
             <button
               onClick={() => {
-                selectedTenantIds.forEach((id) => suspendTenant(id));
-                setSelectedTenantIds([]);
+                selectedDepartmentIds.forEach((id) => suspendDepartment(id));
+                setSelectedDepartmentIds([]);
               }}
               className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 rounded-lg font-medium"
             >
@@ -94,15 +100,15 @@ export const TenantsView: React.FC = () => {
             </button>
             <button
               onClick={() => {
-                selectedTenantIds.forEach((id) => deactivateTenant(id));
-                setSelectedTenantIds([]);
+                selectedDepartmentIds.forEach((id) => deactivateDepartment(id));
+                setSelectedDepartmentIds([]);
               }}
               className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 rounded-lg font-medium"
             >
               Deactivate
             </button>
             <button
-              onClick={() => setSelectedTenantIds([])}
+              onClick={() => setSelectedDepartmentIds([])}
               className="px-3 py-1.5 text-slate-400 hover:text-white"
             >
               Cancel
@@ -111,11 +117,11 @@ export const TenantsView: React.FC = () => {
         </div>
       )}
 
-      {/* Tenants Table */}
+      {/* Departments Table */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
-        {tenants.length === 0 ? (
+        {departments.length === 0 ? (
           <div className="p-12 text-center text-slate-500 text-xs">
-            No tenants yet. Create the first one to get started.
+            No departments yet. Create the first one to get started.
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -126,11 +132,11 @@ export const TenantsView: React.FC = () => {
                     <input
                       type="checkbox"
                       onChange={handleSelectAll}
-                      checked={selectedTenantIds.length === tenants.length && tenants.length > 0}
+                      checked={selectedDepartmentIds.length === departments.length && departments.length > 0}
                       className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
                     />
                   </th>
-                  <th className="py-3 px-4">Tenant</th>
+                  <th className="py-3 px-4">Department</th>
                   <th className="py-3 px-4">Projects</th>
                   <th className="py-3 px-4">Headcount</th>
                   <th className="py-3 px-4">Spend (30d)</th>
@@ -139,12 +145,12 @@ export const TenantsView: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {tenants.map((t) => (
+                {departments.map((t) => (
                   <tr key={t.id} className="hover:bg-slate-50/80 transition-colors">
                     <td className="py-3.5 px-4">
                       <input
                         type="checkbox"
-                        checked={selectedTenantIds.includes(t.id)}
+                        checked={selectedDepartmentIds.includes(t.id)}
                         onChange={() => handleSelectOne(t.id)}
                         className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
                       />
@@ -203,7 +209,7 @@ export const TenantsView: React.FC = () => {
                         <div className="absolute right-4 top-10 w-44 bg-white rounded-xl shadow-xl border border-slate-200 py-1 z-30 text-left text-xs text-slate-700 animate-in fade-in">
                           <button
                             onClick={() => {
-                              setCurrentScope({ type: 'tenant', tenantId: t.id, tenantName: t.name });
+                              setCurrentScope({ type: 'department', departmentId: t.id, departmentName: t.name });
                               setActiveNav('Dashboard');
                               setOpenActionId(null);
                             }}
@@ -213,7 +219,7 @@ export const TenantsView: React.FC = () => {
                           </button>
                           <button
                             onClick={() => {
-                              suspendTenant(t.id);
+                              suspendDepartment(t.id);
                               setOpenActionId(null);
                             }}
                             className="w-full px-3 py-2 hover:bg-slate-50 text-left font-medium"
@@ -240,12 +246,12 @@ export const TenantsView: React.FC = () => {
         )}
       </div>
 
-      {/* 3.2 Create Tenant Modal */}
+      {/* 3.2 Create Department Modal */}
       {createModalOpen && (
         <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full p-6 space-y-5 animate-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h2 className="text-lg font-bold text-slate-900">Create tenant</h2>
+              <h2 className="text-lg font-bold text-slate-900">Create department</h2>
               <button onClick={() => setCreateModalOpen(false)} className="text-slate-400 hover:text-slate-600">
                 <X className="w-5 h-5" />
               </button>
@@ -253,24 +259,24 @@ export const TenantsView: React.FC = () => {
 
             <form onSubmit={handleCreateSubmit} className="space-y-4 text-xs">
               <div>
-                <label className="block font-bold text-slate-700 mb-1">Tenant name</label>
+                <label className="block font-bold text-slate-700 mb-1">Department name</label>
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g., Acme Corporation"
+                  placeholder="e.g., Data & Analytics"
                   required
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-900 focus:bg-white focus:border-indigo-600 outline-none"
                 />
               </div>
 
               <div>
-                <label className="block font-bold text-slate-700 mb-1">Initial Tenant Admin email</label>
+                <label className="block font-bold text-slate-700 mb-1">Initial Department Admin email</label>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="admin@acme.com"
+                  placeholder="data.admin@incedolabs.com"
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-900 focus:bg-white focus:border-indigo-600 outline-none"
                 />
               </div>
@@ -304,7 +310,7 @@ export const TenantsView: React.FC = () => {
                   type="submit"
                   className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-md"
                 >
-                  Create tenant
+                  Create department
                 </button>
               </div>
             </form>
@@ -323,7 +329,7 @@ export const TenantsView: React.FC = () => {
               </h2>
             </div>
             <p className="text-xs text-slate-600 leading-relaxed">
-              All projects under this tenant will become read-only. This can be reversed.
+              All projects under this department will become read-only. This can be reversed.
             </p>
             <div className="pt-2 flex items-center justify-end gap-2 text-xs">
               <button
@@ -334,12 +340,12 @@ export const TenantsView: React.FC = () => {
               </button>
               <button
                 onClick={() => {
-                  deactivateTenant(deactivateModalTarget.id);
+                  deactivateDepartment(deactivateModalTarget.id);
                   setDeactivateModalTarget(null);
                 }}
                 className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl shadow-md"
               >
-                Deactivate tenant
+                Deactivate department
               </button>
             </div>
           </div>

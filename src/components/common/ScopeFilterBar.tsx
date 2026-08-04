@@ -3,14 +3,14 @@ import { useApp } from '../../context/AppContext';
 import { Building2, FolderGit2, Layers } from 'lucide-react';
 
 export interface ScopeFilterValue {
-  tenantId: string | 'all';
+  departmentId: string | 'all';
   projectId: string | 'all';
 }
 
 interface ScopeFilterBarProps {
   value: ScopeFilterValue;
   onChange: (next: ScopeFilterValue) => void;
-  /** Screens with no per-project dimension (e.g. Tenants) hide the project axis. */
+  /** Screens with no per-project dimension (e.g. Departments) hide the project axis. */
   showProject?: boolean;
   /** Count of rows currently shown, appended to the echo line. */
   resultCount?: number;
@@ -18,14 +18,14 @@ interface ScopeFilterBarProps {
 }
 
 /**
- * Shared scope filter. A narrowing funnel — choosing a tenant repopulates the
- * project list, because projects only exist within a tenant.
+ * Shared scope filter. A narrowing funnel — choosing a department repopulates the
+ * project list, because projects only exist within a department.
  *
  * Entitlement decides which axes appear at all:
- *   Super Admin  → tenant + project (spans everything)
- *   Tenant Admin → project only (their tenant is fixed; a locked one-option
- *                  dropdown would be noise)
- *   everyone else → nothing rendered; their scope is already pinned
+ *   Tenant Admin     → department + project (spans everything)
+ *   Department Admin → project only (their department is fixed; a locked one-option
+ *                      dropdown would be noise)
+ *   everyone else    → nothing rendered; their scope is already pinned
  */
 export const ScopeFilterBar: React.FC<ScopeFilterBarProps> = ({
   value,
@@ -34,24 +34,24 @@ export const ScopeFilterBar: React.FC<ScopeFilterBarProps> = ({
   resultCount,
   resultNoun = 'results',
 }) => {
-  const { currentRole, currentScope, tenants, projects } = useApp();
+  const { currentRole, currentScope, departments, projects } = useApp();
 
-  const spansTenants = currentRole === 'Super Admin';
-  const spansProjects = spansTenants || currentRole === 'Tenant Admin';
+  const spansDepartments = currentRole === 'Tenant Admin';
+  const spansProjects = spansDepartments || currentRole === 'Department Admin';
 
   if (!spansProjects) return null;
 
-  const effectiveTenantId = spansTenants ? value.tenantId : currentScope.tenantId ?? 'all';
+  const effectiveDepartmentId = spansDepartments ? value.departmentId : currentScope.departmentId ?? 'all';
 
   const selectableProjects =
-    effectiveTenantId === 'all'
+    effectiveDepartmentId === 'all'
       ? projects
-      : projects.filter((p) => p.tenantId === effectiveTenantId);
+      : projects.filter((p) => p.departmentId === effectiveDepartmentId);
 
-  const tenantLabel =
-    effectiveTenantId === 'all'
-      ? 'All tenants'
-      : tenants.find((t) => t.id === effectiveTenantId)?.name ?? 'Tenant';
+  const departmentLabel =
+    effectiveDepartmentId === 'all'
+      ? 'All departments'
+      : departments.find((t) => t.id === effectiveDepartmentId)?.name ?? 'Department';
 
   const projectLabel =
     value.projectId === 'all'
@@ -59,7 +59,7 @@ export const ScopeFilterBar: React.FC<ScopeFilterBarProps> = ({
       : projects.find((p) => p.id === value.projectId)?.name ?? 'Project';
 
   const dirty =
-    (spansTenants && value.tenantId !== 'all') || (showProject && value.projectId !== 'all');
+    (spansDepartments && value.departmentId !== 'all') || (showProject && value.projectId !== 'all');
 
   return (
     <div className="flex flex-col gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
@@ -68,7 +68,7 @@ export const ScopeFilterBar: React.FC<ScopeFilterBarProps> = ({
         <span>
           Viewing{' '}
           <span className="font-bold text-slate-700">
-            {tenantLabel}
+            {departmentLabel}
             {showProject ? ` · ${projectLabel}` : ''}
           </span>
           {resultCount !== undefined && (
@@ -81,17 +81,17 @@ export const ScopeFilterBar: React.FC<ScopeFilterBarProps> = ({
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        {spansTenants && (
+        {spansDepartments && (
           <label className="flex items-center gap-1.5">
             <Building2 className="h-3.5 w-3.5 shrink-0 text-slate-400" />
             <select
-              value={value.tenantId}
-              // Narrowing the tenant invalidates any project choice beneath it.
-              onChange={(e) => onChange({ tenantId: e.target.value, projectId: 'all' })}
+              value={value.departmentId}
+              // Narrowing the department invalidates any project choice beneath it.
+              onChange={(e) => onChange({ departmentId: e.target.value, projectId: 'all' })}
               className="cursor-pointer rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-800 outline-none focus:border-indigo-600"
             >
-              <option value="all">All tenants</option>
-              {tenants.map((t) => (
+              <option value="all">All departments</option>
+              {departments.map((t) => (
                 <option key={t.id} value={t.id}>
                   {t.name}
                 </option>
@@ -120,7 +120,7 @@ export const ScopeFilterBar: React.FC<ScopeFilterBarProps> = ({
 
         {dirty && (
           <button
-            onClick={() => onChange({ tenantId: 'all', projectId: 'all' })}
+            onClick={() => onChange({ departmentId: 'all', projectId: 'all' })}
             className="cursor-pointer text-xs font-semibold text-indigo-600 hover:underline"
           >
             Clear filters
@@ -138,7 +138,7 @@ export const ScopeFilterBar: React.FC<ScopeFilterBarProps> = ({
 export const useScopeFilter = (): [ScopeFilterValue, (v: ScopeFilterValue) => void] => {
   const { currentScope } = useApp();
   const [value, setValue] = React.useState<ScopeFilterValue>({
-    tenantId: currentScope.tenantId ?? 'all',
+    departmentId: currentScope.departmentId ?? 'all',
     projectId: currentScope.projectId ?? 'all',
   });
   return [value, setValue];

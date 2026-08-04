@@ -16,17 +16,17 @@ import {
 
 /** Explains the tier the signed-in role sits at, in its own words. */
 const TIER_BLURB: Record<string, { title: string; body: string }> = {
-  'platform-availability': {
+  'tenant-availability': {
     title: 'Platform authority',
-    body: 'You decide which connectors exist for tenants at all. Withdrawing one clears every tenant and project binding beneath it.',
+    body: 'You decide which connectors exist for departments at all. Withdrawing one clears every department and project binding beneath it.',
   },
-  'tenant-baseline': {
-    title: 'Tenant authority',
-    body: 'You enable connectors for your tenant from what the platform makes available. Projects can activate only what you enable.',
+  'department-baseline': {
+    title: 'Department authority',
+    body: 'You enable connectors for your department from what the platform makes available. Projects can activate only what you enable.',
   },
   'project-activation': {
     title: 'Project authority',
-    body: 'You activate connectors your Tenant Admin has enabled, using credentials scoped to this project.',
+    body: 'You activate connectors your Department Admin has enabled, using credentials scoped to this project.',
   },
 };
 
@@ -34,7 +34,7 @@ export const ConnectorsView: React.FC = () => {
   const {
     connectors,
     projects,
-    setConnectorPlatformAvailability,
+    setConnectorTenantAvailability,
     toggleConnectorEnabled,
     activateConnectorProject,
     currentRole,
@@ -49,17 +49,17 @@ export const ConnectorsView: React.FC = () => {
   const [authError, setAuthError] = useState('');
 
   // Ladder: each tier holds everything below it.
-  const canSetPlatform = canManageConnector(currentRole, 'platform-availability');
-  const canSetTenant = canManageConnector(currentRole, 'tenant-baseline');
+  const canSetPlatform = canManageConnector(currentRole, 'tenant-availability');
+  const canSetDepartment = canManageConnector(currentRole, 'department-baseline');
   const canActivate = canManageConnector(currentRole, 'project-activation');
   const topCapability = connectorCapabilities(currentRole)[0];
 
   const scopeLabel =
     filter.projectId !== 'all'
       ? projects.find((p) => p.id === filter.projectId)?.name
-      : filter.tenantId !== 'all'
-      ? 'selected tenant'
-      : 'all tenants';
+      : filter.departmentId !== 'all'
+      ? 'selected department'
+      : 'all departments';
 
   const handleActivateSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -85,7 +85,7 @@ export const ConnectorsView: React.FC = () => {
           Connectors
         </h1>
         <p className="mt-1 text-xs text-slate-500 md:text-sm">
-          Integration availability, tenant enablement and project activation — each set at its own
+          Integration availability, department enablement and project activation — each set at its own
           level.
         </p>
       </div>
@@ -124,10 +124,10 @@ export const ConnectorsView: React.FC = () => {
                     </span>
                   </th>
                 )}
-                {canSetTenant && (
+                {canSetDepartment && (
                   <th className="px-4 py-3">
                     <span className="flex items-center gap-1">
-                      <Building2 className="h-3 w-3" /> Tenant
+                      <Building2 className="h-3 w-3" /> Department
                     </span>
                   </th>
                 )}
@@ -143,8 +143,8 @@ export const ConnectorsView: React.FC = () => {
             <tbody className="divide-y divide-slate-100">
               {connectors.map((c) => {
                 // A row is inert for this role when a tier above it is closed.
-                const withdrawn = !c.platformAvailable;
-                const notEnabled = c.platformAvailable && !c.enabledTenant;
+                const withdrawn = !c.tenantAvailable;
+                const notEnabled = c.tenantAvailable && !c.enabledDepartment;
                 const dimmed = canSetPlatform ? false : withdrawn || notEnabled;
 
                 return (
@@ -189,30 +189,30 @@ export const ConnectorsView: React.FC = () => {
                     {canSetPlatform && (
                       <td className="px-4 py-3.5">
                         <button
-                          onClick={() => setConnectorPlatformAvailability(c.id, !c.platformAvailable)}
+                          onClick={() => setConnectorTenantAvailability(c.id, !c.tenantAvailable)}
                           title={
-                            c.platformAvailable
-                              ? 'Withdraw platform-wide. Clears tenant and project bindings.'
-                              : 'Make available to tenants.'
+                            c.tenantAvailable
+                              ? 'Withdraw platform-wide. Clears department and project bindings.'
+                              : 'Make available to departments.'
                           }
                           className={`cursor-pointer rounded-lg px-3 py-1 text-xs font-bold transition-colors ${
-                            c.platformAvailable
+                            c.tenantAvailable
                               ? 'border border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100'
                               : 'border border-slate-200 bg-slate-100 text-slate-500 hover:bg-slate-200'
                           }`}
                         >
-                          {c.platformAvailable ? 'Available' : 'Withdrawn'}
+                          {c.tenantAvailable ? 'Available' : 'Withdrawn'}
                         </button>
                       </td>
                     )}
 
-                    {/* Tier 2 — tenant baseline */}
-                    {canSetTenant && (
+                    {/* Tier 2 — department baseline */}
+                    {canSetDepartment && (
                       <td className="px-4 py-3.5">
                         {withdrawn ? (
                           <div
                             className="flex cursor-not-allowed items-center gap-1.5 text-xs text-slate-400"
-                            title="Withdrawn platform-wide by a Super Admin."
+                            title="Withdrawn platform-wide by a Tenant Admin."
                           >
                             <Lock className="h-3.5 w-3.5" />
                             <span>Not available</span>
@@ -221,17 +221,17 @@ export const ConnectorsView: React.FC = () => {
                           <button
                             onClick={() => toggleConnectorEnabled(c.id)}
                             title={
-                              c.enabledTenant
-                                ? 'Disable for this tenant. Clears project activations.'
-                                : 'Enable for this tenant.'
+                              c.enabledDepartment
+                                ? 'Disable for this department. Clears project activations.'
+                                : 'Enable for this department.'
                             }
                             className={`cursor-pointer rounded-lg px-3 py-1 text-xs font-bold transition-colors ${
-                              c.enabledTenant
+                              c.enabledDepartment
                                 ? 'border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
                                 : 'border border-slate-200 bg-slate-100 text-slate-500 hover:bg-slate-200'
                             }`}
                           >
-                            {c.enabledTenant ? 'Enabled' : 'Disabled'}
+                            {c.enabledDepartment ? 'Enabled' : 'Disabled'}
                           </button>
                         )}
                       </td>
@@ -250,10 +250,10 @@ export const ConnectorsView: React.FC = () => {
                       ) : notEnabled ? (
                         <div
                           className="flex cursor-not-allowed items-center gap-1.5 text-xs text-slate-400"
-                          title="Ask your Tenant Admin to enable this connector."
+                          title="Ask your Department Admin to enable this connector."
                         >
                           <Lock className="h-3.5 w-3.5" />
-                          <span>Not enabled by tenant</span>
+                          <span>Not enabled by department</span>
                         </div>
                       ) : c.activatedProject ? (
                         <span className="inline-flex items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-700">

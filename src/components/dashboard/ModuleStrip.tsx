@@ -221,7 +221,7 @@ const ModuleDetail: React.FC<{
 
 /**
  * The admin-tier lower strip: five capability modules summarised across every
- * project that uses them. This is the Super / Tenant Admin lens — not "one
+ * project that uses them. This is the Super / Department Admin lens — not "one
  * project's phases" but "how is each capability performing across projects".
  */
 export const ModuleStrip: React.FC = () => {
@@ -229,34 +229,34 @@ export const ModuleStrip: React.FC = () => {
   const {
     currentRole,
     currentScope,
-    tenants,
+    departments,
     projects,
     teamMembers,
     moduleActivity,
     navigateTo,
   } = useApp();
 
-  // Super Admin gets the full Tenant → Project funnel. A Tenant Admin's tenant
+  // Tenant Admin gets the full Department → Project funnel. A Department Admin's department
   // is fixed, so their bar collapses to a single Project filter rather than
   // showing a locked single-option dropdown.
-  const tenantLocked = currentRole !== 'Super Admin';
-  const lockedTenantId = currentScope.tenantId;
+  const departmentLocked = currentRole !== 'Tenant Admin';
+  const lockedDepartmentId = currentScope.departmentId;
 
   // Start aligned with the header scope so the strip and the tiles above it
   // agree on first render; the user can widen from there.
-  const [tenantFilter, setTenantFilter] = useState<string>(lockedTenantId ?? 'all');
+  const [departmentFilter, setDepartmentFilter] = useState<string>(lockedDepartmentId ?? 'all');
   const [projectFilter, setProjectFilter] = useState<string>(currentScope.projectId ?? 'all');
   const [openModule, setOpenModule] = useState<ModuleKey | null>(null);
 
-  const effectiveTenantId = tenantLocked ? lockedTenantId ?? 'all' : tenantFilter;
+  const effectiveDepartmentId = departmentLocked ? lockedDepartmentId ?? 'all' : departmentFilter;
 
-  // Tenant choice repopulates the project list — projects only exist within a tenant.
+  // Department choice repopulates the project list — projects only exist within a department.
   const selectableProjects = useMemo(
     () =>
-      effectiveTenantId === 'all'
+      effectiveDepartmentId === 'all'
         ? projects
-        : projects.filter((p) => p.tenantId === effectiveTenantId),
-    [projects, effectiveTenantId]
+        : projects.filter((p) => p.departmentId === effectiveDepartmentId),
+    [projects, effectiveDepartmentId]
   );
 
   const scopeProjects = useMemo(
@@ -272,15 +272,15 @@ export const ModuleStrip: React.FC = () => {
 
   const rollups = MODULE_DEFS.map((def) => rollupModule(def.key, moduleActivity, scopeProjectIds));
 
-  const tenantName =
-    effectiveTenantId === 'all'
-      ? 'All tenants'
-      : tenants.find((t) => t.id === effectiveTenantId)?.name ?? 'Tenant';
+  const departmentName =
+    effectiveDepartmentId === 'all'
+      ? 'All departments'
+      : departments.find((t) => t.id === effectiveDepartmentId)?.name ?? 'Department';
   const projectName =
     projectFilter === 'all' ? 'All projects' : projectNames[projectFilter] ?? 'Project';
 
-  const scopeEcho = `${tenantName} · ${projectName}`;
-  const filtersDirty = (!tenantLocked && tenantFilter !== 'all') || projectFilter !== 'all';
+  const scopeEcho = `${departmentName} · ${projectName}`;
+  const filtersDirty = (!departmentLocked && departmentFilter !== 'all') || projectFilter !== 'all';
 
   const openRollup = openModule ? rollups.find((r) => r.key === openModule) : null;
 
@@ -306,21 +306,21 @@ export const ModuleStrip: React.FC = () => {
           </p>
         </div>
 
-        {/* Narrowing funnel: tenant first, project second */}
+        {/* Narrowing funnel: department first, project second */}
         <div className="flex flex-wrap items-center gap-2">
-          {!tenantLocked && (
+          {!departmentLocked && (
             <label className="flex items-center gap-1.5">
               <Layers className="h-3.5 w-3.5 text-slate-400" />
               <select
-                value={tenantFilter}
+                value={departmentFilter}
                 onChange={(e) => {
-                  setTenantFilter(e.target.value);
+                  setDepartmentFilter(e.target.value);
                   setProjectFilter('all');
                 }}
                 className="cursor-pointer rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-800 outline-none focus:border-indigo-600"
               >
-                <option value="all">All tenants</option>
-                {tenants.map((t) => (
+                <option value="all">All departments</option>
+                {departments.map((t) => (
                   <option key={t.id} value={t.id}>
                     {t.name}
                   </option>
@@ -348,7 +348,7 @@ export const ModuleStrip: React.FC = () => {
           {filtersDirty && (
             <button
               onClick={() => {
-                if (!tenantLocked) setTenantFilter('all');
+                if (!departmentLocked) setDepartmentFilter('all');
                 setProjectFilter('all');
               }}
               className="cursor-pointer text-xs font-semibold text-indigo-600 hover:underline"
@@ -364,10 +364,10 @@ export const ModuleStrip: React.FC = () => {
           <ModuleCard
             key={r.key}
             rollup={r}
-            // Contention is a tenant-level signal: too fine for the platform
+            // Contention is a department-level signal: too fine for the platform
             // view, invisible from inside a single project.
             contention={
-              currentRole === 'Tenant Admin' ? poolContention(r.key, teamMembers, scopeProjects) : 0
+              currentRole === 'Department Admin' ? poolContention(r.key, teamMembers, scopeProjects) : 0
             }
             onOpen={() => setOpenModule(r.key)}
           />

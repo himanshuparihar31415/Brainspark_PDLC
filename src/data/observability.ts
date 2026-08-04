@@ -97,7 +97,7 @@ export const LEVELS: Record<
     audience: 'Product owners, engineering leaders',
   },
   L3: {
-    label: 'Tenant / project',
+    label: 'Department / project',
     content: 'Consumption, cost, data policy, failures, connector health',
     audience: 'Account and platform operations',
   },
@@ -119,7 +119,7 @@ export const LEVELS: Record<
  * response content — this is the check that decides, and it is deliberately
  * narrower than the set of roles that can open the view.
  */
-export const PAYLOAD_READER_ROLES: Role[] = ['Super Admin', 'Tenant Admin'];
+export const PAYLOAD_READER_ROLES: Role[] = ['Tenant Admin', 'Department Admin'];
 
 export const canViewPayloads = (role: Role): boolean => PAYLOAD_READER_ROLES.includes(role);
 
@@ -195,7 +195,7 @@ export const PAYLOAD_POLICY_COPY: Record<PayloadPolicy, { label: string; hint: s
   redacted: { label: 'Redacted', hint: 'Content captured with sensitive spans removed.' },
   sampled: { label: 'Sampled', hint: 'Content captured on a fraction of calls only.' },
   metadata_only: { label: 'Metadata only', hint: 'No content captured — counts and timings only.' },
-  disabled: { label: 'Disabled', hint: 'Capture switched off for this tenant.' },
+  disabled: { label: 'Disabled', hint: 'Capture switched off for this department.' },
 };
 
 // ───────────────────────────── Cost from the catalog ─────────────────────────
@@ -234,7 +234,7 @@ export const computeCostUsd = (
 // ───────────────────────────── Roll-ups and selectors ─────────────────────────
 
 export interface RunFilter {
-  tenantId?: string;
+  departmentId?: string;
   projectId?: string;
   moduleName?: string;
   environment?: string;
@@ -243,7 +243,7 @@ export interface RunFilter {
 export const filterRuns = (runs: ObservabilityRun[], f: RunFilter): ObservabilityRun[] =>
   runs.filter(
     (r) =>
-      (!f.tenantId || r.tenantId === f.tenantId) &&
+      (!f.departmentId || r.departmentId === f.departmentId) &&
       (!f.projectId || r.projectId === f.projectId) &&
       (!f.moduleName || r.moduleName === f.moduleName) &&
       (!f.environment || r.environment === f.environment)
@@ -321,9 +321,9 @@ export const rollup = (runs: ObservabilityRun[], events: ObservabilityEvent[] = 
 export interface ModuleRollup extends RunRollup {
   moduleName: string;
 }
-export interface TenantRollup extends RunRollup {
-  tenantId: string;
-  tenantName: string;
+export interface DepartmentRollup extends RunRollup {
+  departmentId: string;
+  departmentName: string;
 }
 export interface ProjectRollup extends RunRollup {
   projectId?: string;
@@ -347,13 +347,13 @@ export const groupByModule = (
     ),
   }));
 
-export const groupByTenant = (
+export const groupByDepartment = (
   runs: ObservabilityRun[],
   events: ObservabilityEvent[]
-): TenantRollup[] =>
-  distinct(runs.map((r) => r.tenantId)).map((tenantId) => {
-    const rows = runs.filter((r) => r.tenantId === tenantId);
-    return { tenantId, tenantName: rows[0]?.tenantName ?? tenantId, ...rollup(rows, events) };
+): DepartmentRollup[] =>
+  distinct(runs.map((r) => r.departmentId)).map((departmentId) => {
+    const rows = runs.filter((r) => r.departmentId === departmentId);
+    return { departmentId, departmentName: rows[0]?.departmentName ?? departmentId, ...rollup(rows, events) };
   });
 
 export const groupByProject = (
@@ -485,7 +485,7 @@ export const rankedRisks = (
     risks.push({
       id: `fail-${r.id}`,
       severity: 'critical',
-      title: `${r.capability} failed for ${r.tenantName}`,
+      title: `${r.capability} failed for ${r.departmentName}`,
       evidence: r.errorSummary ?? 'No error summary recorded.',
       owner: r.moduleName === 'spec_ai' ? 'AI engineering' : 'Platform engineering',
       runId: r.id,
@@ -535,7 +535,7 @@ export const rankedRisks = (
       id: 'policy',
       severity: 'medium',
       title: `${degraded.length} ${degraded.length === 1 ? 'run' : 'runs'} captured without payloads`,
-      evidence: `Tenant policy is ${PAYLOAD_POLICY_COPY[degraded[0].payloadPolicy].label.toLowerCase()}, so those runs cannot be replayed.`,
+      evidence: `Department policy is ${PAYLOAD_POLICY_COPY[degraded[0].payloadPolicy].label.toLowerCase()}, so those runs cannot be replayed.`,
       owner: 'Governance',
       runId: degraded[0].id,
     });

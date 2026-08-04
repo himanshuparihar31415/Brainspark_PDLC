@@ -220,7 +220,7 @@ export const AgentRegistryView: React.FC = () => {
           <div className="text-xs text-slate-600 leading-relaxed">
             <span className="font-bold text-slate-800">Read-only.</span> As {currentRole} you can
             browse the catalogue, but registering, editing and deactivating agents is set on the
-            tenant baseline.
+            department baseline.
           </div>
         </div>
       )}

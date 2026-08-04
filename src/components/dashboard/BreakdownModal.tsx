@@ -3,7 +3,7 @@ import { BreakdownRow } from '../../types';
 import { X, TrendingUp, TrendingDown, ArrowRight } from 'lucide-react';
 
 export interface BreakdownSection {
-  /** e.g. "By tenant", "By module" — the axis this section ranks on. */
+  /** e.g. "By department", "By module" — the axis this section ranks on. */
   title: string;
   rows: BreakdownRow[];
 }

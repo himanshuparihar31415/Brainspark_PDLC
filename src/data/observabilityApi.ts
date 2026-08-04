@@ -12,7 +12,7 @@ import {
   RetryRateResponse,
   RunSummaryResponse,
   SpanTimelineItem,
-  TenantObservability,
+  DepartmentObservability,
   TokenTrendItem,
   ToolUsageResponse,
   TopConsumerItem,
@@ -21,8 +21,8 @@ import {
 // ────────────────────────── 1. Platform Metrics ──────────────────────────────
 
 export const getPlatformAppMetrics = (): PlatformAppMetrics => ({
-  total_tenants: 5,
-  active_tenants: 4,
+  total_departments: 5,
+  active_departments: 4,
   total_users: 27,
   recent_auth_success: 186,
   recent_auth_failure: 4,
@@ -30,10 +30,10 @@ export const getPlatformAppMetrics = (): PlatformAppMetrics => ({
   recent_schema_provision_failures: 0,
 });
 
-export const getTenantObservability = (tenantId: string): TenantObservability => {
-  const tenants: Record<string, TenantObservability> = {
-    't-incedo': {
-      tenant_id: 't-incedo',
+export const getDepartmentObservability = (departmentId: string): DepartmentObservability => {
+  const departments: Record<string, DepartmentObservability> = {
+    'd-engineering': {
+      department_id: 'd-engineering',
       active_member_count: 8,
       project_count: 3,
       enabled_tool_count: 2,
@@ -41,8 +41,8 @@ export const getTenantObservability = (tenantId: string): TenantObservability =>
       recent_run_count: 120,
       recent_run_failures: 5,
     },
-    't-acme': {
-      tenant_id: 't-acme',
+    'd-data': {
+      department_id: 'd-data',
       active_member_count: 12,
       project_count: 4,
       enabled_tool_count: 3,
@@ -51,7 +51,7 @@ export const getTenantObservability = (tenantId: string): TenantObservability =>
       recent_run_failures: 8,
     },
     't-globex': {
-      tenant_id: 't-globex',
+      department_id: 't-globex',
       active_member_count: 5,
       project_count: 2,
       enabled_tool_count: 1,
@@ -60,7 +60,7 @@ export const getTenantObservability = (tenantId: string): TenantObservability =>
       recent_run_failures: 2,
     },
     't-wayne': {
-      tenant_id: 't-wayne',
+      department_id: 't-wayne',
       active_member_count: 6,
       project_count: 2,
       enabled_tool_count: 2,
@@ -69,11 +69,11 @@ export const getTenantObservability = (tenantId: string): TenantObservability =>
       recent_run_failures: 3,
     },
   };
-  return tenants[tenantId] ?? tenants['t-incedo'];
+  return departments[departmentId] ?? departments['d-engineering'];
 };
 
 export const getProjectObservability = (
-  _tenantId: string,
+  _departmentId: string,
   projectId: string
 ): ProjectObservability => ({
   project_id: projectId,
@@ -167,13 +167,13 @@ export const getFallbackRate = (): FallbackRateResponse => ({
   ],
 });
 
-// ─────────────────────── 7. Tenant (Super-Admin) ─────────────────────────────
+// ─────────────────────── 7. Department (Super-Admin) ─────────────────────────────
 
 export const getTopConsumers = (): TopConsumerItem[] => [
-  { tenant_id: 't-acme', tenant_schema: 'tenant_acme', total_cost_usd: 1.48, run_count: 185, total_tokens: 620000 },
-  { tenant_id: 't-incedo', tenant_schema: 'tenant_incedo', total_cost_usd: 1.12, run_count: 120, total_tokens: 480000 },
-  { tenant_id: 't-wayne', tenant_schema: 'tenant_wayne', total_cost_usd: 0.74, run_count: 72, total_tokens: 310000 },
-  { tenant_id: 't-globex', tenant_schema: 'tenant_globex', total_cost_usd: 0.52, run_count: 54, total_tokens: 225000 },
+  { department_id: 'd-data', department_schema: 'department_acme', total_cost_usd: 1.48, run_count: 185, total_tokens: 620000 },
+  { department_id: 'd-engineering', department_schema: 'department_incedo', total_cost_usd: 1.12, run_count: 120, total_tokens: 480000 },
+  { department_id: 't-wayne', department_schema: 'department_wayne', total_cost_usd: 0.74, run_count: 72, total_tokens: 310000 },
+  { department_id: 't-globex', department_schema: 'department_globex', total_cost_usd: 0.52, run_count: 54, total_tokens: 225000 },
 ];
 
 // ────────────────────────── 8. Agent Behavior ────────────────────────────────

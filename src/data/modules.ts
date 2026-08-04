@@ -69,7 +69,7 @@ export const MODULE_DEFS: ModuleDef[] = [
     primary: { label: 'test cases created', unit: 'count' },
     secondary: { label: 'runs', unit: 'count' },
     quality: { label: 'Avg defect-detection rate', unit: 'percent' },
-    // QA capacity is the classic tenant-level shared pool.
+    // QA capacity is the classic department-level shared pool.
     pooledRoles: ['QA Manager', 'QA Engineer'],
     pipeline: {
       unit: 'test cases',
@@ -163,7 +163,7 @@ export const rollupModule = (
 
 /**
  * How many projects in scope are competing for the same pooled people in this
- * module. A tenant-level problem by definition: the platform view is too high
+ * module. A department-level problem by definition: the platform view is too high
  * to see it and a single project too low.
  */
 export const poolContention = (

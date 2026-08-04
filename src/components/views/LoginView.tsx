@@ -285,7 +285,7 @@ export const LoginView: React.FC = () => {
           </div>
 
           <div className="mt-8 flex flex-wrap items-center justify-between gap-3 text-[11px] text-slate-400">
-            <span>© Copyright 2026 Brainspark · Incedo Labs</span>
+            <span>© Copyright 2026 Brainspark · Engineering</span>
             <a href="#" className="hover:text-slate-200">
               Terms &amp; Conditions
             </a>
@@ -308,7 +308,7 @@ export const LoginView: React.FC = () => {
           </h2>
           <p className="mt-1 text-center text-xs text-slate-500">
             {mode === 'signup'
-              ? 'Your tenant admin approves new workspaces'
+              ? 'Your department admin approves new workspaces'
               : 'Sign in to your workspace'}
           </p>
 

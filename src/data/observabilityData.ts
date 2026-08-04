@@ -146,8 +146,8 @@ export const OBSERVABILITY_RUNS: ObservabilityRun[] = [
   {
     id: 'obs-run-8a3f',
     runId: 'run-8a3f',
-    tenantId: 't-incedo',
-    tenantName: 'Incedo Labs',
+    departmentId: 'd-engineering',
+    departmentName: 'Engineering',
     userId: 'u-priya',
     userName: 'Priya Nair',
     sessionId: 'sess-2201',
@@ -180,8 +180,8 @@ export const OBSERVABILITY_RUNS: ObservabilityRun[] = [
   {
     id: 'obs-run-91c2',
     runId: 'run-91c2',
-    tenantId: 't-incedo',
-    tenantName: 'Incedo Labs',
+    departmentId: 'd-engineering',
+    departmentName: 'Engineering',
     userId: 'u-arjun',
     userName: 'Arjun Mehta',
     sessionId: 'sess-2201',
@@ -214,8 +214,8 @@ export const OBSERVABILITY_RUNS: ObservabilityRun[] = [
   {
     id: 'obs-run-b7d4',
     runId: 'run-b7d4',
-    tenantId: 't-incedo',
-    tenantName: 'Incedo Labs',
+    departmentId: 'd-engineering',
+    departmentName: 'Engineering',
     userId: 'u-devika',
     userName: 'Devika Rao',
     projectId: 'p-mobile-v2',
@@ -250,8 +250,8 @@ export const OBSERVABILITY_RUNS: ObservabilityRun[] = [
   {
     id: 'obs-run-c3e8',
     runId: 'run-c3e8',
-    tenantId: 't-acme',
-    tenantName: 'Acme Corporation',
+    departmentId: 'd-data',
+    departmentName: 'Data & Analytics',
     userId: 'u-sam',
     userName: 'Sam Okafor',
     projectId: 'p-acme-portal',
@@ -286,8 +286,8 @@ export const OBSERVABILITY_RUNS: ObservabilityRun[] = [
   {
     id: 'obs-run-d519',
     runId: 'run-d519',
-    tenantId: 't-acme',
-    tenantName: 'Acme Corporation',
+    departmentId: 'd-data',
+    departmentName: 'Data & Analytics',
     userId: 'u-sam',
     userName: 'Sam Okafor',
     projectId: 'p-acme-portal',
@@ -318,8 +318,8 @@ export const OBSERVABILITY_RUNS: ObservabilityRun[] = [
   {
     id: 'obs-run-e7f1',
     runId: 'run-e7f1',
-    tenantId: 't-incedo',
-    tenantName: 'Incedo Labs',
+    departmentId: 'd-engineering',
+    departmentName: 'Engineering',
     userId: 'u-maya',
     userName: 'Maya Kapoor',
     projectId: 'p-mobile-v2',
@@ -1180,8 +1180,8 @@ export const OBSERVABILITY_EVENTS: ObservabilityEvent[] = [
     completedAt: '2026-07-29T09:41:00.052Z',
     durationMs: 2,
     payloadPolicy: 'metadata_only',
-    policyName: 'tenant_payload_capture',
-    policyDecision: 'metadata_only â€” tenant opted out of content capture',
+    policyName: 'department_payload_capture',
+    policyDecision: 'metadata_only â€” department opted out of content capture',
   },
   {
     id: 'ev-21',
@@ -1313,7 +1313,7 @@ export const EVIDENCE_ACCESS_LOGS: EvidenceAccessLog[] = [
     viewedAt: '2026-07-29T10:45:00.000Z',
     viewerUserId: 'u-admin-incedo',
     viewerName: 'Sec Admin',
-    viewerRole: 'Tenant Admin',
+    viewerRole: 'Department Admin',
     observabilityRunId: 'obs-run-8a3f',
     eventId: 'ev-3',
     clientIp: '10.24.1.8',
@@ -1322,9 +1322,9 @@ export const EVIDENCE_ACCESS_LOGS: EvidenceAccessLog[] = [
   {
     id: 'eal-2',
     viewedAt: '2026-07-29T14:02:00.000Z',
-    viewerUserId: 'u-super',
-    viewerName: 'Platform Super Admin',
-    viewerRole: 'Super Admin',
+    viewerUserId: 'u-tenant-admin',
+    viewerName: 'Platform Tenant Admin',
+    viewerRole: 'Tenant Admin',
     observabilityRunId: 'obs-run-b7d4',
     eventId: 'ev-18',
     clientIp: '10.0.0.12',
@@ -1335,7 +1335,7 @@ export const EVIDENCE_ACCESS_LOGS: EvidenceAccessLog[] = [
     viewedAt: '2026-07-30T08:20:00.000Z',
     viewerUserId: 'u-admin-incedo',
     viewerName: 'Sec Admin',
-    viewerRole: 'Tenant Admin',
+    viewerRole: 'Department Admin',
     observabilityRunId: 'obs-run-e7f1',
     eventId: 'ev-26',
     clientIp: '10.24.1.8',
@@ -1344,9 +1344,9 @@ export const EVIDENCE_ACCESS_LOGS: EvidenceAccessLog[] = [
   {
     id: 'eal-4',
     viewedAt: '2026-07-29T22:11:00.000Z',
-    viewerUserId: 'u-super',
-    viewerName: 'Platform Super Admin',
-    viewerRole: 'Super Admin',
+    viewerUserId: 'u-tenant-admin',
+    viewerName: 'Platform Tenant Admin',
+    viewerRole: 'Tenant Admin',
     observabilityRunId: 'obs-run-c3e8',
     eventId: 'ev-20',
     clientIp: '198.51.100.77',
@@ -1355,16 +1355,16 @@ export const EVIDENCE_ACCESS_LOGS: EvidenceAccessLog[] = [
 ];
 
 /**
- * Prior-period rollups for week-over-week cards. Scoped keys match tenantId or
+ * Prior-period rollups for week-over-week cards. Scoped keys match departmentId or
  * `platform`. Numbers are intentionally slightly worse so deltas read as recovery.
  */
 export const PRIOR_WEEK_STATS: Record<
   string,
   { costUsd: number; errorRate: number; p95Ms: number; runs: number; tokens: number }
 > = {
-  platform: { costUsd: 0.52, errorRate: 28, p95Ms: 95_000, runs: 5, tokens: 90_000 },
-  't-incedo': { costUsd: 0.38, errorRate: 22, p95Ms: 40_000, runs: 3, tokens: 70_000 },
-  't-acme': { costUsd: 0.14, errorRate: 40, p95Ms: 180_000, runs: 2, tokens: 20_000 },
+  tenant: { costUsd: 0.52, errorRate: 28, p95Ms: 95_000, runs: 5, tokens: 90_000 },
+  'd-engineering': { costUsd: 0.38, errorRate: 22, p95Ms: 40_000, runs: 3, tokens: 70_000 },
+  'd-data': { costUsd: 0.14, errorRate: 40, p95Ms: 180_000, runs: 2, tokens: 20_000 },
 };
 
 

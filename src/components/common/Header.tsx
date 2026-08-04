@@ -48,7 +48,7 @@ export const Header: React.FC = () => {
     setSearchQuery,
     notifications,
     markNotificationRead,
-    tenants,
+    departments,
     projects,
     setActiveNav,
     logout,
@@ -71,35 +71,35 @@ export const Header: React.FC = () => {
     category: isGovernanceRole(role) ? 'Platform Governance' : 'PDLC Personas',
   }));
 
-  // Scope entitlement: Super Admin roams the platform, Tenant Admin stays inside
-  // its own tenant, everyone else is pinned to their assigned project.
-  const canSwitchScope = currentRole === 'Super Admin' || currentRole === 'Tenant Admin';
-  const visibleTenants =
-    currentRole === 'Super Admin'
-      ? tenants
-      : tenants.filter((t) => t.id === currentUser?.scope.tenantId);
+  // Scope entitlement: Tenant Admin roams the platform, Department Admin stays inside
+  // its own department, everyone else is pinned to their assigned project.
+  const canSwitchScope = currentRole === 'Tenant Admin' || currentRole === 'Department Admin';
+  const visibleDepartments =
+    currentRole === 'Tenant Admin'
+      ? departments
+      : departments.filter((t) => t.id === currentUser?.scope.departmentId);
   const visibleProjects =
-    currentRole === 'Super Admin'
+    currentRole === 'Tenant Admin'
       ? projects
-      : projects.filter((p) => p.tenantId === currentUser?.scope.tenantId);
+      : projects.filter((p) => p.departmentId === currentUser?.scope.departmentId);
 
-  const handleScopeSelect = (type: 'platform' | 'tenant' | 'project', id?: string, name?: string) => {
-    if (type === 'platform') {
-      setCurrentScope({ type: 'platform', tenantName: 'All Tenants' });
-    } else if (type === 'tenant') {
-      const t = tenants.find((x) => x.id === id);
+  const handleScopeSelect = (type: 'tenant' | 'department' | 'project', id?: string, name?: string) => {
+    if (type === 'tenant') {
+      setCurrentScope({ type: 'tenant', departmentName: 'All Departments' });
+    } else if (type === 'department') {
+      const t = departments.find((x) => x.id === id);
       setCurrentScope({
-        type: 'tenant',
-        tenantId: id,
-        tenantName: t ? t.name : name || 'Tenant',
+        type: 'department',
+        departmentId: id,
+        departmentName: t ? t.name : name || 'Department',
       });
     } else if (type === 'project') {
       const p = projects.find((x) => x.id === id);
       setCurrentScope({
         type: 'project',
-        tenantId: p?.tenantId,
+        departmentId: p?.departmentId,
         projectId: id,
-        tenantName: p?.tenantName,
+        departmentName: p?.departmentName,
         projectName: p ? p.name : name || 'Project',
       });
     }
@@ -149,8 +149,8 @@ export const Header: React.FC = () => {
                 if (p)
                   setCurrentScope({
                     type: 'project',
-                    tenantId: p.tenantId,
-                    tenantName: p.tenantName,
+                    departmentId: p.departmentId,
+                    departmentName: p.departmentName,
                     projectId: p.id,
                     projectName: p.name,
                   });
@@ -174,12 +174,12 @@ export const Header: React.FC = () => {
                 onClick={() => setScopeDropdownOpen(!scopeDropdownOpen)}
                 className="flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-50 cursor-pointer"
               >
-                {currentScope.type === 'platform' && <Layers className="w-3.5 h-3.5 text-slate-400" />}
-                {currentScope.type === 'tenant' && <Building2 className="w-3.5 h-3.5 text-indigo-500" />}
+                {currentScope.type === 'tenant' && <Layers className="w-3.5 h-3.5 text-slate-400" />}
+                {currentScope.type === 'department' && <Building2 className="w-3.5 h-3.5 text-indigo-500" />}
                 {currentScope.type === 'project' && <FolderGit2 className="w-3.5 h-3.5 text-emerald-500" />}
                 <span>
-                  {currentScope.type === 'platform' && 'All Tenants'}
-                  {currentScope.type === 'tenant' && currentScope.tenantName}
+                  {currentScope.type === 'tenant' && 'All Departments'}
+                  {currentScope.type === 'department' && currentScope.departmentName}
                   {currentScope.type === 'project' && currentScope.projectName}
                 </span>
                 <ChevronDown className="w-3 h-3 text-slate-400" />
@@ -189,34 +189,34 @@ export const Header: React.FC = () => {
             {scopeDropdownOpen && (
               <div className="absolute top-full left-0 z-50 mt-1.5 w-56 rounded-xl border border-slate-200 bg-white py-1 shadow-lg shadow-slate-900/8 text-xs">
                 <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">Scope</div>
-                {currentRole === 'Super Admin' && (
+                {currentRole === 'Tenant Admin' && (
                   <button
-                    onClick={() => handleScopeSelect('platform')}
+                    onClick={() => handleScopeSelect('tenant')}
                     className={`w-full flex items-center justify-between px-3 py-2 text-left transition-colors hover:bg-slate-50 ${
-                      currentScope.type === 'platform' ? 'text-indigo-600 font-semibold' : 'text-slate-700'
+                      currentScope.type === 'tenant' ? 'text-indigo-600 font-semibold' : 'text-slate-700'
                     }`}
                   >
                     <div className="flex items-center gap-2">
                       <Layers className="w-3.5 h-3.5" />
-                      <span>Platform</span>
+                      <span>All Departments</span>
                     </div>
-                    {currentScope.type === 'platform' && <Check className="w-3.5 h-3.5" />}
+                    {currentScope.type === 'tenant' && <Check className="w-3.5 h-3.5" />}
                   </button>
                 )}
-                <div className="px-3 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">Tenants</div>
-                {visibleTenants.map((t) => (
+                <div className="px-3 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">Departments</div>
+                {visibleDepartments.map((t) => (
                   <button
                     key={t.id}
-                    onClick={() => handleScopeSelect('tenant', t.id, t.name)}
+                    onClick={() => handleScopeSelect('department', t.id, t.name)}
                     className={`w-full flex items-center justify-between px-3 py-1.5 text-left transition-colors hover:bg-slate-50 ${
-                      currentScope.tenantId === t.id && currentScope.type === 'tenant' ? 'text-indigo-600 font-semibold' : 'text-slate-700'
+                      currentScope.departmentId === t.id && currentScope.type === 'department' ? 'text-indigo-600 font-semibold' : 'text-slate-700'
                     }`}
                   >
                     <div className="flex items-center gap-2 truncate">
                       <Building2 className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
                       <span className="truncate">{t.name}</span>
                     </div>
-                    {currentScope.tenantId === t.id && currentScope.type === 'tenant' && <Check className="w-3.5 h-3.5 shrink-0" />}
+                    {currentScope.departmentId === t.id && currentScope.type === 'department' && <Check className="w-3.5 h-3.5 shrink-0" />}
                   </button>
                 ))}
                 <div className="px-3 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">Projects</div>
@@ -306,7 +306,7 @@ export const Header: React.FC = () => {
               <div className="px-3 py-2 border-b border-slate-100">
                 <div className="font-semibold text-slate-900">Switch Role</div>
                 <div className="text-[10px] text-slate-400 mt-0.5">
-                  {currentUser?.primaryRole === 'Super Admin'
+                  {currentUser?.primaryRole === 'Tenant Admin'
                     ? 'Impersonate any persona'
                     : `Assigned to ${currentUser?.name}`}
                 </div>

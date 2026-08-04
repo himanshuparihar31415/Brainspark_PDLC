@@ -23,7 +23,7 @@ import { ChevronRight, Eye, EyeOff } from 'lucide-react';
 export type Drill =
   | { level: 'L1' }
   | { level: 'L2'; moduleName: string }
-  | { level: 'L3'; tenantId: string; moduleName?: string }
+  | { level: 'L3'; departmentId: string; moduleName?: string }
   | { level: 'L4'; runId: string; from: Drill }
   | { level: 'L5'; runId: string; eventId: string; from: Drill };
 
@@ -41,11 +41,11 @@ export const ObservabilityView: React.FC = () => {
   const [drill, setDrill] = useState<Drill>({ level: 'L1' });
 
   /*
-   * Scope is applied before anything is displayed. A Tenant Admin's "enterprise"
-   * view is their own tenant — the layout keys on role, the numbers key on scope.
+   * Scope is applied before anything is displayed. A Department Admin's "enterprise"
+   * view is their own department — the layout keys on role, the numbers key on scope.
    */
   const scopedRuns = filterRuns(OBSERVABILITY_RUNS, {
-    tenantId: currentScope.tenantId ?? undefined,
+    departmentId: currentScope.departmentId ?? undefined,
     projectId: currentScope.projectId ?? undefined,
   });
 
@@ -63,7 +63,7 @@ export const ObservabilityView: React.FC = () => {
     });
 
   if (drill.level === 'L3') {
-    const name = scopedRuns.find((r) => r.tenantId === drill.tenantId)?.tenantName ?? 'Tenant';
+    const name = scopedRuns.find((r) => r.departmentId === drill.departmentId)?.departmentName ?? 'Department';
     crumbs.push({ level: 'L3', label: name, go: () => setDrill(drill) });
   }
 
@@ -75,7 +75,7 @@ export const ObservabilityView: React.FC = () => {
     if (back.level === 'L3')
       crumbs.push({
         level: 'L3',
-        label: OBSERVABILITY_RUNS.find((r) => r.tenantId === back.tenantId)?.tenantName ?? 'Tenant',
+        label: OBSERVABILITY_RUNS.find((r) => r.departmentId === back.departmentId)?.departmentName ?? 'Department',
         go: () => setDrill(back),
       });
 
@@ -102,7 +102,7 @@ export const ObservabilityView: React.FC = () => {
               PDLC Observability
             </h1>
             <p className="mt-1 text-xs text-slate-500">
-              Platform cost, performance, reliability, agent behavior, and tenant economics —
+              Platform cost, performance, reliability, agent behavior, and department economics —
               aligned with the Observability API surface, with drill-down to run timelines.
             </p>
           </div>
@@ -155,7 +155,7 @@ export const ObservabilityView: React.FC = () => {
         <ModuleHealth runs={scopedRuns} moduleName={drill.moduleName} onDrill={setDrill} from={drill} />
       )}
       {drill.level === 'L3' && (
-        <ScopeHealth runs={scopedRuns} tenantId={drill.tenantId} onDrill={setDrill} from={drill} />
+        <ScopeHealth runs={scopedRuns} departmentId={drill.departmentId} onDrill={setDrill} from={drill} />
       )}
       {drill.level === 'L4' && (
         <RunTimeline runId={drill.runId} onDrill={setDrill} from={drill} />
