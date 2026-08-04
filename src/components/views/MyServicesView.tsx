@@ -1,6 +1,6 @@
 import React from 'react';
 import { useApp } from '../../context/AppContext';
-import { Sparkles, CheckCircle2, AlertTriangle, XCircle } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 
 export const MyServicesView: React.FC = () => {
   const { agents, currentRole } = useApp();
@@ -27,52 +27,55 @@ export const MyServicesView: React.FC = () => {
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-200 text-[10px] font-bold uppercase tracking-widest text-slate-400">
                   <th className="py-3 px-4">Capability</th>
+                  <th className="py-3 px-4">Module</th>
                   <th className="py-3 px-4">Status</th>
-                  <th className="py-3 px-4">Last Evaluation</th>
-                  <th className="py-3 px-4">Version</th>
+                  <th className="py-3 px-4">Model</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {agents.map((a) => {
-                  const isAvailable = a.status === 'Active';
-                  const isDegraded = a.drift.includes('Drift');
-                  const isOffline = a.status === 'Held';
-
-                  return (
-                    <tr key={a.id} className="hover:bg-slate-50/80 transition-colors">
-                      <td className="py-3.5 px-4 font-bold text-slate-900">
-                        <div className="flex items-center gap-2.5">
-                          <Sparkles className="w-4 h-4 text-indigo-600 shrink-0" />
-                          <div>
-                            <div>{a.capability}</div>
-                            {isOffline && (
-                              <div className="text-[10px] text-amber-700 font-normal mt-0.5">
-                                This feature is currently unavailable — its agent service is held out of the Registry.
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="py-3.5 px-4">
-                        <span
-                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-bold ${
-                            isOffline
-                              ? 'bg-slate-800 text-white'
-                              : isDegraded
-                              ? 'bg-amber-50 text-amber-800 border border-amber-200'
-                              : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                {agents.map((a) => (
+                  <tr key={a.id} className="hover:bg-slate-50/80 transition-colors">
+                    <td className="py-3.5 px-4 font-bold text-slate-900">
+                      <div className="flex items-center gap-2.5">
+                        <Sparkles
+                          className={`w-4 h-4 shrink-0 ${
+                            a.is_active ? 'text-indigo-600' : 'text-slate-400'
                           }`}
-                        >
-                          {isOffline ? '○ Offline' : isDegraded ? '⚠ Degraded' : '● Available'}
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-4 font-medium text-slate-600">
-                        {a.lastEvaluationPassed ? 'Passed ' + a.lastEvaluationDate : 'Failed ' + a.lastEvaluationDate}
-                      </td>
-                      <td className="py-3.5 px-4 font-mono font-bold text-slate-800">{a.version}</td>
-                    </tr>
-                  );
-                })}
+                        />
+                        <div>
+                          <div>{a.name}</div>
+                          {a.is_active ? (
+                            <div className="text-[10px] text-slate-400 font-normal mt-0.5 line-clamp-1">
+                              {a.description}
+                            </div>
+                          ) : (
+                            <div className="text-[10px] text-amber-700 font-normal mt-0.5">
+                              This feature is currently unavailable — its agent has been deactivated
+                              in the catalogue.
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-3.5 px-4 font-mono font-semibold text-slate-700">
+                      {a.module_name}
+                    </td>
+                    <td className="py-3.5 px-4">
+                      <span
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-bold ${
+                          a.is_active
+                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                            : 'bg-slate-800 text-white'
+                        }`}
+                      >
+                        {a.is_active ? '● Available' : '○ Offline'}
+                      </span>
+                    </td>
+                    <td className="py-3.5 px-4 font-mono font-bold text-slate-800">
+                      {a.model ?? <span className="font-sans font-normal text-slate-400">Platform default</span>}
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>

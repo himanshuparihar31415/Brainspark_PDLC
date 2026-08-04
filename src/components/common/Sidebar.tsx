@@ -29,7 +29,7 @@ export const Sidebar: React.FC = () => {
   const { currentRole, activeNav, setActiveNav, tasks, agents, navCollapsed } = useApp();
 
   const pendingTasksCount = tasks.filter((t) => t.status === 'Needs Approval').length;
-  const heldAgentsCount = agents.filter((a) => a.status === 'Held').length;
+  const inactiveAgentsCount = agents.filter((a) => !a.is_active).length;
 
   const navItems: NavItemDef[] = [
     { label: 'Dashboard', icon: LayoutDashboard },
@@ -40,7 +40,7 @@ export const Sidebar: React.FC = () => {
     {
       label: 'Agent Registry',
       icon: Cpu,
-      badge: heldAgentsCount > 0 ? `${heldAgentsCount} Held` : undefined,
+      badge: inactiveAgentsCount > 0 ? `${inactiveAgentsCount} Inactive` : undefined,
     },
     { label: 'Observability', icon: Activity },
     { label: 'Evaluation', icon: Award },

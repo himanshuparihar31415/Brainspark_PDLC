@@ -133,7 +133,7 @@ export const DashboardView: React.FC = () => {
   const agentRows = (metric: 'spend30d' | 'tokens30d'): BreakdownRow[] =>
     rank(
       agentUsage.map((u) => ({
-        label: agents.find((a) => a.id === u.agentId)?.capability ?? u.agentId,
+        label: agents.find((a) => a.id === u.agentId)?.name ?? u.agentId,
         value: u[metric],
       }))
     ).slice(0, 5);

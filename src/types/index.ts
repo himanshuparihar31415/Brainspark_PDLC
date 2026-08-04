@@ -143,27 +143,28 @@ export interface Connector {
   workspaceRepo?: string;
 }
 
-export type AgentStatus = 'Active' | 'Deprecated' | 'Held';
-
-export interface AgentService {
+/**
+ * A row in the agent catalogue — the PromptOps `GET /agents` shape. `slug` is the
+ * stable invocation key (snake_case, enforced on registration); `id` is the
+ * server-assigned surrogate. Nullable fields are genuinely absent for agents
+ * that inherit platform routing defaults rather than pinning their own.
+ */
+export interface CatalogueAgent {
   id: string;
-  capability: string;
-  module: string;
-  version: string;
-  status: AgentStatus;
-  lastEvaluationDate: string;
-  lastEvaluationPassed: boolean;
-  drift: '— None' | '⚠ Drift detected';
-  underlyingModel: string;
-  permittedTools: string[];
-  memorySettings: string;
-  actionScope: 'Read + generate' | 'Read + generate + modify' | 'Full Autonomous';
-  tokenBudgetPerInvocation: number;
-  costCeilingPerInvocation: number;
-  rateLimit: string;
-  description: string;
-  deprecationNote?: string;
-  pinnedByProjectsCount?: number;
+  slug: string;
+  name: string;
+  module_name: string;
+  agent_type: string;
+  description: string | null;
+  /** Soft-delete flag. Deactivated agents stay listed but cannot be invoked. */
+  is_active: boolean;
+  created_at: string | null;
+  provider: string | null;
+  deployment: string | null;
+  model: string | null;
+  api_version: string | null;
+  fallback_deployment: string | null;
+  fallback_model: string | null;
 }
 
 export interface MetricResult {
@@ -188,20 +189,36 @@ export interface AgentEvaluation {
   }[];
 }
 
-export type ReviewStatus = 'Active' | 'Pending Review' | 'Draft' | 'Rejected';
-
-export interface PromptVersion {
+/**
+ * One published version of a prompt instruction. Versions are immutable and
+ * append-only: publishing bumps `version_number` and moves `is_active` to the new
+ * row, so history is never rewritten. Exactly one row per
+ * (module, workflow, template_name, project_id) key may be active at a time.
+ */
+export interface PromptInstruction {
   id: string;
-  agentId: string;
-  capability: string;
-  activeVersion: string;
-  candidateVersion?: string;
-  lastChanged: string;
-  author: string;
-  reviewStatus: ReviewStatus;
-  activePromptText: string;
-  candidatePromptText?: string;
-  changeNote?: string;
+  module: string;
+  workflow: string;
+  template_name: string;
+  /** Author of this version. */
+  user_id: string;
+  version_number: number;
+  instructions_text: string;
+  is_active: boolean;
+  created_at: string | null;
+  /** Absent for global instructions; set for a project-scoped override. */
+  project_id?: string;
+}
+
+/**
+ * A Jinja skeleton discovered on disk. Templates define which
+ * (module, workflow, template_name) triples instructions may be published against.
+ */
+export interface PromptTemplate {
+  module: string;
+  workflow: string;
+  template_name: string;
+  path: string;
 }
 
 export interface RBACPermission {
@@ -354,7 +371,7 @@ export interface ModulePipelineCopy {
 export interface ModuleDef {
   key: ModuleKey;
   name: string;
-  /** Matching AgentService.id, so cards can link to the registry. */
+  /** Matching CatalogueAgent.id, so cards can link to the catalogue. */
   agentId: string;
   /** Substring matched against a task's free-text module name. */
   phaseMatch: string;
