@@ -33,7 +33,7 @@ export const TenantsView: React.FC = () => {
     e.preventDefault();
     if (!name.trim()) return;
     if (tenants.some((t) => t.name.toLowerCase() === name.trim().toLowerCase())) {
-      setErrorMsg('A tenant with this name already exists.');
+      setErrorMsg('A department with this name already exists.');
       return;
     }
     createTenant(name.trim(), email.trim() || 'admin@' + name.toLowerCase().replace(/\s+/g, '') + '.com', inheritDefaults);
@@ -64,9 +64,9 @@ export const TenantsView: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">Tenants</h1>
+          <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">Departments</h1>
           <p className="text-xs md:text-sm text-slate-500 mt-1">
-            Manage top-level organizational tenants and platform tenant administrative credentials
+            Manage departments within your organization and their administrative credentials
           </p>
         </div>
         <button
@@ -74,7 +74,7 @@ export const TenantsView: React.FC = () => {
           className="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-md shadow-indigo-600/20 transition-all cursor-pointer shrink-0"
         >
           <Plus className="w-4 h-4" />
-          <span>+ Create tenant</span>
+          <span>+ Create Department</span>
         </button>
       </div>
 
@@ -111,11 +111,11 @@ export const TenantsView: React.FC = () => {
         </div>
       )}
 
-      {/* Tenants Table */}
+      {/* Departments Table */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
         {tenants.length === 0 ? (
           <div className="p-12 text-center text-slate-500 text-xs">
-            No tenants yet. Create the first one to get started.
+            No departments yet. Create the first one to get started.
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -130,7 +130,7 @@ export const TenantsView: React.FC = () => {
                       className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
                     />
                   </th>
-                  <th className="py-3 px-4">Tenant</th>
+                  <th className="py-3 px-4">Department</th>
                   <th className="py-3 px-4">Projects</th>
                   <th className="py-3 px-4">Headcount</th>
                   <th className="py-3 px-4">Spend (30d)</th>
@@ -240,12 +240,12 @@ export const TenantsView: React.FC = () => {
         )}
       </div>
 
-      {/* 3.2 Create Tenant Modal */}
+      {/* Create Department Modal */}
       {createModalOpen && (
         <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full p-6 space-y-5 animate-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h2 className="text-lg font-bold text-slate-900">Create tenant</h2>
+              <h2 className="text-lg font-bold text-slate-900">Create Department</h2>
               <button onClick={() => setCreateModalOpen(false)} className="text-slate-400 hover:text-slate-600">
                 <X className="w-5 h-5" />
               </button>
@@ -253,19 +253,19 @@ export const TenantsView: React.FC = () => {
 
             <form onSubmit={handleCreateSubmit} className="space-y-4 text-xs">
               <div>
-                <label className="block font-bold text-slate-700 mb-1">Tenant name</label>
+                <label className="block font-bold text-slate-700 mb-1">Department name</label>
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g., Acme Corporation"
+                  placeholder="e.g., Digital Engineering"
                   required
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-900 focus:bg-white focus:border-indigo-600 outline-none"
                 />
               </div>
 
               <div>
-                <label className="block font-bold text-slate-700 mb-1">Initial Tenant Admin email</label>
+                <label className="block font-bold text-slate-700 mb-1">Initial Department Admin email</label>
                 <input
                   type="email"
                   value={email}
@@ -304,7 +304,7 @@ export const TenantsView: React.FC = () => {
                   type="submit"
                   className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-md"
                 >
-                  Create tenant
+                  Create Department
                 </button>
               </div>
             </form>

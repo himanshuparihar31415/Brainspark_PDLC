@@ -15,7 +15,7 @@ const TABS: { id: DashboardTab; label: string }[] = [
   { id: 'performance', label: 'Performance' },
   { id: 'reliability', label: 'Reliability' },
   { id: 'agents', label: 'Agents' },
-  { id: 'tenants', label: 'Tenants' },
+  { id: 'tenants', label: 'Departments' },
 ];
 
 export const ObsDashboard: React.FC<{

@@ -22,8 +22,8 @@ interface ScopeFilterBarProps {
  * project list, because projects only exist within a tenant.
  *
  * Entitlement decides which axes appear at all:
- *   Super Admin  → tenant + project (spans everything)
- *   Tenant Admin → project only (their tenant is fixed; a locked one-option
+ *   Tenant Admin  → tenant + project (spans everything)
+ *   Department Admin → project only (their tenant is fixed; a locked one-option
  *                  dropdown would be noise)
  *   everyone else → nothing rendered; their scope is already pinned
  */
@@ -36,8 +36,8 @@ export const ScopeFilterBar: React.FC<ScopeFilterBarProps> = ({
 }) => {
   const { currentRole, currentScope, tenants, projects } = useApp();
 
-  const spansTenants = currentRole === 'Super Admin';
-  const spansProjects = spansTenants || currentRole === 'Tenant Admin';
+  const spansTenants = currentRole === 'Tenant Admin';
+  const spansProjects = spansTenants || currentRole === 'Department Admin';
 
   if (!spansProjects) return null;
 

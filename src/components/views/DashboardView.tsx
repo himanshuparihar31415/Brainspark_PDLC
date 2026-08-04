@@ -41,7 +41,7 @@ export const DashboardView: React.FC = () => {
    * Two different axes, deliberately kept separate:
    *
    * `persona` decides the *layout* — which tile behaviours apply and which lower
-   * strip renders. Keyed on role so they can never diverge: a Tenant Admin who
+   * strip renders. Keyed on role so they can never diverge: a Department Admin who
    * narrows scope to one project must not get project-tier tiles that filter a
    * module strip which cannot respond to them.
    *
@@ -49,7 +49,7 @@ export const DashboardView: React.FC = () => {
    * only one tenant is in scope there is no point ranking by tenant.
    */
   const persona: 'platform' | 'tenant' | 'project' =
-    currentRole === 'Super Admin' ? 'platform' : currentRole === 'Tenant Admin' ? 'tenant' : 'project';
+    currentRole === 'Tenant Admin' ? 'platform' : currentRole === 'Department Admin' ? 'tenant' : 'project';
 
   const tier = currentScope.type;
 
@@ -163,7 +163,7 @@ export const DashboardView: React.FC = () => {
         ]
       : tier === 'tenant'
       ? [
-          // A Tenant Admin acts at project level, so projects lead here.
+          // A Department Admin acts at project level, so projects lead here.
           { title: 'By project', rows: rank(scopeProjects.map((p) => ({ label: p.name, value: p.spend30d }))) },
           { title: 'By module', rows: moduleRows('spend30d') },
         ]
@@ -209,7 +209,7 @@ export const DashboardView: React.FC = () => {
     // Redirects: land on the screen that already owns this data, pre-filtered.
     if (key === 'headcount') {
       navigateTo('Team', {
-        // The Tenant Admin's lever is the cross-project pool, not the flat roster.
+        // The Department Admin's lever is the cross-project pool, not the flat roster.
         teamTab: persona === 'tenant' ? 'shared' : 'roster',
         note:
           persona === 'tenant'
@@ -241,7 +241,7 @@ export const DashboardView: React.FC = () => {
         <p className="mt-1 type-body text-slate-500">{scopeTitle}</p>
       </div>
 
-      {/* Tenant Admins own a spend envelope — the number they log in to check. */}
+      {/* Department Admins own a spend envelope — the number they log in to check. */}
       {persona === 'tenant' && budget !== undefined && (
         <div
           className={`platform-card flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between ${

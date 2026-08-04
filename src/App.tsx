@@ -73,7 +73,7 @@ const AppContent: React.FC = () => {
     switch (activeNav) {
       case 'Dashboard':
         return <DashboardView />;
-      case 'Tenants':
+      case 'Departments':
         return <TenantsView />;
       case 'Projects':
         return <ProjectsView />;

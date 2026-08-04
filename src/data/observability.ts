@@ -119,7 +119,7 @@ export const LEVELS: Record<
  * response content — this is the check that decides, and it is deliberately
  * narrower than the set of roles that can open the view.
  */
-export const PAYLOAD_READER_ROLES: Role[] = ['Super Admin', 'Tenant Admin'];
+export const PAYLOAD_READER_ROLES: Role[] = ['Tenant Admin', 'Department Admin'];
 
 export const canViewPayloads = (role: Role): boolean => PAYLOAD_READER_ROLES.includes(role);
 

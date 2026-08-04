@@ -41,7 +41,7 @@ export const ObservabilityView: React.FC = () => {
   const [drill, setDrill] = useState<Drill>({ level: 'L1' });
 
   /*
-   * Scope is applied before anything is displayed. A Tenant Admin's "enterprise"
+   * Scope is applied before anything is displayed. A Department Admin's "enterprise"
    * view is their own tenant — the layout keys on role, the numbers key on scope.
    */
   const scopedRuns = filterRuns(OBSERVABILITY_RUNS, {

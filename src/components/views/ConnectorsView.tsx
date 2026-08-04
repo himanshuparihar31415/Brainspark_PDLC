@@ -26,7 +26,7 @@ const TIER_BLURB: Record<string, { title: string; body: string }> = {
   },
   'project-activation': {
     title: 'Project authority',
-    body: 'You activate connectors your Tenant Admin has enabled, using credentials scoped to this project.',
+    body: 'You activate connectors your Department Admin has enabled, using credentials scoped to this project.',
   },
 };
 
@@ -212,7 +212,7 @@ export const ConnectorsView: React.FC = () => {
                         {withdrawn ? (
                           <div
                             className="flex cursor-not-allowed items-center gap-1.5 text-xs text-slate-400"
-                            title="Withdrawn platform-wide by a Super Admin."
+                            title="Withdrawn platform-wide by a Tenant Admin."
                           >
                             <Lock className="h-3.5 w-3.5" />
                             <span>Not available</span>
@@ -250,7 +250,7 @@ export const ConnectorsView: React.FC = () => {
                       ) : notEnabled ? (
                         <div
                           className="flex cursor-not-allowed items-center gap-1.5 text-xs text-slate-400"
-                          title="Ask your Tenant Admin to enable this connector."
+                          title="Ask your Department Admin to enable this connector."
                         >
                           <Lock className="h-3.5 w-3.5" />
                           <span>Not enabled by tenant</span>

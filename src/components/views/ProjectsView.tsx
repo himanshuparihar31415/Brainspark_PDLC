@@ -476,7 +476,7 @@ export const ProjectsView: React.FC = () => {
   const [selectedTemplate, setSelectedTemplate] = useState('None (blank project)');
   const [selectedTenantId, setSelectedTenantId] = useState(currentScope.tenantId || 't-incedo');
 
-  const canFilterByTenant = currentRole === 'Super Admin';
+  const canFilterByTenant = currentRole === 'Tenant Admin';
   const [scopeFilter, setScopeFilter] = useScopeFilter();
 
   const scopedProjects = projects.filter((p) => {
@@ -506,9 +506,9 @@ export const ProjectsView: React.FC = () => {
 
   const filterLabel = canFilterByTenant
     ? scopeFilter.tenantId === 'all'
-      ? 'All Tenants'
+      ? 'All Departments'
       : tenants.find((t) => t.id === scopeFilter.tenantId)?.name ?? 'Tenant'
-    : currentScope.tenantName || 'All Tenants';
+    : currentScope.tenantName || 'All Departments';
 
   const handleCreateSubmit = (e: React.FormEvent) => {
     e.preventDefault();

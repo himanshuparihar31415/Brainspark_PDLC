@@ -40,8 +40,8 @@ export const SecurityView: React.FC = () => {
   const [auditSearch, setAuditSearch] = useState('');
 
   const rbacMatrix: { role: Role; view: boolean; create: boolean; edit: boolean; approve: boolean; export: boolean }[] = [
-    { role: 'Super Admin', view: true, create: true, edit: true, approve: true, export: true },
     { role: 'Tenant Admin', view: true, create: true, edit: true, approve: true, export: true },
+    { role: 'Department Admin', view: true, create: true, edit: true, approve: true, export: true },
     { role: 'Project Admin', view: true, create: true, edit: true, approve: true, export: true },
     { role: 'Product Manager', view: true, create: true, edit: true, approve: true, export: false },
     { role: 'Architect', view: true, create: false, edit: true, approve: true, export: false },

@@ -1,6 +1,6 @@
 export type Role =
-  | 'Super Admin'
   | 'Tenant Admin'
+  | 'Department Admin'
   | 'Project Admin'
   | 'Product Manager'
   | 'Architect'
@@ -23,7 +23,7 @@ export interface ScopeContext {
 
 export type NavView =
   | 'Dashboard'
-  | 'Tenants'
+  | 'Departments'
   | 'Projects'
   | 'Team'
   | 'Connectors'
@@ -71,7 +71,7 @@ export interface Tenant {
   /** Prior period spend — powers the "vs last period" trend in breakdowns. */
   spendPrev30d: number;
   tokens30d: number;
-  /** Spend envelope the Tenant Admin is accountable to. */
+  /** Spend envelope the Department Admin is accountable to. */
   budget30d: number;
   status: TenantStatus;
   adminEmail: string;
@@ -132,7 +132,7 @@ export interface Connector {
   name: string;
   category: ConnectorCategory;
   usedByModules: string[];
-  /** Set by a Super Admin. When false, no tenant may enable this connector. */
+  /** Set by a Tenant Admin. When false, no tenant may enable this connector. */
   platformAvailable: boolean;
   enabledTenant: boolean;
   activatedProject: boolean;

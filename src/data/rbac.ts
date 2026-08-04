@@ -1,6 +1,6 @@
 import { NavView, Role, ScopeContext, UserAccount } from '../types';
 
-export const GOVERNANCE_ROLES: Role[] = ['Super Admin', 'Tenant Admin', 'Project Admin'];
+export const GOVERNANCE_ROLES: Role[] = ['Tenant Admin', 'Department Admin', 'Project Admin'];
 
 export const PDLC_ROLES: Role[] = [
   'Product Manager',
@@ -20,7 +20,7 @@ export const ALL_ROLES: Role[] = [...GOVERNANCE_ROLES, ...PDLC_ROLES];
  * evaluations, session/API policy. A Project Admin runs a project; it does not
  * set the baselines the project inherits.
  */
-export const TENANT_ROLES: Role[] = ['Super Admin', 'Tenant Admin'];
+export const TENANT_ROLES: Role[] = ['Tenant Admin', 'Department Admin'];
 
 /**
  * Single source of truth for subtractive navigation. The sidebar renders from
@@ -29,8 +29,8 @@ export const TENANT_ROLES: Role[] = ['Super Admin', 'Tenant Admin'];
  */
 export const NAV_VISIBILITY: Record<NavView, Role[]> = {
   Dashboard: GOVERNANCE_ROLES,
-  Tenants: ['Super Admin'],
-  Projects: ['Super Admin', 'Tenant Admin'],
+  Departments: ['Tenant Admin'],
+  Projects: ['Tenant Admin', 'Department Admin'],
   Team: GOVERNANCE_ROLES,
   Connectors: GOVERNANCE_ROLES,
   // Visible to a Project Admin, but read-only — see canDeprecateAgent.
@@ -38,7 +38,7 @@ export const NAV_VISIBILITY: Record<NavView, Role[]> = {
   Evaluation: TENANT_ROLES,
   /*
    * All three governance tiers see it; scope decides what the numbers cover, so a
-   * Tenant Admin's "enterprise" view is their own tenant. Reading payload content
+   * Department Admin's "enterprise" view is their own tenant. Reading payload content
    * at L5 is a separate right — see canViewPayloads in data/observability.
    */
   Observability: GOVERNANCE_ROLES,
@@ -73,7 +73,7 @@ export const canDeprecateAgent = (role: Role) => TENANT_ROLES.includes(role);
  * Connector authority, as a strict ladder. Each tier holds everything below it:
  *
  *   platform-availability — decide which connectors exist for tenants at all.
- *                           Super Admin only; revoking it cascades downward.
+ *                           Tenant Admin only; revoking it cascades downward.
  *   tenant-baseline       — enable an available connector for one tenant.
  *                           Projects can activate only what is enabled here.
  *   project-activation    — bind an enabled connector to a project with
@@ -85,8 +85,8 @@ export type ConnectorCapability =
   | 'project-activation';
 
 const CONNECTOR_LADDER: Record<Role, ConnectorCapability[]> = {
-  'Super Admin': ['platform-availability', 'tenant-baseline', 'project-activation'],
-  'Tenant Admin': ['tenant-baseline', 'project-activation'],
+  'Tenant Admin': ['platform-availability', 'tenant-baseline', 'project-activation'],
+  'Department Admin': ['tenant-baseline', 'project-activation'],
   'Project Admin': ['project-activation'],
   'Product Manager': [],
   Architect: [],
@@ -108,9 +108,9 @@ export const canManageConnector = (role: Role, capability: ConnectorCapability):
 export const connectorDeniedReason = (capability: ConnectorCapability): string => {
   switch (capability) {
     case 'platform-availability':
-      return 'Platform availability is set by a Super Admin.';
+      return 'Platform availability is set by a Tenant Admin.';
     case 'tenant-baseline':
-      return 'Tenant enablement is set by a Tenant Admin.';
+      return 'Tenant enablement is set by a Department Admin.';
     default:
       return 'You do not have permission to change this.';
   }
@@ -126,19 +126,19 @@ export const landingNavForRole = (role: Role): NavView =>
 
 /**
  * Scope a role operates at, narrowed to whatever the signed-in identity is
- * bound to. Super Admin sees the whole platform; everyone else inherits their
+ * bound to. Tenant Admin sees the whole platform; everyone else inherits their
  * account's tenant / project.
  */
 export const scopeForRole = (role: Role, user: UserAccount | null): ScopeContext => {
-  if (role === 'Super Admin') {
-    return { type: 'platform', tenantName: 'All Tenants' };
+  if (role === 'Tenant Admin') {
+    return { type: 'platform', tenantName: 'All Departments' };
   }
 
   const bound = user?.scope;
   const tenantId = bound?.tenantId ?? 't-incedo';
   const tenantName = bound?.tenantName ?? 'Incedo Labs';
 
-  if (role === 'Tenant Admin') {
+  if (role === 'Department Admin') {
     return { type: 'tenant', tenantId, tenantName };
   }
 

@@ -221,7 +221,7 @@ const ModuleDetail: React.FC<{
 
 /**
  * The admin-tier lower strip: five capability modules summarised across every
- * project that uses them. This is the Super / Tenant Admin lens — not "one
+ * project that uses them. This is the Super / Department Admin lens — not "one
  * project's phases" but "how is each capability performing across projects".
  */
 export const ModuleStrip: React.FC = () => {
@@ -236,10 +236,10 @@ export const ModuleStrip: React.FC = () => {
     navigateTo,
   } = useApp();
 
-  // Super Admin gets the full Tenant → Project funnel. A Tenant Admin's tenant
+  // Tenant Admin gets the full Tenant → Project funnel. A Department Admin's tenant
   // is fixed, so their bar collapses to a single Project filter rather than
   // showing a locked single-option dropdown.
-  const tenantLocked = currentRole !== 'Super Admin';
+  const tenantLocked = currentRole !== 'Tenant Admin';
   const lockedTenantId = currentScope.tenantId;
 
   // Start aligned with the header scope so the strip and the tiles above it
@@ -367,7 +367,7 @@ export const ModuleStrip: React.FC = () => {
             // Contention is a tenant-level signal: too fine for the platform
             // view, invisible from inside a single project.
             contention={
-              currentRole === 'Tenant Admin' ? poolContention(r.key, teamMembers, scopeProjects) : 0
+              currentRole === 'Department Admin' ? poolContention(r.key, teamMembers, scopeProjects) : 0
             }
             onOpen={() => setOpenModule(r.key)}
           />

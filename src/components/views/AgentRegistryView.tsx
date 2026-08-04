@@ -49,7 +49,7 @@ export const AgentRegistryView: React.FC = () => {
   // in view, so a tenant or project filter answers "which agents do we depend on".
   const scopedProjectIds = projects
     .filter((p) => {
-      if (currentRole === 'Super Admin' && scopeFilter.tenantId !== 'all' && p.tenantId !== scopeFilter.tenantId)
+      if (currentRole === 'Tenant Admin' && scopeFilter.tenantId !== 'all' && p.tenantId !== scopeFilter.tenantId)
         return false;
       if (scopeFilter.projectId !== 'all' && p.id !== scopeFilter.projectId) return false;
       return true;

@@ -141,10 +141,10 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<UserAccount | null>(null);
   const [users] = useState<UserAccount[]>(INITIAL_USERS);
-  const [currentRole, setCurrentRoleState] = useState<Role>('Super Admin');
+  const [currentRole, setCurrentRoleState] = useState<Role>('Tenant Admin');
   const [currentScope, setCurrentScope] = useState<ScopeContext>({
     type: 'platform',
-    tenantName: 'All Tenants',
+    tenantName: 'All Departments',
   });
   const [activeNav, setActiveNavState] = useState<NavView>('Dashboard');
   const [navIntent, setNavIntent] = useState<NavIntent | null>(null);
@@ -214,8 +214,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19),
       actor: currentUser
         ? `${currentUser.name} (${currentRole})`
-        : currentRole === 'Super Admin'
-        ? 'Platform Super Admin'
+        : currentRole === 'Tenant Admin'
+        ? 'Platform Tenant Admin'
         : 'Current User (' + currentRole + ')',
       actorType: 'user',
       action,
@@ -339,14 +339,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       'Session terminated'
     );
     setCurrentUser(null);
-    setCurrentRoleState('Super Admin');
-    setCurrentScope({ type: 'platform', tenantName: 'All Tenants' });
+    setCurrentRoleState('Tenant Admin');
+    setCurrentScope({ type: 'platform', tenantName: 'All Departments' });
     setActiveNavState('Dashboard');
   };
 
   /**
    * Corporate-email sign-up. Provisioning is governed, so this raises an access
-   * request for a Tenant Admin rather than minting a session.
+   * request for a Department Admin rather than minting a session.
    */
   const requestAccess = (email: string): AuthResult => {
     const normalized = email.trim().toLowerCase();
@@ -365,7 +365,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       'Request Workspace Access',
       `Prospective user: ${normalized}`,
       `Detected tenant: ${tenant ? tenant.name : 'Unmatched domain'}`,
-      'Pending Tenant Admin approval'
+      'Pending Department Admin approval'
     );
 
     return { ok: true };

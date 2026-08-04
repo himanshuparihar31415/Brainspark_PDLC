@@ -71,21 +71,21 @@ export const Header: React.FC = () => {
     category: isGovernanceRole(role) ? 'Platform Governance' : 'PDLC Personas',
   }));
 
-  // Scope entitlement: Super Admin roams the platform, Tenant Admin stays inside
+  // Scope entitlement: Tenant Admin roams the platform, Department Admin stays inside
   // its own tenant, everyone else is pinned to their assigned project.
-  const canSwitchScope = currentRole === 'Super Admin' || currentRole === 'Tenant Admin';
+  const canSwitchScope = currentRole === 'Tenant Admin' || currentRole === 'Department Admin';
   const visibleTenants =
-    currentRole === 'Super Admin'
+    currentRole === 'Tenant Admin'
       ? tenants
       : tenants.filter((t) => t.id === currentUser?.scope.tenantId);
   const visibleProjects =
-    currentRole === 'Super Admin'
+    currentRole === 'Tenant Admin'
       ? projects
       : projects.filter((p) => p.tenantId === currentUser?.scope.tenantId);
 
   const handleScopeSelect = (type: 'platform' | 'tenant' | 'project', id?: string, name?: string) => {
     if (type === 'platform') {
-      setCurrentScope({ type: 'platform', tenantName: 'All Tenants' });
+      setCurrentScope({ type: 'platform', tenantName: 'All Departments' });
     } else if (type === 'tenant') {
       const t = tenants.find((x) => x.id === id);
       setCurrentScope({
@@ -178,7 +178,7 @@ export const Header: React.FC = () => {
                 {currentScope.type === 'tenant' && <Building2 className="w-3.5 h-3.5 text-indigo-500" />}
                 {currentScope.type === 'project' && <FolderGit2 className="w-3.5 h-3.5 text-emerald-500" />}
                 <span>
-                  {currentScope.type === 'platform' && 'All Tenants'}
+                  {currentScope.type === 'platform' && 'All Departments'}
                   {currentScope.type === 'tenant' && currentScope.tenantName}
                   {currentScope.type === 'project' && currentScope.projectName}
                 </span>
@@ -189,7 +189,7 @@ export const Header: React.FC = () => {
             {scopeDropdownOpen && (
               <div className="absolute top-full left-0 z-50 mt-1.5 w-56 rounded-xl border border-slate-200 bg-white py-1 shadow-lg shadow-slate-900/8 text-xs">
                 <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">Scope</div>
-                {currentRole === 'Super Admin' && (
+                {currentRole === 'Tenant Admin' && (
                   <button
                     onClick={() => handleScopeSelect('platform')}
                     className={`w-full flex items-center justify-between px-3 py-2 text-left transition-colors hover:bg-slate-50 ${
@@ -306,7 +306,7 @@ export const Header: React.FC = () => {
               <div className="px-3 py-2 border-b border-slate-100">
                 <div className="font-semibold text-slate-900">Switch Role</div>
                 <div className="text-[10px] text-slate-400 mt-0.5">
-                  {currentUser?.primaryRole === 'Super Admin'
+                  {currentUser?.primaryRole === 'Tenant Admin'
                     ? 'Impersonate any persona'
                     : `Assigned to ${currentUser?.name}`}
                 </div>
