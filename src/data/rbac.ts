@@ -33,7 +33,7 @@ export const NAV_VISIBILITY: Record<NavView, Role[]> = {
   Projects: ['Super Admin', 'Tenant Admin'],
   Team: GOVERNANCE_ROLES,
   Connectors: GOVERNANCE_ROLES,
-  // Visible to a Project Admin, but read-only — see canDeprecateAgent.
+  // Visible to a Project Admin, but read-only — see canManageAgents.
   'Agent Registry': GOVERNANCE_ROLES,
   Evaluation: TENANT_ROLES,
   /*
@@ -64,10 +64,11 @@ export const isModuleWorkspace = (nav: NavView) => MODULE_WORKSPACES.includes(na
 export const isGovernanceRole = (role: Role) => GOVERNANCE_ROLES.includes(role);
 
 /**
- * A Project Admin can see held agents but cannot retire a version — deprecation
- * affects every project on the tenant baseline.
+ * A Project Admin can browse the agent catalogue but cannot change it —
+ * registering, editing routing or deactivating an agent affects every project on
+ * the tenant baseline.
  */
-export const canDeprecateAgent = (role: Role) => TENANT_ROLES.includes(role);
+export const canManageAgents = (role: Role) => TENANT_ROLES.includes(role);
 
 /**
  * Connector authority, as a strict ladder. Each tier holds everything below it:

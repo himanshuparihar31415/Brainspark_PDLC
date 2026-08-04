@@ -6,9 +6,10 @@ import {
   Project,
   TeamMember,
   Connector,
-  AgentService,
+  CatalogueAgent,
   AgentEvaluation,
-  PromptVersion,
+  PromptInstruction,
+  PromptTemplate,
   SessionConfig,
   SensitiveDataLog,
   AuditLogEntry,
@@ -23,7 +24,7 @@ import {
 } from '../types';
 import {
   canAccessNav,
-  canDeprecateAgent,
+  canManageAgents,
   isModuleWorkspace,
   canManageConnector,
   connectorDeniedReason,
@@ -36,9 +37,7 @@ import {
   INITIAL_PROJECTS,
   INITIAL_TEAM_MEMBERS,
   INITIAL_CONNECTORS,
-  INITIAL_AGENTS,
   INITIAL_EVALUATIONS,
-  INITIAL_PROMPTS,
   INITIAL_SESSIONS,
   INITIAL_SENSITIVE_LOGS,
   INITIAL_AUDIT_LOGS,
@@ -47,6 +46,11 @@ import {
   INITIAL_MODULE_ACTIVITY,
   INITIAL_AGENT_USAGE,
 } from '../data/mockData';
+import { INITIAL_CATALOGUE_AGENTS } from '../data/agentCatalogue';
+import {
+  INITIAL_PROMPT_INSTRUCTIONS,
+  INITIAL_PROMPT_TEMPLATES,
+} from '../data/promptInstructions';
 import { INITIAL_PIPELINE } from '../data/pipelineData';
 import {
   projectCompletionFromPhases,
@@ -63,6 +67,25 @@ export interface ToastMessage {
 }
 
 export type AuthMethod = 'password' | 'sso';
+
+/** POST /agents request body — the server assigns id, created_at and is_active. */
+export type AgentRegistration = Omit<CatalogueAgent, 'id' | 'created_at' | 'is_active'>;
+
+/** PATCH /agents/{id} — slug is immutable once registered. */
+export type AgentUpdate = Partial<Omit<CatalogueAgent, 'id' | 'slug' | 'created_at'>>;
+
+/**
+ * POST /prompt-instructions. The server derives version_number by incrementing
+ * the highest version on the key, and moves the active flag onto the new row.
+ */
+export interface InstructionPublication {
+  module: string;
+  workflow: string;
+  template_name: string;
+  instructions_text: string;
+  user_id: string;
+  project_id?: string;
+}
 
 export interface AuthResult {
   ok: boolean;
@@ -100,9 +123,10 @@ interface AppContextType extends SpecAiSlice {
   projects: Project[];
   teamMembers: TeamMember[];
   connectors: Connector[];
-  agents: AgentService[];
+  agents: CatalogueAgent[];
   evaluations: Record<string, AgentEvaluation>;
-  prompts: PromptVersion[];
+  instructions: PromptInstruction[];
+  promptTemplates: PromptTemplate[];
   sessions: SessionConfig;
   sensitiveLogs: SensitiveDataLog[];
   auditLogs: AuditLogEntry[];
@@ -122,11 +146,14 @@ interface AppContextType extends SpecAiSlice {
   setConnectorPlatformAvailability: (id: string, available: boolean) => void;
   toggleConnectorEnabled: (id: string) => void;
   activateConnectorProject: (id: string, endpoint?: string, repo?: string) => void;
-  deprecateAgent: (id: string, note: string) => void;
-  submitPromptCandidate: (promptId: string, candidateText: string, changeNote: string) => void;
-  approvePromptCandidate: (promptId: string) => void;
-  rejectPromptCandidate: (promptId: string) => void;
-  rollbackPrompt: (promptId: string, targetVersion: string) => void;
+  registerAgent: (payload: AgentRegistration) => boolean;
+  updateAgent: (id: string, patch: AgentUpdate) => void;
+  /** Soft delete — the agent stays in the catalogue, flagged inactive. */
+  deactivateAgent: (id: string) => void;
+  publishInstruction: (payload: InstructionPublication) => void;
+  rollbackInstruction: (id: string) => void;
+  /** Refuses on an active version, mirroring the API's 409. */
+  deleteInstruction: (id: string) => boolean;
   updateSessionConfig: (newConfig: Partial<SessionConfig>) => void;
   revokeApiKey: (keyId: string) => void;
   completeTask: (taskId: string) => void;
@@ -157,9 +184,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [projects, setProjects] = useState<Project[]>(INITIAL_PROJECTS);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>(INITIAL_TEAM_MEMBERS);
   const [connectors, setConnectors] = useState<Connector[]>(INITIAL_CONNECTORS);
-  const [agents, setAgents] = useState<AgentService[]>(INITIAL_AGENTS);
+  const [agents, setAgents] = useState<CatalogueAgent[]>(INITIAL_CATALOGUE_AGENTS);
   const [evaluations, setEvaluations] = useState<Record<string, AgentEvaluation>>(INITIAL_EVALUATIONS);
-  const [prompts, setPrompts] = useState<PromptVersion[]>(INITIAL_PROMPTS);
+  const [instructions, setInstructions] = useState<PromptInstruction[]>(INITIAL_PROMPT_INSTRUCTIONS);
+  const [promptTemplates] = useState<PromptTemplate[]>(INITIAL_PROMPT_TEMPLATES);
   const [sessions, setSessions] = useState<SessionConfig>(INITIAL_SESSIONS);
   const [sensitiveLogs, setSensitiveLogs] = useState<SensitiveDataLog[]>(INITIAL_SENSITIVE_LOGS);
   const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>(INITIAL_AUDIT_LOGS);
@@ -577,87 +605,174 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     addAuditLog('Activate Connector', `Connector: ${target?.name}`, `Endpoint: ${endpoint}`, 'Activated with project credentials');
   };
 
-  const deprecateAgent = (id: string, note: string) => {
-    if (!canDeprecateAgent(currentRole)) {
-      addToast(`Deprecation is a tenant-level action — not available to ${currentRole}.`, 'error');
+  /**
+   * Register a catalogue agent. Returns false when the slug is already taken —
+   * the API answers a duplicate with 409, and the form keeps the user's input so
+   * they can correct the slug rather than retype the whole payload.
+   */
+  const registerAgent = (payload: AgentRegistration): boolean => {
+    if (!canManageAgents(currentRole)) {
+      addToast(`Registering an agent is a tenant-level action — not available to ${currentRole}.`, 'error');
+      return false;
+    }
+
+    if (agents.some((a) => a.slug === payload.slug)) {
+      addToast(`Slug "${payload.slug}" is already registered.`, 'error');
+      return false;
+    }
+
+    const created: CatalogueAgent = {
+      ...payload,
+      id: 'agent-' + Date.now().toString(36),
+      is_active: true,
+      created_at: new Date().toISOString(),
+    };
+    setAgents((prev) => [created, ...prev]);
+    addToast(`Agent "${created.slug}" registered.`);
+    addAuditLog(
+      'Register Agent',
+      `Agent: ${created.slug}`,
+      `Module: ${created.module_name} · Type: ${created.agent_type} · Model: ${created.model ?? 'platform default'}`,
+      'Agent added to catalogue as Active'
+    );
+    return true;
+  };
+
+  const updateAgent = (id: string, patch: AgentUpdate) => {
+    if (!canManageAgents(currentRole)) {
+      addToast(`Editing an agent is a tenant-level action — not available to ${currentRole}.`, 'error');
       return;
     }
-    setAgents((prev) =>
-      prev.map((a) =>
-        a.id === id ? { ...a, status: 'Deprecated' as const, deprecationNote: note } : a
-      )
-    );
+
+    setAgents((prev) => prev.map((a) => (a.id === id ? { ...a, ...patch } : a)));
     const target = agents.find((a) => a.id === id);
-    addToast(`Agent service "${target?.capability}" deprecated.`);
-    addAuditLog('Deprecate Agent', `Agent: ${target?.capability}`, `Note: ${note}`, 'Status set to Deprecated');
-  };
-
-  const submitPromptCandidate = (promptId: string, candidateText: string, changeNote: string) => {
-    setPrompts((prev) =>
-      prev.map((p) =>
-        p.id === promptId
-          ? {
-              ...p,
-              candidateVersion: (p.candidateVersion || 'v2.5.0-rc1'),
-              candidatePromptText: candidateText,
-              changeNote,
-              reviewStatus: 'Pending Review' as const,
-              lastChanged: new Date().toISOString().replace('T', ' ').substring(0, 19),
-            }
-          : p
-      )
+    addToast(`Agent "${target?.slug || id}" updated.`);
+    addAuditLog(
+      'Update Agent',
+      `Agent: ${target?.slug || id}`,
+      Object.keys(patch).join(', ') || 'no fields',
+      'Catalogue record updated'
     );
-    addToast(`Candidate prompt submitted for review.`);
-    addAuditLog('Submit Prompt Candidate', `Prompt ID: ${promptId}`, changeNote, 'Pending Review status set');
   };
 
-  const approvePromptCandidate = (promptId: string) => {
-    setPrompts((prev) =>
-      prev.map((p) => {
-        if (p.id === promptId && p.candidatePromptText) {
-          return {
-            ...p,
-            activeVersion: p.candidateVersion || 'v2.5.0',
-            activePromptText: p.candidatePromptText,
-            candidateVersion: undefined,
-            candidatePromptText: undefined,
-            reviewStatus: 'Active' as const,
-            lastChanged: new Date().toISOString().replace('T', ' ').substring(0, 19),
-          };
+  /** Soft delete. The row stays visible so historical runs still resolve it. */
+  const deactivateAgent = (id: string) => {
+    if (!canManageAgents(currentRole)) {
+      addToast(`Deactivation is a tenant-level action — not available to ${currentRole}.`, 'error');
+      return;
+    }
+
+    setAgents((prev) => prev.map((a) => (a.id === id ? { ...a, is_active: false } : a)));
+    const target = agents.find((a) => a.id === id);
+    addToast(`Agent "${target?.slug || id}" deactivated.`);
+    addAuditLog(
+      'Deactivate Agent',
+      `Agent: ${target?.slug || id}`,
+      'Deactivation confirmed',
+      'is_active set to false; agent can no longer be invoked'
+    );
+  };
+
+  /**
+   * Publish a new instruction version. Append-only: the previous active row on
+   * the same key is demoted rather than edited, so the version history stays
+   * intact and a rollback has something to return to.
+   */
+  const publishInstruction = (payload: InstructionPublication) => {
+    const sameKey = instructions.filter(
+      (i) =>
+        i.module === payload.module &&
+        i.workflow === payload.workflow &&
+        i.template_name === payload.template_name &&
+        (i.project_id ?? null) === (payload.project_id ?? null)
+    );
+    const nextVersion = sameKey.reduce((max, i) => Math.max(max, i.version_number), 0) + 1;
+
+    const created: PromptInstruction = {
+      id: 'pi-' + Date.now().toString(36),
+      module: payload.module,
+      workflow: payload.workflow,
+      template_name: payload.template_name,
+      user_id: payload.user_id,
+      version_number: nextVersion,
+      instructions_text: payload.instructions_text,
+      is_active: true,
+      created_at: new Date().toISOString(),
+      ...(payload.project_id ? { project_id: payload.project_id } : {}),
+    };
+
+    setInstructions((prev) => [
+      created,
+      ...prev.map((i) =>
+        i.module === created.module &&
+        i.workflow === created.workflow &&
+        i.template_name === created.template_name &&
+        (i.project_id ?? null) === (created.project_id ?? null)
+          ? { ...i, is_active: false }
+          : i
+      ),
+    ]);
+
+    addToast(`Published v${nextVersion} of ${created.template_name}.`);
+    addAuditLog(
+      'Publish Prompt Instruction',
+      `${created.module}/${created.workflow}/${created.template_name}`,
+      `Scope: ${created.project_id ?? 'global'} · Author: ${created.user_id}`,
+      `v${nextVersion} published and set active`
+    );
+  };
+
+  /** Reactivate an earlier version on the same key; no new version is minted. */
+  const rollbackInstruction = (id: string) => {
+    const target = instructions.find((i) => i.id === id);
+    if (!target) return;
+
+    setInstructions((prev) =>
+      prev.map((i) => {
+        if (
+          i.module !== target.module ||
+          i.workflow !== target.workflow ||
+          i.template_name !== target.template_name ||
+          (i.project_id ?? null) !== (target.project_id ?? null)
+        ) {
+          return i;
         }
-        return p;
+        return { ...i, is_active: i.id === id };
       })
     );
-    addToast(`Prompt candidate approved & promoted to Active.`);
-    addAuditLog('Approve Prompt', `Prompt ID: ${promptId}`, 'Approval sign-off', 'Promoted to Active system prompt');
+
+    addToast(`Rolled back to v${target.version_number} of ${target.template_name}.`);
+    addAuditLog(
+      'Rollback Prompt Instruction',
+      `${target.module}/${target.workflow}/${target.template_name}`,
+      `Target: v${target.version_number} · Scope: ${target.project_id ?? 'global'}`,
+      `v${target.version_number} reactivated`
+    );
   };
 
-  const rejectPromptCandidate = (promptId: string) => {
-    setPrompts((prev) =>
-      prev.map((p) =>
-        p.id === promptId
-          ? { ...p, candidateVersion: undefined, candidatePromptText: undefined, reviewStatus: 'Rejected' as const }
-          : p
-      )
-    );
-    addToast(`Prompt candidate rejected.`, 'info');
-    addAuditLog('Reject Prompt', `Prompt ID: ${promptId}`, 'Reviewer rejection', 'Candidate version cleared');
-  };
+  /**
+   * Delete a non-active version. The API answers 409 on the active row because
+   * deleting it would leave the key with nothing to resolve; the UI disables the
+   * control, and this is the backstop behind it.
+   */
+  const deleteInstruction = (id: string): boolean => {
+    const target = instructions.find((i) => i.id === id);
+    if (!target) return false;
 
-  const rollbackPrompt = (promptId: string, targetVersion: string) => {
-    setPrompts((prev) =>
-      prev.map((p) =>
-        p.id === promptId
-          ? {
-              ...p,
-              activeVersion: targetVersion,
-              lastChanged: new Date().toISOString().replace('T', ' ').substring(0, 19),
-            }
-          : p
-      )
+    if (target.is_active) {
+      addToast('The active version cannot be deleted. Roll back to another version first.', 'error');
+      return false;
+    }
+
+    setInstructions((prev) => prev.filter((i) => i.id !== id));
+    addToast(`Deleted v${target.version_number} of ${target.template_name}.`, 'info');
+    addAuditLog(
+      'Delete Prompt Instruction',
+      `${target.module}/${target.workflow}/${target.template_name}`,
+      `Target: v${target.version_number} · Scope: ${target.project_id ?? 'global'}`,
+      'Version removed'
     );
-    addToast(`Rolled back prompt to ${targetVersion}.`);
-    addAuditLog('Rollback Prompt', `Prompt ID: ${promptId}`, `Target Version: ${targetVersion}`, 'Rollback executed & logged');
+    return true;
   };
 
   const updateSessionConfig = (newConfig: Partial<SessionConfig>) => {
@@ -733,7 +848,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         connectors,
         agents,
         evaluations,
-        prompts,
+        instructions,
+        promptTemplates,
         sessions,
         sensitiveLogs,
         auditLogs,
@@ -752,11 +868,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setConnectorPlatformAvailability,
         toggleConnectorEnabled,
         activateConnectorProject,
-        deprecateAgent,
-        submitPromptCandidate,
-        approvePromptCandidate,
-        rejectPromptCandidate,
-        rollbackPrompt,
+        registerAgent,
+        updateAgent,
+        deactivateAgent,
+        publishInstruction,
+        rollbackInstruction,
+        deleteInstruction,
         updateSessionConfig,
         revokeApiKey,
         completeTask,
