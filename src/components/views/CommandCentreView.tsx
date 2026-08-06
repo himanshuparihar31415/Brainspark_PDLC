@@ -6,6 +6,7 @@ import { Pipeline } from '../command/Pipeline';
 import { MyTasksQueue, buildMyTasks } from '../command/MyTasksQueue';
 import { BlockersRail, buildBlockers } from '../command/BlockersRail';
 import { AwaitingReview, buildReviewQueue } from '../command/AwaitingReview';
+import { SpecAiCard } from '../command/SpecAiCard';
 import { CheckCircle2, RefreshCw, AlertTriangle, ArrowRight, FolderGit2 } from 'lucide-react';
 
 /**
@@ -183,6 +184,12 @@ export const CommandCentreView: React.FC = () => {
           </span>
         </div>
       )}
+
+      {/*
+        Spec AI leads the zone: a specification is where the pipeline comes from, so
+        the door that opens one sits above the phases it will go on to fill.
+      */}
+      <SpecAiCard projectId={activeProject.id} projectName={activeProject.name} />
 
       {/* ── Pipeline */}
       <section className="space-y-2.5">
