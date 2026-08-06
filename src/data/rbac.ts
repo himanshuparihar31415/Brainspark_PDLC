@@ -50,6 +50,8 @@ export const NAV_VISIBILITY: Record<NavView, Role[]> = {
   // Module workspace: reached from the Command Centre doors, not the sidebar.
   // PM and Architect own it; everyone else opens it read-only.
   'Spec AI': ['Project Admin', ...PDLC_ROLES],
+  // The redesigned conversational surface, on its own path beside the original.
+  'Spec AI v2': ['Project Admin', ...PDLC_ROLES],
 };
 
 /**
@@ -57,7 +59,7 @@ export const NAV_VISIBILITY: Record<NavView, Role[]> = {
  * rather than the sidebar, and collapse the platform nav on entry so the module
  * gets the whole viewport.
  */
-export const MODULE_WORKSPACES: NavView[] = ['Spec AI'];
+export const MODULE_WORKSPACES: NavView[] = ['Spec AI', 'Spec AI v2'];
 
 export const isModuleWorkspace = (nav: NavView) => MODULE_WORKSPACES.includes(nav);
 

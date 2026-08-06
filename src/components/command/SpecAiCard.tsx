@@ -38,7 +38,8 @@ export const SpecAiCard: React.FC<{ projectId: string; projectName: string }> = 
   const progress = workspaceProgress(state);
   const stage = stageDef(activeStage(state));
 
-  const open = () => navigateTo('Spec AI');
+  /* The redesigned conversational surface. */
+  const open = () => navigateTo('Spec AI v2');
 
   const start = () => {
     const statement = draft.trim();

@@ -35,7 +35,8 @@ export type NavView =
   | 'My Services'
   | 'Command Centre'
   | 'My Tasks'
-  | 'Spec AI';
+  | 'Spec AI'
+  | 'Spec AI v2';
 
 /**
  * A sign-in identity. Mock only — passwords live in mock data purely so the
