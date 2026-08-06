@@ -76,7 +76,7 @@
 .sx .brand .wordmark {
   font-family: var(--font-display);
   font-weight: 600;
-  font-size: 16px;
+  font-size: 14px;
   letter-spacing: -0.01em;
 }
 .sx .brand .sub {
@@ -104,7 +104,7 @@
   border: none;
   background: none;
   cursor: pointer;
-  font-size: 13.5px;
+  font-size: 12.5px;
   font-weight: 500;
   color: var(--ink-soft);
   border-radius: 8px;
@@ -140,7 +140,7 @@
   gap: 14px;
 }
 .sx .breadcrumb {
-  font-size: 12.5px;
+  font-size: 11.5px;
   color: var(--ink-faint);
 }
 .sx .breadcrumb b {
@@ -219,7 +219,7 @@
 }
 .sx .problem-text {
   flex: 1;
-  font-size: 14.5px;
+  font-size: 13px;
   line-height: 1.5;
   color: var(--ink);
   outline: none;
@@ -307,14 +307,14 @@
 .sx .messages {
   flex: 1;
   overflow-y: auto;
-  padding: 24px 30px;
+  padding: 18px 22px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 15px;
 }
 
 .sx .msg {
-  max-width: 660px;
+  max-width: 620px;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -329,7 +329,7 @@
 }
 .sx .msg .meta {
   font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-size: 9.5px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--ink-faint);
@@ -349,22 +349,22 @@
 
 .sx .msg.agent .content {
   border-left: 2px solid var(--line-strong);
-  padding-left: 13px;
-  font-size: 14.5px;
-  line-height: 1.6;
+  padding-left: 11px;
+  font-size: 12px;
+  line-height: 1.55;
 }
 .sx .msg.agent .content p {
-  margin: 0 0 10px;
+  margin: 0 0 8px;
 }
 .sx .msg.agent .content p:last-child {
   margin-bottom: 0;
 }
 .sx .msg.agent .content ol {
   margin: 8px 0 0;
-  padding-left: 20px;
+  padding-left: 17px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 .sx .msg.agent .content li {
   padding-left: 2px;
@@ -373,15 +373,15 @@
 .sx .msg.user .content {
   background: var(--accent-soft);
   color: var(--ink);
-  font-size: 14.5px;
+  font-size: 12px;
   line-height: 1.5;
-  padding: 9px 14px;
+  padding: 7px 11px;
   border-radius: 12px 12px 2px 12px;
 }
 
 .sx .msg.system .content {
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 10.5px;
   color: var(--ink-soft);
   background: var(--surface);
   border: 1px solid var(--line);
@@ -391,7 +391,7 @@
 
 .sx .cite {
   font-family: var(--font-mono);
-  font-size: 12.5px;
+  font-size: 10.5px;
   background: var(--surface);
   border: 1px solid var(--line);
   padding: 1px 6px;
@@ -437,7 +437,7 @@
   display: flex;
   align-items: flex-start;
   gap: 8px;
-  padding: 3px 0;
+  padding: 2px 0;
 }
 .sx .claim > span.text {
   flex: 1;
@@ -471,8 +471,8 @@
 }
 .sx .chip {
   font-family: var(--font-body);
-  font-size: 13px;
-  padding: 7px 13px;
+  font-size: 11px;
+  padding: 5px 10px;
   border: 1px solid var(--line-strong);
   border-radius: 8px;
   background: var(--surface);
@@ -485,8 +485,8 @@
   background: var(--accent-soft);
 }
 .sx .chip.soft {
-  font-size: 12px;
-  padding: 5px 10px;
+  font-size: 10.5px;
+  padding: 4px 8px;
   color: var(--ink-soft);
 }
 .sx .chip:disabled {
@@ -573,7 +573,7 @@
   gap: 3px;
   margin: 6px 0 2px;
   font-family: var(--font-mono);
-  font-size: 11.5px;
+  font-size: 10.5px;
 }
 .sx .tool {
   display: flex;
@@ -613,7 +613,7 @@
 /* ---------- COMPOSER ---------- */
 .sx .composer {
   border-top: 1px solid var(--line);
-  padding: 12px 24px 16px;
+  padding: 10px 20px 12px;
   background: var(--surface);
   flex-shrink: 0;
   position: relative;
@@ -629,7 +629,7 @@
 }
 .sx .tray-chip {
   font-family: var(--font-mono);
-  font-size: 11.5px;
+  font-size: 10.5px;
   background: var(--bg);
   border: 1px solid var(--line);
   padding: 3px 8px;
@@ -646,8 +646,8 @@
   align-items: center;
 }
 .sx .icon-btn {
-  width: 38px;
-  height: 38px;
+  width: 34px;
+  height: 34px;
   border-radius: 9px;
   border: 1px solid var(--line-strong);
   background: var(--surface);
@@ -666,9 +666,9 @@
   flex: 1;
   border: 1px solid var(--line-strong);
   border-radius: 10px;
-  padding: 10px 14px;
+  padding: 8px 12px;
   font-family: var(--font-body);
-  font-size: 14.5px;
+  font-size: 12px;
   outline: none;
   background: var(--surface);
   color: var(--ink);
@@ -685,11 +685,11 @@
 .sx .btn {
   font-family: var(--font-display);
   font-weight: 600;
-  font-size: 13px;
+  font-size: 11.5px;
   border: none;
   border-radius: 10px;
-  padding: 0 16px;
-  height: 38px;
+  padding: 0 13px;
+  height: 34px;
   cursor: pointer;
   flex-shrink: 0;
   display: flex;
@@ -721,7 +721,7 @@
   cursor: not-allowed;
 }
 .sx .composer-hint {
-  font-size: 11px;
+  font-size: 10px;
   color: var(--ink-faint);
   margin-top: 7px;
   font-family: var(--font-mono);
@@ -769,33 +769,34 @@
 }
 .sx .command-item .desc {
   color: var(--ink-soft);
-  font-size: 11.5px;
+  font-size: 10.5px;
 }
 
 /* ---------- RAIL ---------- */
 .sx .rail {
-  width: 320px;
+  width: 236px;
   flex-shrink: 0;
   overflow-y: auto;
-  padding: 20px;
+  padding: 12px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 10px;
+  transition: width 0.2s ease;
   background: var(--surface-2);
 }
 .sx .rail-card {
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 16px;
+  border-radius: 10px;
+  padding: 11px 12px;
 }
 .sx .rail-card h3 {
   font-family: var(--font-display);
-  font-size: 12.5px;
+  font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--ink-soft);
-  margin: 0 0 14px;
+  margin: 0 0 8px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -832,7 +833,7 @@
 }
 .sx .tag {
   font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-size: 9.5px;
   padding: 2px 7px;
   border-radius: 20px;
   text-transform: uppercase;
@@ -895,7 +896,7 @@
   border-radius: 9px;
   padding: 11px 12px;
   margin-bottom: 10px;
-  font-size: 12.5px;
+  font-size: 11.5px;
   line-height: 1.5;
 }
 .sx .flag-item:last-child {
@@ -906,7 +907,7 @@
   align-items: center;
   gap: 6px;
   font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-size: 9.5px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--flag);
@@ -957,7 +958,7 @@
   color: var(--flag);
 }
 .sx .rail-empty {
-  font-size: 12.5px;
+  font-size: 11.5px;
   color: var(--ink-faint);
   display: flex;
   align-items: center;
@@ -994,14 +995,14 @@
   flex: 1;
 }
 .sx .src .nm {
-  font-size: 12.5px;
+  font-size: 11.5px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .sx .src .dt {
   font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-size: 9.5px;
   color: var(--ink-faint);
 }
 .sx .ingest {
@@ -1038,11 +1039,11 @@
 }
 .sx .panel-header h1 {
   font-family: var(--font-display);
-  font-size: 19px;
+  font-size: 16px;
   margin: 0 0 4px;
 }
 .sx .panel-header p {
-  font-size: 13.5px;
+  font-size: 12.5px;
   color: var(--ink-soft);
   margin: 0;
 }
@@ -1056,7 +1057,7 @@
 }
 .sx .empty-state p {
   margin: 14px 0 2px;
-  font-size: 14.5px;
+  font-size: 13px;
   color: var(--ink-soft);
 }
 .sx .empty-state p.sub {
@@ -1073,7 +1074,7 @@
   padding: 12px 16px;
   border-radius: 10px;
   margin-bottom: 18px;
-  font-size: 13.5px;
+  font-size: 12.5px;
   font-weight: 500;
 }
 .sx table {
@@ -1087,7 +1088,7 @@
 .sx thead th {
   text-align: left;
   font-family: var(--font-display);
-  font-size: 11.5px;
+  font-size: 10.5px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--ink-soft);
@@ -1099,7 +1100,7 @@
 .sx tbody td {
   padding: 13px 16px;
   border-bottom: 1px solid var(--line);
-  font-size: 13.5px;
+  font-size: 12.5px;
   vertical-align: middle;
 }
 .sx tbody tr:last-child td {
@@ -1110,7 +1111,7 @@
 }
 .sx .art-type {
   font-family: var(--font-mono);
-  font-size: 11.5px;
+  font-size: 10.5px;
   color: var(--ink-faint);
 }
 .sx .status-pill {
@@ -1136,7 +1137,7 @@
 }
 .sx .approve-btn {
   font-family: var(--font-body);
-  font-size: 12.5px;
+  font-size: 11.5px;
   font-weight: 500;
   background: var(--surface);
   color: var(--accent);
@@ -1187,12 +1188,12 @@
   color: var(--ink-faint);
 }
 .sx .build .bnm {
-  font-size: 12.5px;
+  font-size: 11.5px;
   font-weight: 500;
 }
 .sx .build .reading {
   font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-size: 9.5px;
   color: var(--ink-faint);
   margin-top: 2px;
   overflow: hidden;
@@ -1230,11 +1231,11 @@
 }
 .sx-modal h2 {
   font-family: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
-  font-size: 17px;
+  font-size: 15px;
   margin: 0 0 6px;
 }
 .sx-modal p.sub {
-  font-size: 13.5px;
+  font-size: 12.5px;
   color: #667085;
   margin: 0 0 16px;
   line-height: 1.5;
@@ -1342,5 +1343,3495 @@
   .sx-modal * {
     animation-duration: 0.001s !important;
     transition-duration: 0.001s !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Density pass — smaller type, a rail that gets out of the way, and
+   retrieval hidden until asked for.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ---------- Tool calls: collapsed until clicked ---------- */
+.sx .tool-toggle {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink-faint);
+  background: none;
+  border: none;
+  border-bottom: 1px dotted var(--line-strong);
+  padding: 0 0 1px;
+  margin: 4px 0 2px;
+  cursor: pointer;
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.sx .tool-toggle:hover {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+/* ---------- Confidence, as one dense line per item ---------- */
+.sx .cf {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  padding: 3px 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+}
+.sx .cf .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.sx .cf .dot.low {
+  background: var(--conf-low);
+}
+.sx .cf .dot.medium {
+  background: var(--conf-med);
+}
+.sx .cf .dot.high {
+  background: var(--conf-high);
+}
+.sx .cf .lbl {
+  font-size: 11px;
+  color: var(--ink);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sx .cf:hover .lbl {
+  color: var(--accent);
+}
+.sx .cf .lvl {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--ink-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  flex-shrink: 0;
+}
+.sx .cf-why {
+  font-size: 10px;
+  color: var(--ink-faint);
+  padding: 0 0 5px 13px;
+  line-height: 1.4;
+}
+.sx .cf-flag {
+  color: var(--flag);
+}
+
+/* ---------- Rail collapsed to a strip of dots ---------- */
+.sx .rail.mini {
+  width: 34px;
+  padding: 10px 0;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface-2);
+  border-left: 1px solid var(--line);
+}
+.sx .rail-toggle {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: 6px;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--ink-faint);
+  flex-shrink: 0;
+}
+.sx .rail-toggle:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+/* At a glance: one dot per item, weakest at the top. */
+.sx .dots-strip {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  align-items: center;
+}
+.sx .dots-strip .cdot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+.sx .dots-strip .cdot.low {
+  background: var(--conf-low);
+}
+.sx .dots-strip .cdot.medium {
+  background: var(--conf-med);
+}
+.sx .dots-strip .cdot.high {
+  background: var(--conf-high);
+}
+.sx .mini-count {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--ink-faint);
+  writing-mode: vertical-rl;
+  letter-spacing: 0.05em;
+}
+
+/* ---------- Gate notice on a locked tab ---------- */
+.sx .tab:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.sx .gate-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--accent-soft);
+  border: 1px solid var(--line);
+  color: var(--accent-dark);
+  padding: 10px 14px;
+  border-radius: 10px;
+  margin-bottom: 16px;
+  font-size: 12px;
+}
+
+/* ---------- Reused stage surfaces ----------
+   Modules & Features and Stories come from the original Spec AI, which is built
+   with the app's Tailwind classes. They keep their own look; this only stops the
+   v2 body font and colour cascading into them. */
+.sx .legacy {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  background: #fff;
+  font-family: 'Poppins', ui-sans-serif, system-ui, sans-serif;
+  color: #1c1c1e;
+  font-size: 14px;
+}
+
+/* ---------- Sources, top right ----------
+   Retrieval and the source list are both out of the thread. The count lives in
+   the top bar and opens the list on click, so the conversation stays the
+   conversation and evidence is one deliberate step away. */
+.sx .src-wrap {
+  position: relative;
+}
+.sx .src-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--ink-soft);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 4px 10px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.sx .src-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.sx .src-btn .n {
+  font-weight: 500;
+  color: var(--ink);
+}
+.sx .src-btn:hover .n {
+  color: var(--accent);
+}
+.sx .src-btn .busy {
+  color: var(--conf-med);
+}
+.sx .src-pop {
+  position: absolute;
+  top: calc(100% + 7px);
+  right: 0;
+  width: 288px;
+  max-height: 340px;
+  overflow-y: auto;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  box-shadow: 0 12px 32px rgba(20, 23, 31, 0.12);
+  padding: 10px 12px;
+  z-index: 40;
+}
+.sx .src-pop h4 {
+  font-family: var(--font-display);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-soft);
+  margin: 0 0 7px;
+  display: flex;
+  justify-content: space-between;
+  font-weight: 600;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Thread, rebuilt.
+
+   The old version read as a log: an uppercase AGENT header on every turn, a
+   heavy rule down the side of each one, and the whole reading dumped into a
+   single message with a shouty badge in front of every claim.
+
+   Three changes. Consecutive turns from the same speaker group under one
+   header, so the eye follows a conversation instead of a stack of records.
+   The reading becomes a card that is collapsed by default, because it is a
+   document and documents do not belong inline. And evidence is carried by a
+   coloured dot rather than a word, so the sentence is the thing you read.
+   ═══════════════════════════════════════════════════════════════════ */
+
+.sx .turn {
+  display: flex;
+  gap: 10px;
+  max-width: 660px;
+  align-items: flex-start;
+}
+.sx .turn.me {
+  align-self: flex-end;
+  flex-direction: row-reverse;
+  max-width: 520px;
+}
+.sx .av {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent);
+  color: #fff;
+  margin-top: 1px;
+}
+.sx .turn.me .av {
+  background: var(--line-strong);
+  color: var(--ink-soft);
+  font-family: var(--font-display);
+  font-size: 9px;
+  font-weight: 600;
+}
+/* A run of turns from one speaker keeps the column but drops the repeat. */
+.sx .turn.grouped .av {
+  visibility: hidden;
+}
+.sx .turn.grouped {
+  margin-top: -9px;
+}
+
+.sx .turn .col {
+  min-width: 0;
+  flex: 1;
+}
+.sx .who {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  margin-bottom: 3px;
+}
+.sx .who .nm {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.sx .who .sub {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  color: var(--ink-faint);
+}
+.sx .say {
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--ink);
+}
+.sx .say p {
+  margin: 0 0 7px;
+}
+.sx .say p:last-child {
+  margin-bottom: 0;
+}
+.sx .turn.me .say {
+  background: var(--accent-soft);
+  padding: 7px 11px;
+  border-radius: 11px 11px 2px 11px;
+}
+
+/* Cursor while a reply is landing, so the agent reads as working. */
+.sx .caret {
+  display: inline-block;
+  width: 6px;
+  height: 12px;
+  background: var(--accent);
+  margin-left: 2px;
+  vertical-align: -1px;
+  animation: sx-blink 1s steps(2, start) infinite;
+}
+@keyframes sx-blink {
+  to {
+    visibility: hidden;
+  }
+}
+
+/* ---------- Inline card: the reading, and each question ---------- */
+.sx .card {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  margin-top: 7px;
+  overflow: hidden;
+}
+.sx .card-head {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 9px 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+}
+.sx .card-head:hover {
+  background: var(--surface-2);
+}
+.sx .card-head .t {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.sx .card-head .s {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink-faint);
+  margin-left: auto;
+}
+.sx .card-body {
+  padding: 2px 12px 11px;
+  border-top: 1px solid var(--line);
+}
+.sx .band-h {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--ink-faint);
+  margin: 10px 0 3px;
+}
+
+/* Evidence as colour, not a word. The label is in the title attribute and in
+   the provenance panel; the row itself just has to read as a sentence. */
+.sx .cl {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 3px 0;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.sx .cl .evd {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 6px;
+}
+.sx .cl .evd.fact {
+  background: var(--ink);
+}
+.sx .cl .evd.decision {
+  background: var(--conf-high);
+}
+.sx .cl .evd.inferred {
+  background: var(--accent);
+}
+.sx .cl .evd.assumption {
+  background: var(--conf-med);
+}
+.sx .cl .tx {
+  flex: 1;
+  min-width: 0;
+}
+.sx .cl .promote {
+  opacity: 0;
+  font-size: 10px;
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  color: var(--ink-soft);
+  border-radius: 5px;
+  padding: 1px 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.sx .cl:hover .promote {
+  opacity: 1;
+}
+.sx .cl .promote:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* ---------- One question at a time ---------- */
+.sx .q {
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  background: var(--surface);
+  padding: 12px 13px;
+  margin-top: 7px;
+}
+.sx .q-top {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 6px;
+}
+.sx .q-n {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  color: var(--ink-faint);
+  margin-left: auto;
+}
+.sx .q-text {
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+.sx .q-why {
+  font-size: 10.5px;
+  color: var(--ink-faint);
+  line-height: 1.45;
+  margin-bottom: 9px;
+}
+.sx .q-rest {
+  font-size: 10.5px;
+  color: var(--ink-faint);
+  margin-top: 7px;
+  font-family: var(--font-mono);
+}
+
+/* ---------- Opening state ---------- */
+.sx .starter {
+  margin-top: 9px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.sx .starter button {
+  text-align: left;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: 8px;
+  padding: 8px 11px;
+  font-size: 11.5px;
+  color: var(--ink-soft);
+  cursor: pointer;
+  line-height: 1.4;
+}
+.sx .starter button:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Chat layout, the way assistants actually do it.
+
+   The panel version was the problem: text ran the full width of whatever
+   space was left, turns sat 15px apart, and the composer was a row of
+   controls bolted to the bottom edge. That reads as a console.
+
+   What makes ChatGPT and Claude feel like conversation is boring and
+   structural — a fixed reading column centred in the space, a lot of air
+   between turns, assistant text with no container at all, and a single
+   composer that looks like one object instead of five.
+   ═══════════════════════════════════════════════════════════════════ */
+
+.sx .thread-panel {
+  background: var(--surface);
+}
+
+.sx .messages {
+  padding: 26px 24px 8px;
+  gap: 0;
+}
+/* One column, centred, regardless of how wide the pane gets. Long lines are
+   the fastest way to make reading feel like work. */
+.sx .messages > * {
+  width: 100%;
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.sx .turn {
+  max-width: 700px;
+  gap: 13px;
+  padding: 13px 0;
+  align-items: flex-start;
+}
+.sx .turn.grouped {
+  margin-top: -13px;
+  padding-top: 0;
+}
+.sx .turn.me {
+  max-width: 700px;
+  flex-direction: row;
+  justify-content: flex-end;
+}
+/* The person's own words get a container; the assistant's do not. That single
+   asymmetry is what makes a thread scan as a dialogue. */
+.sx .turn.me .av {
+  display: none;
+}
+.sx .turn.me .col {
+  flex: 0 1 auto;
+  max-width: 78%;
+}
+.sx .turn.me .say {
+  background: var(--accent-soft);
+  padding: 9px 14px;
+  border-radius: 16px;
+  font-size: 13px;
+}
+.sx .turn.me .who {
+  display: none;
+}
+
+.sx .av {
+  width: 26px;
+  height: 26px;
+  background: var(--ink);
+  margin-top: -1px;
+}
+.sx .who {
+  margin-bottom: 5px;
+}
+.sx .who .nm {
+  font-size: 12px;
+}
+.sx .say {
+  font-size: 13px;
+  line-height: 1.68;
+}
+.sx .say p {
+  margin: 0 0 11px;
+}
+
+/* ---------- Composer as one object ---------- */
+.sx .composer {
+  border-top: none;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0) 0%, var(--surface) 22%);
+  padding: 6px 24px 14px;
+}
+.sx .composer-shell {
+  max-width: 700px;
+  margin: 0 auto;
+}
+.sx .composer-box {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: 22px;
+  background: var(--surface);
+  padding: 7px 7px 7px 12px;
+  box-shadow: 0 2px 10px rgba(20, 23, 31, 0.05);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.sx .composer-box:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 2px 14px rgba(53, 56, 205, 0.1);
+}
+.sx .composer-box textarea {
+  flex: 1;
+  border: none;
+  outline: none;
+  resize: none;
+  background: none;
+  font-family: var(--font-body);
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ink);
+  padding: 7px 0;
+  max-height: 168px;
+  min-width: 0;
+}
+.sx .composer-box textarea::placeholder {
+  color: var(--ink-faint);
+}
+.sx .composer-box textarea:disabled {
+  color: var(--ink-faint);
+}
+.sx .clip {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: none;
+  background: none;
+  color: var(--ink-faint);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.sx .clip:hover {
+  background: var(--bg);
+  color: var(--accent);
+}
+.sx .send-fab {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+.sx .send-fab:hover:not(:disabled) {
+  background: var(--accent-dark);
+}
+.sx .send-fab:disabled {
+  background: var(--line);
+  color: var(--ink-faint);
+  cursor: default;
+}
+.sx .composer-foot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 8px;
+  font-size: 10.5px;
+  color: var(--ink-faint);
+}
+.sx .foot-btn {
+  border: none;
+  background: none;
+  font-family: var(--font-body);
+  font-size: 10.5px;
+  color: var(--ink-soft);
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-color: var(--line-strong);
+}
+.sx .foot-btn:hover:not(:disabled) {
+  color: var(--accent);
+  text-decoration-color: var(--accent);
+}
+.sx .foot-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.sx .command-menu {
+  bottom: 78px;
+  left: 50%;
+  transform: translateX(-350px);
+  width: 330px;
+}
+
+/* Cards inside the column sit flush with the assistant's text. */
+.sx .card,
+.sx .q {
+  margin-top: 10px;
+}
+.sx .starter button {
+  padding: 9px 13px;
+  font-size: 12px;
+  border-radius: 10px;
+}
+
+/* ---------- Confidence and probes, side by side ----------
+   Confidence says where the reading is thin. On its own that leaves the user to
+   work out what to type next, so the probes sit in the lane beside it: the
+   question that closes each common gap, one press away. A probe whose item is
+   already strong fades rather than disappearing, so the set stays in the same
+   place every time you look at it. */
+.sx .rail {
+  width: 312px;
+}
+.sx .lanes {
+  display: flex;
+  gap: 11px;
+  align-items: flex-start;
+}
+.sx .lane {
+  min-width: 0;
+}
+.sx .lane.conf {
+  flex: 1;
+}
+.sx .lane.probes {
+  flex: 0 0 118px;
+  border-left: 1px solid var(--line);
+  padding-left: 11px;
+}
+.sx .lane-h {
+  font-family: var(--font-display);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-faint);
+  font-weight: 600;
+  margin-bottom: 7px;
+}
+.sx .probe {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--surface);
+  color: var(--ink-soft);
+  font-family: var(--font-body);
+  font-size: 10.5px;
+  line-height: 1.3;
+  padding: 5px 7px;
+  margin-bottom: 5px;
+  cursor: pointer;
+}
+.sx .probe:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.sx .probe:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+.sx .probe.strong {
+  opacity: 0.4;
+}
+.sx .probe .pdot {
+  display: inline-block;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  margin-right: 5px;
+  vertical-align: 1px;
+}
+.sx .probe .pdot.low {
+  background: var(--conf-low);
+}
+.sx .probe .pdot.medium {
+  background: var(--conf-med);
+}
+.sx .probe .pdot.high {
+  background: var(--conf-high);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Knowledge map — the specification as a tree of questions.
+   ═══════════════════════════════════════════════════════════════════ */
+
+.sx .kmap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  position: relative;
+  background: var(--surface);
+}
+.sx .kmap-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 16px 22px 13px;
+  border-bottom: 1px solid var(--line);
+  flex-shrink: 0;
+}
+.sx .kmap-head h1 {
+  font-family: var(--font-display);
+  font-size: 15px;
+  margin: 0 0 3px;
+}
+.sx .kmap-head p {
+  font-size: 11.5px;
+  color: var(--ink-soft);
+  margin: 0;
+}
+.sx .kmap-stats {
+  display: flex;
+  gap: 14px;
+  font-size: 10.5px;
+  color: var(--ink-soft);
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+}
+.sx .kmap-stats b {
+  color: var(--ink);
+  font-weight: 500;
+}
+.sx .kred {
+  color: var(--conf-low);
+}
+.sx .kmap-stats .kred b {
+  color: var(--conf-low);
+}
+.sx .kmap-canvas {
+  flex: 1;
+  min-height: 0;
+}
+.sx .kmap-canvas .react-flow__renderer,
+.sx .kmap-canvas .react-flow {
+  background: var(--surface-2);
+}
+
+/* ---------- one node ---------- */
+.sx .kn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 214px;
+  padding: 5px 9px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--surface);
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: var(--ink);
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(20, 23, 31, 0.04);
+}
+.sx .kn:hover {
+  border-color: var(--accent);
+}
+.sx .kn.branch {
+  font-weight: 500;
+  background: var(--surface);
+}
+.sx .kn.gap {
+  border-color: var(--conf-low);
+  background: var(--conf-low-bg);
+}
+.sx .kdot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.sx .klabel {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sx .kcrit {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--conf-low);
+  flex-shrink: 0;
+}
+.sx .kmeta {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--ink-faint);
+  flex-shrink: 0;
+}
+.sx .kmeta b {
+  color: var(--conf-low);
+  font-weight: 500;
+}
+.sx .kbar {
+  display: block;
+  width: 26px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--line);
+  overflow: hidden;
+}
+.sx .kbar > i {
+  display: block;
+  height: 100%;
+  background: var(--conf-high);
+}
+
+/* ---------- leaf drawer ---------- */
+.sx .kdrawer {
+  position: absolute;
+  right: 16px;
+  top: 78px;
+  width: 300px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  box-shadow: 0 16px 40px rgba(20, 23, 31, 0.14);
+  padding: 13px 15px 15px;
+  z-index: 20;
+}
+.sx .kdrawer-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.sx .kpath {
+  flex: 1;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--ink-faint);
+  line-height: 1.4;
+}
+.sx .kdrawer-head button {
+  border: none;
+  background: none;
+  font-size: 16px;
+  line-height: 1;
+  color: var(--ink-faint);
+  cursor: pointer;
+  padding: 0;
+}
+.sx .kdrawer h4 {
+  font-family: var(--font-display);
+  font-size: 13px;
+  margin: 0 0 8px;
+}
+.sx .kq {
+  font-size: 12px;
+  line-height: 1.5;
+  margin: 0 0 6px;
+}
+.sx .knone {
+  font-size: 11px;
+  color: var(--conf-low);
+  margin: 0 0 10px;
+}
+.sx .kstate {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.sx .kstate.answered {
+  background: var(--conf-high-bg);
+  color: var(--conf-high);
+}
+.sx .kstate.inferred {
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+}
+.sx .kans {
+  font-size: 12px;
+  line-height: 1.55;
+  margin: 8px 0 5px;
+}
+.sx .kfrom {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink-faint);
+  margin: 0 0 10px;
+}
+
+/* ---------- Map beside the chat ----------
+   The panel is the map's home; the tab is gone. Wider than a rail of cards
+   needs to be, because a tree earns the width — and there is a full-screen
+   escape hatch when it does not fit. */
+.sx .rail {
+  width: 392px;
+  padding: 10px;
+  gap: 9px;
+}
+.sx .rail-switch {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+}
+.sx .rail-switch button {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid transparent;
+  background: none;
+  border-radius: 7px;
+  padding: 4px 9px;
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+.sx .rail-switch button:hover {
+  background: var(--surface);
+  color: var(--ink);
+}
+.sx .rail-switch button.on {
+  background: var(--surface);
+  border-color: var(--line);
+  color: var(--accent);
+  font-weight: 500;
+}
+.sx .rail-switch button i {
+  font-style: normal;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  background: var(--conf-low);
+  color: #fff;
+  border-radius: 20px;
+  padding: 0 5px;
+  line-height: 14px;
+}
+.sx .rail-switch .rail-toggle {
+  margin-left: auto;
+}
+
+/* The map fills the panel below the switch. */
+.sx .rail .kmap {
+  flex: 1;
+  min-height: 0;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.sx .kmap-head.compact {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--line);
+}
+.sx .kmini-t {
+  font-family: var(--font-display);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-soft);
+  font-weight: 600;
+}
+.sx .kmini-s {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  color: var(--ink-faint);
+  margin-left: auto;
+}
+.sx .kmini-s b {
+  font-weight: 500;
+}
+.sx .kexpand {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: 5px;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--ink-faint);
+  flex-shrink: 0;
+}
+.sx .kexpand:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* Denser nodes in the panel. */
+.sx .kmap.compact .kn {
+  width: 146px;
+  padding: 3px 7px;
+  font-size: 9.5px;
+  gap: 5px;
+  border-radius: 6px;
+}
+.sx .kmap.compact .kmeta {
+  font-size: 8px;
+  gap: 3px;
+}
+.sx .kmap.compact .kbar {
+  width: 16px;
+}
+.sx .kmap.compact .kcrit {
+  display: none;
+}
+.sx .kmap.compact .kdot {
+  width: 5px;
+  height: 5px;
+}
+/* A critical gap is the one thing that has to be visible at this size. */
+.sx .kmap.compact .kn.gap {
+  border-color: var(--conf-low);
+  box-shadow: 0 0 0 2px rgba(180, 35, 24, 0.12);
+}
+.sx .kmap.compact .kdrawer {
+  right: 8px;
+  top: 40px;
+  width: 250px;
+}
+
+/* ---------- Full screen ---------- */
+.sx-full-host .kfull,
+.sx .kfull {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 23, 31, 0.4);
+  z-index: 95;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 26px;
+}
+.sx .kfull-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  max-width: 1400px;
+  background: var(--surface);
+  border-radius: 14px;
+  overflow: hidden;
+  display: flex;
+  box-shadow: 0 24px 64px rgba(20, 23, 31, 0.3);
+}
+.sx .kfull-inner > .kmap {
+  flex: 1;
+  min-width: 0;
+}
+.sx .kfull-x {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  z-index: 30;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: 7px;
+  width: 26px;
+  height: 26px;
+  font-size: 17px;
+  line-height: 1;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+.sx .kfull-x:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* React Flow strips pointer events from nodes it considers inert, and hides the
+   selection ring behind its own styles. Both need saying explicitly here. */
+.sx .react-flow__node {
+  pointer-events: all !important;
+  cursor: pointer;
+}
+.sx .react-flow__node.selected .kn,
+.sx .react-flow__node:focus .kn,
+.sx .react-flow__node:focus-visible .kn {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-soft);
+  outline: none;
+}
+.sx .react-flow__node:focus {
+  outline: none;
+}
+.sx .kn:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.sx .kn.gap:hover {
+  background: var(--conf-low-bg);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Single page: problem statement on top, chat left, workspace right,
+   connected knowledge counted along the bottom.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ---------- Problem statement header ---------- */
+.sx .phead {
+  background: var(--accent-soft);
+  border-bottom: 1px solid var(--line);
+  padding: 11px 22px 12px;
+  flex-shrink: 0;
+}
+.sx .phead-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+.sx .phead-status {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--accent-dark);
+}
+.sx .phead-cov {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink-soft);
+}
+.sx .phead-cov b {
+  color: var(--ink);
+  font-size: 12px;
+}
+.sx .phead-text {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ink);
+  outline: none;
+  max-width: 900px;
+}
+.sx .phead-text:focus {
+  background: var(--surface);
+  padding: 5px 9px;
+  margin: -5px -9px;
+  border-radius: 7px;
+  box-shadow: 0 0 0 2px rgba(53, 56, 205, 0.18);
+}
+.sx .phead-acts {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+/* ---------- Source activity ----------
+   Transparency without controls. Nothing here is clickable except the toggle:
+   these are systems reporting in, not buttons to press. */
+.sx .sact {
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+  flex-shrink: 0;
+}
+.sx .sact-strip {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 6px 22px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  overflow-x: auto;
+}
+.sx .sact-p {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  color: var(--ink-faint);
+  white-space: nowrap;
+}
+.sx .sact-p i {
+  font-style: normal;
+}
+.sx .sact-p.Complete {
+  color: var(--conf-high);
+}
+.sx .sact-p.Partial {
+  color: var(--conf-med);
+}
+.sx .sact-p.Permission-required,
+.sx .sact-p.Unavailable {
+  color: var(--ink-faint);
+  text-decoration: line-through;
+}
+.sx .sact-p.Discovering,
+.sx .sact-p.Retrieving,
+.sx .sact-p.Analysing,
+.sx .sact-p.Connecting {
+  color: var(--accent);
+}
+.sx .sact-more {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--ink-faint);
+  text-decoration: underline;
+  flex-shrink: 0;
+}
+.sx .sact-panel {
+  border-top: 1px solid var(--line);
+  padding: 8px 22px 10px;
+  background: var(--surface-2);
+}
+.sx .sact-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 3px 0;
+  font-size: 11px;
+}
+.sx .sact-l {
+  width: 130px;
+  flex-shrink: 0;
+}
+.sx .sact-s {
+  width: 130px;
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-faint);
+}
+.sx .sact-s.Complete {
+  color: var(--conf-high);
+}
+.sx .sact-s.Partial {
+  color: var(--conf-med);
+}
+.sx .sact-s.Analysing,
+.sx .sact-s.Retrieving,
+.sx .sact-s.Discovering {
+  color: var(--accent);
+}
+.sx .sact-d {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink-soft);
+}
+
+/* ---------- Workspace, right ---------- */
+.sx .ws {
+  width: 430px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--surface-2);
+  border-left: 1px solid var(--line);
+}
+.sx .ws-tabs {
+  display: flex;
+  gap: 2px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--line);
+  flex-shrink: 0;
+  overflow-x: auto;
+}
+.sx .ws-tabs button {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid transparent;
+  background: none;
+  border-radius: 7px;
+  padding: 4px 8px;
+  font-family: var(--font-body);
+  font-size: 10.5px;
+  color: var(--ink-soft);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.sx .ws-tabs button:hover {
+  background: var(--surface);
+  color: var(--ink);
+}
+.sx .ws-tabs button.on {
+  background: var(--surface);
+  border-color: var(--line);
+  color: var(--accent);
+  font-weight: 500;
+}
+.sx .ws-tabs button i {
+  font-style: normal;
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  background: var(--conf-low);
+  color: #fff;
+  border-radius: 20px;
+  padding: 0 4px;
+  line-height: 13px;
+}
+.sx .ws .kmap {
+  flex: 1;
+  min-height: 0;
+  border: none;
+}
+
+/* ---------- Workspace panels ---------- */
+.sx .wpanel {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 10px 12px 16px;
+}
+.sx .wsec {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  font-family: var(--font-display);
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-soft);
+  font-weight: 600;
+  margin: 13px 0 6px;
+}
+.sx .wsec:first-child {
+  margin-top: 2px;
+}
+.sx .wsec span {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--ink-faint);
+  text-transform: none;
+  letter-spacing: 0;
+}
+.sx .wq {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 9px 11px;
+  margin-bottom: 7px;
+}
+.sx .wq.crit {
+  border-color: var(--conf-low);
+  background: var(--conf-low-bg);
+}
+.sx .wq-h {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+.sx .wq.crit .wq-h {
+  color: var(--conf-low);
+}
+.sx .wq-q {
+  font-size: 12px;
+  line-height: 1.45;
+  margin-bottom: 4px;
+}
+.sx .wq-claims {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-bottom: 5px;
+}
+.sx .wq-claims span {
+  font-size: 11px;
+  line-height: 1.4;
+  padding-left: 9px;
+  border-left: 2px solid var(--line-strong);
+}
+.sx .wq-why {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  color: var(--ink-faint);
+}
+.sx .wq-path {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--ink-faint);
+  margin-top: 3px;
+}
+.sx .wq-acts {
+  margin-top: 7px;
+}
+.sx .wempty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 50px 16px;
+  color: var(--conf-high);
+}
+.sx .wempty p {
+  margin: 10px 0 0;
+  font-size: 12.5px;
+  color: var(--ink-soft);
+}
+.sx .wempty p.sub {
+  font-size: 11px;
+  color: var(--ink-faint);
+  margin-top: 3px;
+}
+.sx .wcap {
+  font-size: 12px;
+  line-height: 1.5;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-left: 2px solid var(--accent);
+  border-radius: 8px;
+  padding: 9px 11px;
+}
+.sx .wimp {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  padding: 4px 0;
+  color: var(--ink-soft);
+}
+.sx .wimp.direct {
+  color: var(--ink);
+}
+.sx .wout {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 11.5px;
+}
+.sx .wout:last-child {
+  border-bottom: none;
+}
+.sx .wout.pending {
+  color: var(--ink-faint);
+}
+.sx .wout-l {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sx .wout-f {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--ink-faint);
+  flex-shrink: 0;
+}
+.sx .wnote {
+  margin-top: 12px;
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--conf-med);
+  background: var(--conf-med-bg);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+/* ---------- Node context above the composer ---------- */
+.sx .nctx {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 auto 4px;
+  max-width: 700px;
+  width: calc(100% - 48px);
+  background: var(--accent-soft);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 6px 10px;
+  flex-shrink: 0;
+}
+.sx .nctx-l {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--accent-dark);
+  flex-shrink: 0;
+}
+.sx .nctx-p {
+  font-size: 11px;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+.sx .nctx-e {
+  font-size: 10.5px;
+  color: var(--ink-soft);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sx .nctx button {
+  margin-left: auto;
+  border: none;
+  background: none;
+  font-size: 14px;
+  line-height: 1;
+  color: var(--ink-faint);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* ---------- Counted knowledge, along the bottom ---------- */
+.sx .cbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 5px 22px;
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  color: var(--ink-faint);
+  flex-shrink: 0;
+  overflow-x: auto;
+}
+.sx .cbar span {
+  white-space: nowrap;
+}
+.sx .cbar b {
+  color: var(--ink);
+  font-weight: 500;
+}
+.sx .cbar span.dim {
+  opacity: 0.45;
+}
+
+/* ---------- Leaf options in the drawer ---------- */
+.sx .kopts {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 9px 0 11px;
+}
+.sx .kopts label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11.5px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  padding: 6px 9px;
+  cursor: pointer;
+}
+.sx .kopts label:hover {
+  border-color: var(--accent);
+}
+.sx .kopts label.on {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+}
+.sx .kopts input {
+  accent-color: var(--accent);
+}
+.sx .kacts {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.sx .kstate.confirmed {
+  background: #ccfbf1;
+  color: #0f766e;
+}
+.sx .kn.ok {
+  border-color: #99f6e4;
+  background: #f0fdfa;
+}
+.sx .kwait {
+  font-style: normal;
+  color: var(--accent);
+  font-size: 8px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   System model: the graph, the reconciliation drawer, the delta.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ---------- Scope confirmation ---------- */
+.sx .scope {
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+  padding: 12px 22px 13px;
+  flex-shrink: 0;
+}
+.sx .scope-h {
+  font-size: 12.5px;
+  color: var(--ink);
+  margin-bottom: 9px;
+}
+.sx .scope-h b {
+  font-family: var(--font-display);
+  font-weight: 600;
+}
+.sx .scope-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 11px;
+}
+.sx .scope-n {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--line-strong);
+  border-radius: 20px;
+  padding: 3px 10px;
+  font-size: 11px;
+  background: var(--surface);
+}
+.sx .scope-n i {
+  font-style: normal;
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-faint);
+}
+.sx .scope-acts {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+/* ---------- System map nodes ---------- */
+.sx .sn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 158px;
+  padding: 5px 8px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--surface);
+  font-family: var(--font-body);
+  font-size: 10.5px;
+  box-shadow: 0 1px 2px rgba(20, 23, 31, 0.04);
+}
+.sx .kmap:not(.compact) .sn {
+  width: 200px;
+  font-size: 11.5px;
+  padding: 7px 10px;
+}
+.sx .sn:hover {
+  border-color: var(--accent);
+}
+/* Asked for by the problem statement, absent from the system. */
+.sx .sn.proposed {
+  border-style: dashed;
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.sx .sn.drift {
+  border-color: var(--conf-low);
+  background: var(--conf-low-bg);
+}
+.sx .sn-k {
+  width: 3px;
+  align-self: stretch;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+.sx .sn-body {
+  flex: 1;
+  min-width: 0;
+}
+.sx .sn-l {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sx .sn-d {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  color: var(--ink-faint);
+}
+.sx .sn-flag {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  text-transform: uppercase;
+  color: var(--conf-low);
+  flex-shrink: 0;
+}
+.sx .sn-n {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  color: var(--ink-faint);
+  flex-shrink: 0;
+}
+.sx .sn-legend {
+  display: flex;
+  gap: 14px;
+  padding: 7px 22px;
+  border-bottom: 1px solid var(--line);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--ink-faint);
+  flex-shrink: 0;
+}
+.sx .sn-legend span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.sx .sn-legend i {
+  width: 8px;
+  height: 3px;
+  border-radius: 2px;
+}
+
+/* ---------- Reconciliation drawer ---------- */
+.sx .kdrawer.wide {
+  width: 330px;
+}
+.sx .rd {
+  border-top: 1px solid var(--line);
+  padding-top: 9px;
+  margin-top: 9px;
+}
+.sx .rd:first-of-type {
+  border-top: none;
+  margin-top: 4px;
+}
+.sx .rd-h {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.sx .rd-c {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--conf-high);
+}
+.sx .rd-c.soft {
+  color: var(--ink-faint);
+}
+.sx .rd-row {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  padding: 2px 0;
+  font-size: 11px;
+}
+.sx .auth {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 1px 5px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  width: 62px;
+  text-align: center;
+}
+.sx .auth.verified {
+  background: var(--conf-high-bg);
+  color: var(--conf-high);
+}
+.sx .auth.observed {
+  background: var(--ink);
+  color: #fff;
+}
+.sx .auth.intended {
+  background: var(--conf-med-bg);
+  color: var(--conf-med);
+}
+.sx .auth.permitted {
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+}
+.sx .rd-v {
+  flex: 1;
+  min-width: 0;
+}
+.sx .rd-s {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--ink-faint);
+  flex-shrink: 0;
+}
+.sx .rd-sum {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  color: var(--ink-soft);
+  margin-top: 7px;
+  line-height: 1.5;
+}
+.sx .rd-warn {
+  font-size: 10px;
+  color: var(--conf-med);
+  margin-top: 5px;
+}
+.sx .rd-drift {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--conf-low);
+  margin-top: 8px;
+}
+.sx .rd-q {
+  font-size: 11.5px;
+  line-height: 1.45;
+  margin: 4px 0 8px;
+}
+
+/* ---------- Delta ---------- */
+.sx .dl {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  margin-bottom: 5px;
+  overflow: hidden;
+}
+.sx .dl.cur,
+.sx .dl.prop {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  font-size: 11.5px;
+  line-height: 1.4;
+}
+.sx .dl.cur {
+  border-left: 2px solid var(--ink-faint);
+}
+.sx .dl.prop {
+  border-left: 2px solid var(--accent);
+}
+.sx .dl-t {
+  flex: 1;
+  min-width: 0;
+}
+.sx .dl-c {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--conf-high);
+  flex-shrink: 0;
+}
+.sx .dl-c.drift {
+  color: var(--conf-low);
+}
+.sx .dl.step.blocked {
+  border-color: var(--conf-med);
+}
+.sx .dl-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 10px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+  font-size: 11.5px;
+  line-height: 1.4;
+  font-family: var(--font-body);
+}
+.sx .dl-head:hover {
+  background: var(--surface-2);
+}
+.sx .dl-k {
+  width: 17px;
+  height: 17px;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #fff;
+}
+.sx .dl-k.add {
+  background: var(--conf-high);
+}
+.sx .dl-k.change {
+  background: var(--accent);
+}
+.sx .dl-k.extend {
+  background: var(--conf-med);
+}
+.sx .dl-k.remove {
+  background: var(--conf-low);
+}
+.sx .dl-a {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-faint);
+  flex-shrink: 0;
+}
+.sx .dl-body {
+  padding: 0 10px 9px 35px;
+  border-top: 1px solid var(--line);
+  padding-top: 8px;
+}
+.sx .dl-touch {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.sx .dl-touch span {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 1px 5px;
+  color: var(--ink-soft);
+}
+.sx .dl-touch span.new {
+  border-style: dashed;
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.sx .dl-block {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 8px;
+  font-size: 10.5px;
+  color: var(--conf-med);
+}
+.sx .dl-reach {
+  display: flex;
+  gap: 16px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink-faint);
+  padding: 4px 2px;
+}
+.sx .dl-reach b {
+  color: var(--ink);
+  font-weight: 500;
+}
+.sx .wimp-l {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sx .wimp-k {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  color: var(--ink-faint);
+  flex-shrink: 0;
+}
+.sx .wq-claims span b {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-faint);
+  margin-right: 4px;
+  font-weight: 500;
+}
+
+/* ---------- Header: narrow reading column, actions on the right ---------- */
+.sx .phead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+}
+/* The statement is prose, so it gets a measure rather than the whole width. */
+.sx .phead-main {
+  flex: 0 1 520px;
+  min-width: 0;
+}
+.sx .phead-text {
+  font-size: 13.5px;
+  max-width: none;
+  margin-top: 4px;
+}
+.sx .phead-sub {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 7px;
+}
+.sx .phead-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 7px;
+  flex-shrink: 0;
+}
+.sx .phead-cov {
+  margin-left: 0;
+}
+
+/* The statement runs the full measure up to the action column; the bar keeps its
+   width but its contents get a ceiling, so the header stays compact on a wide
+   screen instead of stretching to fill it. */
+.sx .phead {
+  display: block;
+  padding: 9px 20px 10px;
+}
+.sx .phead-in {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  max-width: 1080px;
+}
+.sx .phead-main {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.sx .phead-text {
+  font-size: 13px;
+}
+
+/* ═══════════ Problem statement header, rebuilt ═══════════
+   The previous version pinned a label, a number, a paragraph, a button and a
+   link to the four corners of a very wide tinted band, so nothing related to
+   anything and the right half was empty. One card fixes the composition: the
+   statement keeps a reading measure, and the action sits next to the number it
+   moves. */
+.sx .phead {
+  display: block;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--line);
+  padding: 10px 20px;
+}
+.sx .phead-card {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  border-radius: 10px;
+  padding: 11px 14px;
+}
+.sx .phead-main {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.sx .phead-lbl {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 3px;
+}
+/* The eyebrow lost its styling when the container was renamed; it is a label,
+   not a sentence. */
+.sx .phead-lbl > span {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.sx .phead-edit {
+  width: 18px;
+  height: 18px;
+  border: none;
+  background: none;
+  border-radius: 4px;
+  color: var(--ink-faint);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+}
+.sx .phead-card:hover .phead-edit {
+  opacity: 1;
+}
+.sx .phead-edit:hover {
+  background: var(--bg);
+  color: var(--accent);
+}
+.sx .phead-text {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink);
+  outline: none;
+  /* A measure, so a long statement does not run the width of a monitor. */
+  max-width: 74ch;
+}
+.sx .phead-text:focus {
+  background: var(--bg);
+  padding: 4px 8px;
+  margin: -4px -8px;
+  border-radius: 6px;
+  box-shadow: 0 0 0 2px rgba(53, 56, 205, 0.16);
+}
+.sx .phead-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  color: var(--accent-dark);
+  margin-top: 6px;
+}
+
+/* Right cluster: the number and the button that changes it. */
+.sx .phead-side {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-shrink: 0;
+}
+.sx .phead-cov {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  margin-left: 0;
+}
+.sx .phead-cov b {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--ink);
+}
+.sx .phead-cov > span {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-faint);
+}
+.sx .phead-cov > i {
+  display: block;
+  width: 74px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--line);
+  overflow: hidden;
+  margin-top: 2px;
+}
+.sx .phead-cov > i > i {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@media (max-width: 1000px) {
+  .sx .phead-card {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  .sx .phead-side {
+    justify-content: space-between;
+  }
+}
+
+/* ---------- Header, shorter ----------
+   It is glanced at, not read repeatedly, so it should cost as little vertical
+   space as the button inside it allows. Status moved up beside the label, the
+   statement clamps to two lines and opens out when focused for editing. */
+.sx .phead {
+  padding: 6px 20px 7px;
+}
+.sx .phead-card {
+  padding: 7px 12px;
+  gap: 18px;
+  align-items: center;
+}
+.sx .phead-lbl {
+  margin-bottom: 1px;
+  gap: 9px;
+}
+.sx .phead-text {
+  font-size: 12.5px;
+  line-height: 1.42;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.sx .phead-text:focus {
+  display: block;
+  overflow: visible;
+  padding: 3px 7px;
+  margin: -3px -7px;
+}
+.sx .phead-status {
+  margin-top: 0;
+  font-size: 9px;
+}
+/* The number reads at a glance without a stacked label taking a row. */
+.sx .phead-cov {
+  flex-direction: row;
+  align-items: baseline;
+  gap: 5px;
+  position: relative;
+  padding-bottom: 5px;
+}
+.sx .phead-cov b {
+  font-size: 15px;
+}
+.sx .phead-cov > i {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: auto;
+  margin-top: 0;
+  height: 2px;
+}
+.sx .btn {
+  height: 30px;
+  font-size: 11px;
+  padding: 0 12px;
+}
+
+/* ---------- Statement shows in full ----------
+   The two-line clamp saved height at the cost of hiding the one thing the whole
+   workspace is built from. Full text wins; the measure widens so it costs fewer
+   lines rather than being cut off. */
+.sx .phead-text {
+  display: block;
+  overflow: visible;
+  max-width: 110ch;
+  -webkit-line-clamp: none;
+}
+
+/* ---------- Upload as a way in ---------- */
+.sx .phead-upload {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: 20px;
+  padding: 1px 8px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ink-faint);
+  cursor: pointer;
+}
+.sx .phead-upload:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.sx .phead-from {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--accent-dark);
+  background: var(--accent-soft);
+  border-radius: 4px;
+  padding: 1px 6px;
+}
+
+/* ---------- Scope confirmation, with its working shown ---------- */
+.sx .scope {
+  max-height: 46vh;
+  overflow-y: auto;
+}
+.sx .scope-h {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.sx .scope-count {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink-faint);
+}
+.sx .scope-groups {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(268px, 1fr));
+  gap: 8px;
+  margin-bottom: 11px;
+}
+.sx .scope-g {
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface);
+  overflow: hidden;
+}
+.sx .scope-gh {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  border: none;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--line);
+  padding: 5px 9px;
+  cursor: pointer;
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ink-soft);
+}
+.sx .scope-gh i {
+  margin-left: auto;
+  font-style: normal;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--ink-faint);
+}
+.sx .scope-box {
+  width: 12px;
+  height: 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  color: #fff;
+  flex-shrink: 0;
+}
+.sx .scope-box.on {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.sx .scope-box.part {
+  background: var(--line-strong);
+  border-color: var(--line-strong);
+}
+.sx .scope-i {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 9px;
+  border-bottom: 1px solid var(--line);
+  cursor: pointer;
+}
+.sx .scope-i:last-child {
+  border-bottom: none;
+}
+.sx .scope-i:hover {
+  background: var(--surface-2);
+}
+.sx .scope-i.off {
+  opacity: 0.4;
+}
+.sx .scope-i input {
+  accent-color: var(--accent);
+  flex-shrink: 0;
+}
+.sx .scope-il {
+  flex: 1;
+  min-width: 0;
+}
+.sx .scope-in {
+  display: block;
+  font-size: 11.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sx .scope-iw {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  color: var(--ink-faint);
+}
+/* Other systems that also speak to this thing. */
+.sx .scope-iw b {
+  font-weight: 500;
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+  border-radius: 3px;
+  padding: 0 4px;
+}
+.sx .scope-ir {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--ink-soft);
+  flex-shrink: 0;
+}
+.sx .scope-ir > i {
+  display: block;
+  width: 34px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--line);
+  overflow: hidden;
+}
+.sx .scope-ir > i > i {
+  display: block;
+  height: 100%;
+  background: var(--conf-high);
+}
+.sx .scope-note {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  color: var(--ink-faint);
+  margin-left: auto;
+}
+
+/* ---------- Current focus vs proposed solution ---------- */
+.sx .mapview {
+  display: flex;
+  gap: 3px;
+  padding: 5px 9px;
+  border-bottom: 1px solid var(--line);
+  flex-shrink: 0;
+  background: var(--surface);
+}
+.sx .mapview button {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid transparent;
+  background: none;
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-family: var(--font-body);
+  font-size: 10px;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+.sx .mapview button:hover {
+  background: var(--bg);
+}
+.sx .mapview button.on {
+  background: var(--accent-soft);
+  border-color: var(--line);
+  color: var(--accent-dark);
+  font-weight: 500;
+}
+.sx .mapview button i {
+  font-style: normal;
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  color: var(--accent);
+}
+
+/* ---------- Impact lens: Jira or code ---------- */
+.sx .lens {
+  display: flex;
+  gap: 3px;
+  margin-bottom: 4px;
+}
+.sx .lens button {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: 7px;
+  padding: 4px 10px;
+  font-family: var(--font-body);
+  font-size: 10.5px;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+.sx .lens button.on {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-soft);
+  font-weight: 500;
+}
+.sx .lens button i {
+  font-style: normal;
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  color: var(--ink-faint);
+}
+
+/* ---------- Epic / story / task and repo / module trees ---------- */
+.sx .tree {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  margin-bottom: 5px;
+  overflow: hidden;
+}
+.sx .tree-h {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  border: none;
+  background: none;
+  padding: 6px 9px;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-body);
+  font-size: 11.5px;
+}
+.sx .tree-h:hover {
+  background: var(--surface-2);
+}
+.sx .tree-k {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--accent-dark);
+  background: var(--accent-soft);
+  border-radius: 3px;
+  padding: 1px 5px;
+  flex-shrink: 0;
+}
+.sx .tree-t {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sx .tree-t.mono {
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+.sx .tree-m {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  color: var(--ink-faint);
+  flex-shrink: 0;
+}
+.sx .tree-c {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 9px 5px 26px;
+  border-top: 1px solid var(--line);
+  font-size: 11px;
+}
+.sx .tree-c.blocked {
+  background: var(--conf-med-bg);
+}
+.sx .tree-b {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--ink-faint);
+  padding: 4px 9px 4px 26px;
+  border-top: 1px solid var(--line);
+  background: var(--surface-2);
+}
+.sx .tree-i {
+  display: flex;
+  flex-shrink: 0;
+}
+.sx .tree-i.schema {
+  color: var(--conf-med);
+}
+.sx .tree-i.config {
+  color: var(--accent);
+}
+.sx .tree-i.code {
+  color: var(--conf-high);
+}
+.sx .tree-i.test {
+  color: var(--conf-low);
+}
+
+/* ---------- Indexed sources bar ---------- */
+.sx .cbar {
+  border: none;
+  border-top: 1px solid var(--line);
+  width: 100%;
+  cursor: pointer;
+  text-align: left;
+}
+.sx .cbar-l {
+  font-family: var(--font-display);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--ink-faint);
+  font-weight: 600;
+}
+.sx .cbar-s {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+}
+.sx .cbar-s i {
+  font-style: normal;
+  color: var(--accent);
+}
+.sx .cbar-s.Skipped {
+  opacity: 0.4;
+  text-decoration: line-through;
+}
+.sx .cbar-s.Partial i {
+  color: var(--conf-med);
+}
+.sx .cbar-more {
+  margin-left: auto;
+  text-decoration: underline;
+  flex-shrink: 0;
+}
+
+/* ═══════════ The specification, as a document ═══════════ */
+.doc-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 23, 31, 0.42);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 96;
+  padding: 24px;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  color: #14171f;
+}
+.doc {
+  background: #fff;
+  border-radius: 14px;
+  width: 100%;
+  max-width: 860px;
+  height: 88vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 26px 70px rgba(20, 23, 31, 0.3);
+  overflow: hidden;
+}
+.doc-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 22px 13px;
+  border-bottom: 1px solid #e4e7ec;
+  flex-shrink: 0;
+}
+.doc-eyebrow {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: #98a2b3;
+}
+.doc-head h2 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 16px;
+  margin: 3px 0 0;
+  line-height: 1.35;
+}
+.doc-x {
+  border: 1px solid #e4e7ec;
+  background: #fff;
+  border-radius: 7px;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #667085;
+  flex-shrink: 0;
+}
+.doc-x:hover {
+  border-color: #3538cd;
+  color: #3538cd;
+}
+.doc-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px 22px 26px;
+}
+.doc-warn,
+.doc-ok {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  border-radius: 9px;
+  padding: 10px 13px;
+  font-size: 12px;
+  line-height: 1.5;
+  margin-bottom: 18px;
+}
+.doc-warn {
+  background: #fbf3df;
+  color: #92670b;
+  border: 1px solid #f0dcae;
+}
+.doc-warn ul {
+  margin: 5px 0 0;
+  padding-left: 16px;
+}
+.doc-ok {
+  background: #e7f6ef;
+  color: #16794f;
+  border: 1px solid #b9e3cf;
+}
+.doc-s {
+  margin-bottom: 20px;
+}
+.doc-s h3 {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 12.5px;
+  margin: 0 0 8px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid #e4e7ec;
+}
+.doc-n {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9.5px;
+  color: #98a2b3;
+}
+.doc-s h3 em {
+  margin-left: auto;
+  font-style: normal;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  color: #98a2b3;
+}
+.doc-s h4 {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #667085;
+  margin: 11px 0 5px;
+}
+.doc-s p {
+  font-size: 12.5px;
+  line-height: 1.6;
+  margin: 0 0 8px;
+}
+.doc-note {
+  color: #667085;
+  font-size: 11.5px;
+}
+.doc-list {
+  margin: 0;
+  padding-left: 17px;
+  font-size: 12.5px;
+  line-height: 1.6;
+}
+.doc-list.tight {
+  font-size: 11.5px;
+  line-height: 1.5;
+}
+.doc-list li {
+  margin-bottom: 3px;
+}
+.doc-list code {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10.5px;
+  background: #f6f7f9;
+  border-radius: 3px;
+  padding: 1px 5px;
+}
+.doc-conf {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  color: #16794f;
+  margin-left: 7px;
+}
+.doc-conf.drift {
+  color: #b42318;
+}
+.doc-k {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 8.5px;
+  text-transform: uppercase;
+  border-radius: 3px;
+  padding: 1px 5px;
+  margin-right: 6px;
+  color: #fff;
+}
+.doc-k.add {
+  background: #16794f;
+}
+.doc-k.change {
+  background: #3538cd;
+}
+.doc-k.extend {
+  background: #92670b;
+}
+.doc-k.remove {
+  background: #b42318;
+}
+.doc-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-bottom: 8px;
+}
+.doc-chips span {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  border: 1px solid #e4e7ec;
+  border-radius: 20px;
+  padding: 2px 9px;
+  font-size: 11px;
+}
+.doc-chips i {
+  font-style: normal;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 8.5px;
+  color: #98a2b3;
+}
+.doc-fact {
+  border: 1px solid #e4e7ec;
+  border-radius: 8px;
+  padding: 9px 11px;
+  margin-bottom: 7px;
+}
+.doc-fh {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+.doc-fr {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 11.5px;
+  padding: 2px 0;
+}
+.doc-fr em {
+  margin-left: auto;
+  font-style: normal;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  color: #98a2b3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 46%;
+}
+.doc-fact .auth {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 8.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 1px 5px;
+  border-radius: 4px;
+  width: 62px;
+  text-align: center;
+  flex-shrink: 0;
+}
+.doc-fact .auth.verified { background: #e7f6ef; color: #16794f; }
+.doc-fact .auth.observed { background: #14171f; color: #fff; }
+.doc-fact .auth.intended { background: #fbf3df; color: #92670b; }
+.doc-fact .auth.permitted { background: #eef0fc; color: #2a2ca3; }
+.doc-unver {
+  font-size: 10.5px;
+  color: #92670b;
+  margin-top: 5px;
+}
+.doc-two {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+.doc-link {
+  border: none;
+  background: none;
+  color: #3538cd;
+  font-size: 11px;
+  cursor: pointer;
+  text-decoration: underline;
+  margin-left: 6px;
+  padding: 0;
+}
+.doc-area {
+  margin-bottom: 4px;
+}
+.doc-foot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 22px;
+  border-top: 1px solid #e4e7ec;
+  background: #fbfbfd;
+  flex-shrink: 0;
+}
+.doc-fmeta {
+  flex: 1;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9.5px;
+  color: #98a2b3;
+}
+.doc-foot .btn {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 600;
+  font-size: 12px;
+  border: none;
+  border-radius: 9px;
+  padding: 0 15px;
+  height: 33px;
+  cursor: pointer;
+}
+.doc-foot .btn-primary { background: #3538cd; color: #fff; }
+.doc-foot .btn-primary:hover { background: #2a2ca3; }
+.doc-foot .btn-ghost { background: #fff; border: 1px solid #d0d5dd; color: #667085; }
+
+@media (max-width: 760px) {
+  .doc-two { grid-template-columns: 1fr; }
+}
+
+/* ---------- Collapsed problem statement ----------
+   On the working tabs the statement is reference, not the subject, so it folds
+   to a single line that still says what the work is about. */
+.sx .phead.mini {
+  padding: 0;
+  background: var(--surface);
+}
+.sx .phead-mini {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  border: none;
+  background: none;
+  padding: 5px 20px;
+  cursor: pointer;
+  text-align: left;
+}
+.sx .phead-mini:hover {
+  background: var(--surface-2);
+}
+.sx .phead-mini-l {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+  flex-shrink: 0;
+}
+.sx .phead-mini-t {
+  flex: 1;
+  min-width: 0;
+  font-size: 11.5px;
+  color: var(--ink-soft);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sx .phead-mini-c {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink);
+  flex-shrink: 0;
+}
+.sx .phead-mini svg {
+  color: var(--ink-faint);
+  flex-shrink: 0;
+}
+
+/* ---------- Artifact row actions ---------- */
+.sx .art-open {
+  border: none;
+  background: none;
+  padding: 0;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: 500;
+  color: var(--ink);
+  cursor: pointer;
+  text-align: left;
+}
+.sx .art-open:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+.sx .art-acts {
+  white-space: nowrap;
+}
+.sx .approve-btn.undo {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border-color: var(--conf-high);
+  color: var(--conf-high);
+}
+.sx .approve-btn.undo:hover {
+  background: var(--conf-high);
+  color: #fff;
+}
+
+/* ---------- Artifact viewer ---------- */
+.doc.art {
+  max-width: 760px;
+  height: 82vh;
+}
+.art-body {
+  width: 100%;
+  min-height: 46vh;
+  border: 1px solid #e4e7ec;
+  border-radius: 9px;
+  padding: 13px 15px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11.5px;
+  line-height: 1.65;
+  color: #14171f;
+  background: #fbfbfd;
+  outline: none;
+  resize: vertical;
+}
+.art-body:focus {
+  border-color: #3538cd;
+  background: #fff;
+}
+.art-body[readonly] {
+  color: #667085;
+}
+.doc-foot .btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ---------- Scope, minimal ----------
+   Cards with bars and per-row percentages were a lot of furniture for a
+   decision that is mostly 'yes, that looks right'. One line per system, its
+   candidates as small toggles, relevance as a dot. Everything else is a hover. */
+.sx .scope {
+  max-height: 38vh;
+  padding: 9px 20px 10px;
+}
+.sx .scope-h {
+  font-size: 11.5px;
+  color: var(--ink-soft);
+  margin-bottom: 8px;
+}
+.sx .scope-h b {
+  color: var(--ink);
+}
+.sx .scope-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+.sx .scope-r {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+}
+.sx .scope-src {
+  flex: 0 0 96px;
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  border: none;
+  background: none;
+  padding: 2px 0;
+  cursor: pointer;
+  font-family: var(--font-display);
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-soft);
+  text-align: left;
+}
+.sx .scope-src:hover {
+  color: var(--accent);
+}
+.sx .scope-src i {
+  font-style: normal;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  color: var(--ink-faint);
+}
+.sx .scope-src.off {
+  opacity: 0.4;
+}
+.sx .scope-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  flex: 1;
+  min-width: 0;
+}
+.sx .scope-p {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: 5px;
+  padding: 1px 6px;
+  font-family: var(--font-body);
+  font-size: 9.5px;
+  line-height: 15px;
+  color: var(--ink);
+  cursor: pointer;
+}
+.sx .scope-p:hover {
+  border-color: var(--accent);
+}
+.sx .scope-p.off {
+  opacity: 0.34;
+  text-decoration: line-through;
+  background: none;
+}
+.sx .scope-p .rel {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.sx .scope-p .rel.hi {
+  background: var(--conf-high);
+}
+.sx .scope-p .rel.md {
+  background: var(--conf-med);
+}
+.sx .scope-p .rel.lo {
+  background: var(--line-strong);
+}
+/* How many systems speak to this thing. */
+.sx .scope-p em {
+  font-style: normal;
+  font-family: var(--font-mono);
+  font-size: 7.5px;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-radius: 3px;
+  padding: 0 3px;
+}
+.sx .scope-acts {
+  gap: 12px;
+}
+
+/* ═══════════ Persona journey ═══════════
+   The panel opens where this person's question lives, and says what done means
+   for them. Steps the system can judge report themselves; the rest tick when the
+   person has actually been and looked, which is the honest signal available. */
+.sx .jrn {
+  padding: 9px 11px 10px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+  flex-shrink: 0;
+}
+.sx .jrn-h {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.sx .jrn-role {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent-dark);
+}
+.sx .jrn-role i {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-style: normal;
+  color: var(--ink-faint);
+  letter-spacing: 0.04em;
+}
+.sx .jrn-prog {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  color: var(--ink-faint);
+}
+.sx .jrn-prog > i {
+  display: block;
+  width: 44px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--line);
+  overflow: hidden;
+}
+.sx .jrn-prog > i > i {
+  display: block;
+  height: 100%;
+  background: var(--conf-high);
+  transition: width 0.4s ease;
+}
+.sx .jrn-title {
+  font-family: var(--font-display);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+.sx .jrn-blurb {
+  font-size: 10.5px;
+  line-height: 1.45;
+  color: var(--ink-soft);
+  margin: 2px 0 8px;
+}
+.sx .jrn-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.sx .jrn-s {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  border: 1px solid transparent;
+  background: none;
+  border-radius: 7px;
+  padding: 4px 7px;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-body);
+}
+.sx .jrn-s:hover {
+  background: var(--bg);
+}
+/* The first thing not yet done is the one being pointed at. */
+.sx .jrn-s.next {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.sx .jrn-s.here {
+  border-color: var(--line-strong);
+}
+.sx .jrn-n {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  border: 1px solid var(--line-strong);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  color: var(--ink-faint);
+  flex-shrink: 0;
+}
+.sx .jrn-s.next .jrn-n {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.sx .jrn-s.done .jrn-n {
+  background: var(--conf-high);
+  border-color: var(--conf-high);
+  color: #fff;
+}
+.sx .jrn-l {
+  flex: 1;
+  min-width: 0;
+  font-size: 11px;
+  color: var(--ink);
+}
+.sx .jrn-s.done .jrn-l {
+  color: var(--ink-soft);
+}
+.sx .jrn-l em {
+  display: block;
+  font-style: normal;
+  font-size: 9px;
+  color: var(--ink-faint);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sx .jrn-s svg:last-child {
+  color: var(--ink-faint);
+  flex-shrink: 0;
+}
+
+/* ---------- Map focus ---------- */
+.sx .sn.dim {
+  opacity: 0.32;
+}
+.sx .sn.dim:hover {
+  opacity: 1;
+}
+.sx .sn-legend button {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid transparent;
+  background: none;
+  border-radius: 5px;
+  padding: 1px 6px;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--ink-faint);
+}
+.sx .sn-legend button:hover {
+  background: var(--bg);
+  color: var(--ink);
+}
+.sx .sn-legend button.on {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.sx .sn-clear {
+  margin-left: auto;
+  text-decoration: underline;
+}
+
+/* ---------- Resizable split ----------
+   Which half matters changes with the task, so the divider moves. 60/40 to
+   start; neither side is useful much below a third. */
+.sx .ws {
+  width: auto;
+  flex: 1 1 auto;
+  min-width: 260px;
+}
+.sx .thread-panel {
+  min-width: 300px;
+  border-right: none;
+}
+.sx .splitter {
+  flex: 0 0 7px;
+  cursor: col-resize;
+  background: var(--surface);
+  border-left: 1px solid var(--line);
+  border-right: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+.sx .splitter:hover,
+.sx .splitter:focus-visible {
+  background: var(--accent-soft);
+  outline: none;
+}
+.sx .splitter i {
+  display: block;
+  width: 2px;
+  height: 26px;
+  border-radius: 2px;
+  background: var(--line-strong);
+}
+.sx .splitter:hover i,
+.sx .splitter:focus-visible i {
+  background: var(--accent);
+}
+
+@media (max-width: 900px) {
+  .sx .splitter {
+    display: none;
+  }
+  .sx .thread-panel {
+    flex: 1 1 auto !important;
   }
 }

@@ -161,6 +161,58 @@ export const facetsByWeakest = (state: SpecAiState): FacetConfidence[] =>
     return a.total - b.total;
   });
 
+/**
+ * The handful of things that make a brief weak, nearly every time.
+ *
+ * Confidence tells you *where* the reading is thin; on its own that leaves the
+ * user to work out what to type. Each probe is the question that closes one
+ * common gap, paired with the item it would strengthen — so the rail stops being
+ * a report and becomes the next thing to do.
+ *
+ * Deliberately generic. These are the gaps a specification has regardless of what
+ * it is about, which is what makes them worth putting on screen permanently
+ * rather than generating per project.
+ */
+export interface Probe {
+  label: string;
+  facet: UnderstandingKey;
+  /** Sent to the agent verbatim when the probe is pressed. */
+  prompt: string;
+}
+
+export const PROBES: Probe[] = [
+  {
+    label: 'Who it is for',
+    facet: 'primaryUsers',
+    prompt: 'Who exactly is this for, and which group is most affected by the problem?',
+  },
+  {
+    label: 'What success is',
+    facet: 'proposedState',
+    prompt: 'What does success look like here, and how would we know we had achieved it?',
+  },
+  {
+    label: 'Where it stops',
+    facet: 'outOfScope',
+    prompt: 'What is explicitly out of scope for this piece of work?',
+  },
+  {
+    label: 'What limits us',
+    facet: 'constraints',
+    prompt: 'What constraints does this have to work within — compliance, deadlines, budget, existing systems?',
+  },
+  {
+    label: 'What could break',
+    facet: 'assumptions',
+    prompt: 'What are the main risks, and what happens if this underperforms once it ships?',
+  },
+  {
+    label: 'What it touches',
+    facet: 'currentState',
+    prompt: 'Which existing systems, teams or services does this depend on or change?',
+  },
+];
+
 /** Rolled up for the card in the Command Centre. */
 export const confidenceSummary = (
   state: SpecAiState
