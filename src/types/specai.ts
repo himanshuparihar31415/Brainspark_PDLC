@@ -419,6 +419,8 @@ export interface ArchArtifact {
   stale: boolean;
   reviewComments: number;
   changeTag?: ChangeTag;
+  /** Who is reviewing it. Approval without an owner tends not to happen. */
+  assignee?: string;
   note?: string;
   /** Legacy flat node chain. */
   diagramFlow?: string[];

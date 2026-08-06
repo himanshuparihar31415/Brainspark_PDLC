@@ -684,6 +684,41 @@ export const useSpecAiSlice = ({
     addToast('Artifact reviewed and approved.');
   };
 
+  /** Hand an artifact to someone. Review without an owner tends not to happen. */
+  const assignArtifact = (projectId: string, artifactId: string, assignee: string) => {
+    patch(projectId, (s) => ({
+      ...s,
+      artifacts: s.artifacts.map((a) =>
+        a.id === artifactId ? { ...a, assignee: assignee || undefined } : a
+      ),
+    }));
+  };
+
+  /**
+   * Reopen an approved artifact.
+   *
+   * Approval is a judgement, and judgements get revisited — usually because
+   * something upstream moved after the tick went on. Reversing it puts the
+   * artifact back in review rather than deleting the approval quietly, and the
+   * gate it was holding open closes again on its own.
+   */
+  const unlockArtifact = (projectId: string, artifactId: string) => {
+    const target = specAiFor(projectId).artifacts.find((a) => a.id === artifactId);
+    patch(projectId, (s) => ({
+      ...s,
+      artifacts: s.artifacts.map((a) =>
+        a.id === artifactId ? { ...a, status: 'In review' as const } : a
+      ),
+    }));
+    addToast(`${target?.label ?? 'Artifact'} reopened for changes.`, 'info');
+    addAuditLog(
+      'Reopen Artifact',
+      `Artifact: ${target?.label ?? artifactId}`,
+      'Approval withdrawn',
+      'Back in review; downstream gate closed'
+    );
+  };
+
   // ── Modules ────────────────────────────────────────────────────────────────
 
   const addSpecModule = (projectId: string, name: string) => {
@@ -1036,6 +1071,8 @@ export const useSpecAiSlice = ({
     updateArtifact,
     regenerateArtifact,
     reviewArtifact,
+    unlockArtifact,
+    assignArtifact,
     addSpecModule,
     addSpecFeature,
     addSpecCapability,
