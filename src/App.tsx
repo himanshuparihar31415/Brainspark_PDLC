@@ -49,6 +49,9 @@ const CommandCentreView = lazy(() =>
 const SpecAiView = lazy(() =>
   import('./components/views/SpecAiView').then((m) => ({ default: m.SpecAiView }))
 );
+const SpecAiV2View = lazy(() =>
+  import('./components/specaiv2/SpecAiV2View').then((m) => ({ default: m.SpecAiV2View }))
+);
 const MyTasksView = lazy(() =>
   import('./components/views/MyTasksView').then((m) => ({ default: m.MyTasksView }))
 );
@@ -97,6 +100,8 @@ const AppContent: React.FC = () => {
         return <CommandCentreView />;
       case 'Spec AI':
         return <SpecAiView />;
+      case 'Spec AI v2':
+        return <SpecAiV2View />;
       case 'My Tasks':
         return <MyTasksView />;
       default:
