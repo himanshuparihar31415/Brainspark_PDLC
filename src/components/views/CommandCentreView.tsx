@@ -157,7 +157,7 @@ export const CommandCentreView: React.FC = () => {
         <div className="flex items-center gap-2.5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5">
           <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-amber-700" />
           <span className="text-xs font-semibold text-amber-900">
-            Some AI features are degraded. See My Services for details.
+            Some AI features are degraded. See Dashboard for details.
           </span>
         </div>
       )}

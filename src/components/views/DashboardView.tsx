@@ -368,7 +368,7 @@ export const DashboardView: React.FC = () => {
           // by entitlement: My Services where the role has it, otherwise the
           // (read-only) Agent Registry — a Project Admin has the latter, not
           // the former.
-          label: tokenDestination === 'My Services' ? 'Open My Services' : 'Open Agent Registry',
+          label: tokenDestination === 'My Services' ? 'Open Dashboard' : 'Open Agent Registry',
           onClick: () => {
             setOpenModal(null);
             navigateTo(tokenDestination);
