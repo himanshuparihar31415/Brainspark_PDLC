@@ -4615,138 +4615,7 @@
    The panel opens where this person's question lives, and says what done means
    for them. Steps the system can judge report themselves; the rest tick when the
    person has actually been and looked, which is the honest signal available. */
-.sx .jrn {
-  padding: 9px 11px 10px;
-  border-bottom: 1px solid var(--line);
-  background: var(--surface);
-  flex-shrink: 0;
-}
-.sx .jrn-h {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 4px;
-}
-.sx .jrn-role {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-family: var(--font-mono);
-  font-size: 8.5px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--accent-dark);
-}
-.sx .jrn-role i {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  font-style: normal;
-  color: var(--ink-faint);
-  letter-spacing: 0.04em;
-}
-.sx .jrn-prog {
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-family: var(--font-mono);
-  font-size: 8.5px;
-  color: var(--ink-faint);
-}
-.sx .jrn-prog > i {
-  display: block;
-  width: 44px;
-  height: 3px;
-  border-radius: 2px;
-  background: var(--line);
-  overflow: hidden;
-}
-.sx .jrn-prog > i > i {
-  display: block;
-  height: 100%;
-  background: var(--conf-high);
-  transition: width 0.4s ease;
-}
-.sx .jrn-blurb {
-  font-size: 10.5px;
-  line-height: 1.45;
-  color: var(--ink-soft);
-  margin: 0 0 8px;
-}
-.sx .jrn-steps {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-.sx .jrn-s {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  border: 1px solid transparent;
-  background: none;
-  border-radius: 7px;
-  padding: 4px 7px;
-  cursor: pointer;
-  text-align: left;
-  font-family: var(--font-body);
-}
-.sx .jrn-s:hover {
-  background: var(--bg);
-}
 /* The first thing not yet done is the one being pointed at. */
-.sx .jrn-s.next {
-  border-color: var(--accent);
-  background: var(--accent-soft);
-}
-.sx .jrn-s.here {
-  border-color: var(--line-strong);
-}
-.sx .jrn-n {
-  width: 15px;
-  height: 15px;
-  border-radius: 50%;
-  border: 1px solid var(--line-strong);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-mono);
-  font-size: 8px;
-  color: var(--ink-faint);
-  flex-shrink: 0;
-}
-.sx .jrn-s.next .jrn-n {
-  border-color: var(--accent);
-  color: var(--accent);
-}
-.sx .jrn-s.done .jrn-n {
-  background: var(--conf-high);
-  border-color: var(--conf-high);
-  color: #fff;
-}
-.sx .jrn-l {
-  flex: 1;
-  min-width: 0;
-  font-size: 11px;
-  color: var(--ink);
-}
-.sx .jrn-s.done .jrn-l {
-  color: var(--ink-soft);
-}
-.sx .jrn-l em {
-  display: block;
-  font-style: normal;
-  font-size: 9px;
-  color: var(--ink-faint);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.sx .jrn-s svg:last-child {
-  color: var(--ink-faint);
-  flex-shrink: 0;
-}
 
 /* ---------- Map focus ---------- */
 .sx .sn.dim {
@@ -4838,4 +4707,23 @@
   flex-wrap: wrap;
   gap: 4px;
   margin-top: 7px;
+}
+
+/* Thinking, said once and quietly. Bouncing dots plus a blinking caret plus a
+   status line was three ways of saying the same thing. */
+.sx .thinking {
+  font-size: 11.5px;
+  color: var(--ink-faint);
+  font-style: italic;
+}
+.sx .thinking::after {
+  content: "";
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--accent);
+  margin-left: 6px;
+  vertical-align: 1px;
+  animation: sx-blink 1s steps(2, start) infinite;
 }
