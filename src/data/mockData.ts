@@ -743,7 +743,10 @@ export const INITIAL_TASKS: Task[] = [
   {
     id: 'task-2',
     projectId: 'p-mobile-v2',
-    storyId: 'st-6',
+    /* st-7 is the API story this schema belongs to. It used to point at st-6,
+       which is a Draft nothing has been scheduled against — that both read
+       wrong and hid st-6 from the never-scheduled measure. */
+    storyId: 'st-7',
     taskType: 'story-work',
     assigneeId: 'm-2',
     createdAt: '2026-07-16T09:30:00.000Z',
@@ -802,7 +805,10 @@ export const INITIAL_TASKS: Task[] = [
   {
     id: 'task-5',
     projectId: 'p-mobile-v2',
-    storyId: 'st-17',
+    /* Was st-17, which no longer exists. A storyId pointing at nothing is worse
+       than none: it is excluded from the story join *and* from the no-story gap,
+       so the task disappears from every measure silently. */
+    storyId: 'st-3',
     taskType: 'story-work',
     assigneeId: 'm-4',
     createdAt: '2026-07-19T09:30:00.000Z',
