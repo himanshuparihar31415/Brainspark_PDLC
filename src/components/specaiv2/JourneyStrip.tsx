@@ -52,7 +52,6 @@ export const JourneyStrip: React.FC<{
         </span>
       </div>
 
-      <div className="jrn-title">{lens.title}</div>
       <div className="jrn-blurb">{lens.blurb}</div>
 
       <div className="jrn-steps">
