@@ -87,6 +87,20 @@ export interface Fact {
   origin?: string;
 }
 
+/**
+ * Which projects this model actually describes.
+ *
+ * The graph below is one system — a mobile bank's authentication stack. Showing
+ * it for a project it has nothing to do with is worse than showing nothing,
+ * because it is confident and wrong, which is the exact failure the whole
+ * reconciliation layer exists to prevent. Anything not listed here gets an
+ * empty state and says so.
+ */
+export const MODELLED_PROJECTS = ['p-mobile-v2'];
+
+export const hasSystemModel = (projectId: string): boolean =>
+  MODELLED_PROJECTS.includes(projectId);
+
 /* ─────────────────────────── the mock system ─────────────────────────── */
 
 export const NODES: SysNode[] = [

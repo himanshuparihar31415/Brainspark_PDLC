@@ -800,6 +800,49 @@ export const rollup = (node: KNode, state: SpecAiState, path: string[] = []): Ro
     );
 };
 
+/**
+ * Concrete answers for the leaves worth asking about.
+ *
+ * A question with options is objective: it can be settled with a click and the
+ * answer means the same thing to everyone. An open text box is where a
+ * specification goes to become vague.
+ */
+const OPTIONS: Record<string, string[]> = {
+  'user-roles': [
+    'All returning mobile users',
+    'Users with a registered device',
+    'Users who explicitly opt in',
+  ],
+  'included-problem-areas': ['Login only', 'Login and enrolment', 'Login, enrolment and recovery'],
+  'excluded-problem-areas': [
+    'Password reset unchanged',
+    'Desktop login out of scope',
+    'OAuth gateway unchanged',
+  ],
+  'mvp-deadline': ['End of this quarter', 'End of next quarter', 'No fixed date'],
+  'response-time-target': ['Under 500ms', 'Under 1 second', 'Under 2 seconds'],
+  'regulatory-requirements': ['PSD2 strong authentication', 'GDPR only', 'No specific regime'],
+  'business-objective': [
+    'Reduce login abandonment',
+    'Reduce support cost',
+    'Improve security posture',
+  ],
+  'what-currently-happens': [
+    'Users abandon at password recovery',
+    'Users retry and lock the account',
+    'Users switch to desktop',
+  ],
+  'desired-user-outcome': ['Sign in without a password', 'Recover access unaided', 'Both'],
+  'capability-definition': ['Biometric sign-in', 'Biometric enrolment', 'Both'],
+  'required-fields': ['Device id and consent', 'Device id only', 'Consent only'],
+  'positive-scenarios': ['Enrol then sign in', 'Sign in on a known device', 'Both'],
+  'adoption-metrics': ['Enrolment rate', 'Sign-in success rate', 'Support ticket volume'],
+  'product-decisions': ['Optional enrolment', 'Mandatory for eligible users', 'Pilot group first'],
+};
+
+export const optionsFor = (node: KNode): string[] =>
+  OPTIONS[node.id.split('/').pop() ?? ''] ?? ['Yes', 'No', 'Not decided yet'];
+
 /** Every critical leaf still unanswered — the only ones allowed into the chat. */
 export const criticalGaps = (
   state: SpecAiState
