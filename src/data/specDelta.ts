@@ -210,15 +210,49 @@ export const scopeItems = (): ScopeItem[] => {
   return items.sort((a, b) => b.relevance - a.relevance);
 };
 
-/** Clubbed by the system they were discovered through. */
+/**
+ * Confirm-scope reads Code first, then Jira — the two that carry the decision —
+ * with the other two after. Sorting by group size put Code's two dozen rows at
+ * the top and buried Jira's three underneath them.
+ */
+const SCOPE_SOURCE_ORDER = ['Code', 'Jira'];
+
+/**
+ * Per-source ceiling for the confirmation panel. Twenty-four Code pills on one
+ * row is a wall, not a decision — nobody untick-audits that. The top six by
+ * relevance are the ones a person would actually rule on, and the rest stay in
+ * scope by default, which is what ticking them all would have meant anyway.
+ *
+ * This caps the *panel* only. `scopeItems()` stays complete, so the map, the
+ * spec document and retrieval still see the whole subgraph.
+ */
+export const SCOPE_PANEL_LIMIT = 4;
+
+/**
+ * Clubbed by the system they were discovered through, and narrowed to the two
+ * that carry the decision.
+ *
+ * Apps and Flows are still read — they are simply not things anyone rules on at
+ * this moment. Absence here means "no candidates to confirm", not "skip it":
+ * `confirmScope` is told what to *skip*, so a source with nothing in this panel
+ * is retrieved as normal rather than silently excluded.
+ */
 export const scopeBySource = (): { system: string; items: ScopeItem[] }[] => {
   const groups = new Map<string, ScopeItem[]>();
   for (const item of scopeItems()) {
+    if (!SCOPE_SOURCE_ORDER.includes(item.node.system)) continue;
     groups.set(item.node.system, [...(groups.get(item.node.system) ?? []), item]);
   }
+
   return [...groups.entries()]
-    .map(([system, items]) => ({ system, items }))
-    .sort((a, b) => b.items.length - a.items.length);
+    .map(([system, items]) => ({
+      system,
+      /* Already sorted by relevance upstream, so the head is the top N. */
+      items: items.slice(0, SCOPE_PANEL_LIMIT),
+    }))
+    .sort(
+      (a, b) => SCOPE_SOURCE_ORDER.indexOf(a.system) - SCOPE_SOURCE_ORDER.indexOf(b.system)
+    );
 };
 
 export const scopeNodes = (): SysNode[] => {

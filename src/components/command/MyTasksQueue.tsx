@@ -80,7 +80,7 @@ export const MyTasksQueue: React.FC<MyTasksQueueProps> = ({ tasks, onOpen }) => 
     <section className="space-y-3">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h2 className="text-base font-extrabold tracking-tight text-slate-900">My Tasks</h2>
+          <h2 className="text-base font-extrabold tracking-tight text-slate-900">Project Tasks</h2>
           <p className="mt-0.5 text-xs text-slate-500">
             Everything assigned to you, most urgent first.
           </p>

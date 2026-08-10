@@ -1,6 +1,6 @@
 import React from 'react';
 import { useApp, NavView } from '../../context/AppContext';
-import { canAccessNav } from '../../data/rbac';
+import { canAccessNav, navLabel } from '../../data/rbac';
 import {
   LayoutDashboard,
   Building2,
@@ -95,7 +95,7 @@ export const Sidebar: React.FC = () => {
               <button
                 key={item.label}
                 onClick={() => setActiveNav(item.label)}
-                title={navCollapsed ? item.label : undefined}
+                title={navCollapsed ? navLabel(item.label) : undefined}
                 className={`relative flex w-full cursor-pointer items-center rounded-xl py-2 text-xs font-semibold transition-all ${
                   navCollapsed ? 'justify-center px-0 h-[40px]' : 'justify-between px-3.5 h-[38px]'
                 } ${
@@ -109,7 +109,7 @@ export const Sidebar: React.FC = () => {
                   <Icon
                     className={`h-4 w-4 shrink-0 ${isActive ? 'text-indigo-600' : 'text-slate-400'}`}
                   />
-                  {!navCollapsed && <span>{item.label}</span>}
+                  {!navCollapsed && <span>{navLabel(item.label)}</span>}
                 </div>
                 {item.badge && !navCollapsed && (
                   <span

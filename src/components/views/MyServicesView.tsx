@@ -9,7 +9,7 @@ export const MyServicesView: React.FC = () => {
     <div className="p-6 md:p-8 space-y-6 max-w-7xl mx-auto animate-in fade-in duration-200">
       {/* Header */}
       <div>
-        <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">My Services</h1>
+        <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">Dashboard</h1>
         <p className="text-xs md:text-sm text-slate-500 mt-1">
           Status of the AI-powered features you rely on in your active module context ({currentRole}). Read-only.
         </p>

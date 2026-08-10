@@ -145,6 +145,20 @@ export interface Narration {
   from?: string;
 }
 
+/**
+ * A line of the agent's working.
+ *
+ * Between pressing Analyse and the first finding there was nothing but four
+ * status pills changing colour, which reads as a hang. These are the steps it is
+ * taking, in the order it takes them — short, present tense, one clause each.
+ * They are reasoning, not a progress log: no percentages, no timings, nothing
+ * that would be meaningless if the run were instant.
+ */
+export interface ThinkingStep {
+  id: string;
+  text: string;
+}
+
 export interface LeafAnswer {
   value: string;
   /** Systems re-read because of this answer. */
@@ -171,6 +185,9 @@ export const useOrchestrator = () => {
   const [narration, setNarration] = useState<Narration[]>([]);
   const [conflicts, setConflicts] = useState<Conflict[]>([]);
   const [answers, setAnswers] = useState<Record<string, LeafAnswer>>({});
+  const [thinking, setThinking] = useState<ThinkingStep[]>([]);
+  /** Seconds the run took, once it has finished — for the collapsed summary. */
+  const [thoughtFor, setThoughtFor] = useState<number | null>(null);
 
   const timers = useRef<number[]>([]);
   const at = (ms: number, fn: () => void) => timers.current.push(window.setTimeout(fn, ms));
@@ -178,6 +195,10 @@ export const useOrchestrator = () => {
 
   const patch = (key: string, next: Partial<KnowledgeSource>) =>
     setSources((prev) => prev.map((s) => (s.key === key ? { ...s, ...next } : s)));
+
+  const startedAt = useRef(0);
+  const think = (text: string) =>
+    setThinking((prev) => [...prev, { id: `t${prev.length}-${now()}`, text }]);
 
   /**
    * The one action. Everything after this happens without being asked for.
@@ -187,33 +208,51 @@ export const useOrchestrator = () => {
     timers.current = [];
     setNarration([]);
     setConflicts([]);
+    setThinking([]);
+    setThoughtFor(null);
+    startedAt.current = now();
     setPhase('discovering');
     setSources(SOURCES.map((s) => ({ ...s, status: 'Queued' })));
+
+    think('Reading the problem statement and pulling out what it names.');
 
     /* Stage 1 — broad discovery. Every system, shallow, fast. */
     SOURCES.forEach((s, i) => {
       at(120 + i * 90, () => patch(s.key, { status: 'Discovering' }));
     });
 
+    at(340, () => think(`Sweeping ${SOURCES.map((s) => s.label).join(', ')} for anything related.`));
+    at(760, () => think('Ranking what came back by how close it sits to the change.'));
+
     /* Discovery done: stop and show what we intend to read deeply. */
-    at(1100, () => setPhase('scoping'));
+    at(1100, () => {
+      think('Enough to propose a scope — checking it with you before reading deeply.');
+      setPhase('scoping');
+    });
   }, []);
 
-  /** Stage 2 — focused retrieval, once the scope has been confirmed. */
-  /** Only the systems the user left in scope are read deeply. */
-  const confirmScope = useCallback((activeSystems?: string[]) => {
+  /**
+   * Stage 2 — focused retrieval, once the scope has been confirmed.
+   *
+   * Takes what to *skip*, not what to keep. The confirmation panel only offers
+   * the sources anyone actually rules on, so an allow-list would have quietly
+   * excluded every source it had no candidates for — a system nobody was asked
+   * about would end up marked "excluded from scope" as if they had unticked it.
+   */
+  const confirmScope = useCallback((skipSystems?: string[]) => {
     setPhase('retrieving');
 
-    const active = activeSystems ? new Set(activeSystems.map((a) => a.toLowerCase())) : null;
+    const skip = new Set((skipSystems ?? []).map((a) => a.toLowerCase()));
 
     SOURCES.forEach((s, i) => {
-      if (active && !active.has(s.label.toLowerCase())) {
+      if (skip.has(s.label.toLowerCase())) {
         patch(s.key, { status: 'Skipped', detail: 'excluded from scope' });
         return;
       }
       const base = i * 260;
       const total = parseInt(s.count, 10) || 6;
 
+      at(base, () => think(`Reading ${s.label} — ${s.detail}.`));
       at(base, () => patch(s.key, { status: 'Retrieving', done: 0, total }));
       at(base + 320, () =>
         patch(s.key, { status: 'Analysing', done: Math.max(1, Math.floor(total / 2)), total })
@@ -239,13 +278,60 @@ export const useOrchestrator = () => {
     /* Consolidation: what disagrees only becomes visible once several systems
        have been read against each other. */
     const settleAt = SOURCES.length * 260 + 900;
+    at(settleAt - 300, () => think('Cross-checking what each system claims against the others.'));
     at(settleAt, () => {
+      think(`${CONFLICTS.length} of them disagree — those become questions rather than claims.`);
+      setThoughtFor(Math.max(1, Math.round((now() - startedAt.current) / 1000)));
       setConflicts(CONFLICTS);
       setNarration((prev) => [
         ...prev,
         {
           id: `sum-${now()}`,
           text: `I found ${CONFLICTS.length} conflicts between your systems and a handful of decisions only you can make. They are in Open Questions.`,
+        },
+      ]);
+      setPhase('ready');
+    });
+  }, []);
+
+  /**
+   * Greenfield — there is nothing to read.
+   *
+   * Confirm-scope assumed a system already exists, which left a new project with
+   * one usable button and a list of somebody else's services to untick. Skipping
+   * every source through `confirmScope([])` would have worked mechanically and
+   * then reported three conflicts between systems it never read, which is worse
+   * than no path at all: retrieval findings and cross-system conflicts are both
+   * meaningless here.
+   *
+   * So the run still happens — it just ends with decisions to make rather than
+   * findings to reconcile.
+   */
+  const goGreenfield = useCallback(() => {
+    timers.current.forEach(window.clearTimeout);
+    timers.current = [];
+    setPhase('retrieving');
+    setConflicts([]);
+    setSources(
+      SOURCES.map((s) => ({
+        ...s,
+        status: 'Skipped' as SourceStatus,
+        count: '—',
+        detail: 'greenfield — nothing to read yet',
+      }))
+    );
+
+    think('Nothing connected to read — treating this as a new build.');
+    at(300, () => think('Working the specification out from the statement alone.'));
+    at(700, () => {
+      think('Listing the decisions this needs before anything can be designed.');
+      setThoughtFor(Math.max(1, Math.round((now() - startedAt.current) / 1000)));
+      setNarration([
+        {
+          id: `gf-${now()}`,
+          text:
+            'Nothing existing to read, so the specification is built from your problem statement alone. ' +
+            'That means everything is a decision rather than a finding — I have put the ones I need in Open Questions.',
         },
       ]);
       setPhase('ready');
@@ -304,8 +390,11 @@ export const useOrchestrator = () => {
     narration,
     conflicts,
     answers,
+    thinking,
+    thoughtFor,
     analyse,
     confirmScope,
+    goGreenfield,
     answerLeaf,
     resolveConflictLocal,
     pendingFor,

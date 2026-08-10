@@ -55,6 +55,22 @@ export const NAV_VISIBILITY: Record<NavView, Role[]> = {
 };
 
 /**
+ * What a nav view is *called*, as distinct from what it is keyed by. The keys
+ * are load-bearing — routing, RBAC and mock data all reference them — so the
+ * two views that wanted friendlier names get them here instead of a rename.
+ *
+ * 'My Services' and 'Dashboard' both read as "Dashboard" now. They never appear
+ * together: Dashboard is governance-only, My Services is PDLC-only, so no role
+ * sees the same word twice.
+ */
+const NAV_LABELS: Partial<Record<NavView, string>> = {
+  'My Services': 'Dashboard',
+  'My Tasks': 'Project Tasks',
+};
+
+export const navLabel = (nav: NavView): string => NAV_LABELS[nav] ?? nav;
+
+/**
  * Full-screen module workspaces. They are reached from the Command Centre doors
  * rather than the sidebar, and collapse the platform nav on entry so the module
  * gets the whole viewport.
