@@ -11,55 +11,52 @@ import { SysKind } from '../../data/specSystemModel';
  * the emphasis change.
  */
 
-export type WsTab = 'system' | 'impact' | 'questions';
-
 export interface Lens {
   role: string;
-  /** Which tab this persona lands on. */
-  defaultTab: WsTab;
   impactLens: 'jira' | 'code';
   /** Node kinds this persona reasons in; the rest dim on the map. */
   focus: SysKind[];
 }
 
+/*
+ * The landing tab used to vary too. It no longer does: Change Impact is where
+ * everyone starts, because "what does this touch" is the question every role
+ * arrives with. What still differs is the lens that tab opens in and the layers
+ * the map brings forward — which is the part that was ever doing real work.
+ */
+
 const PM: Lens = {
   role: 'Product Manager',
-  defaultTab: 'questions',
   impactLens: 'jira',
   focus: ['ticket', 'flow', 'screen'],
 };
 
 const ARCHITECT: Lens = {
   role: 'Architect',
-  defaultTab: 'system',
   impactLens: 'code',
   focus: ['service', 'endpoint', 'entity'],
 };
 
 const ENGINEER: Lens = {
   role: 'Engineering',
-  defaultTab: 'impact',
   impactLens: 'code',
   focus: ['service', 'endpoint', 'entity', 'test'],
 };
 
 const QA: Lens = {
   role: 'Quality',
-  defaultTab: 'impact',
   impactLens: 'code',
   focus: ['test', 'flow', 'screen'],
 };
 
 const DESIGN: Lens = {
   role: 'Design',
-  defaultTab: 'system',
   impactLens: 'jira',
   focus: ['flow', 'screen'],
 };
 
 const RELEASE: Lens = {
   role: 'Release',
-  defaultTab: 'impact',
   impactLens: 'code',
   focus: ['service', 'entity', 'test'],
 };

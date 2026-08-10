@@ -4,21 +4,17 @@ import { useApp } from '../../context/AppContext';
 import {
   ArtifactGroup,
   BriefLine,
-  EvidenceClass,
+  SourceType,
   SpecAiState,
 } from '../../types/specai';
-import {
-  BRIEF_BAND_COPY,
-  BRIEF_BANDS,
-  INTAKE_ACCEPT,
-  SOURCE_TYPE_FOR_FILE,
-  canEditSpecAi,
-} from '../../data/specai';
-import { KNOWLEDGE_ROOT, criticalGaps, rollup } from '../../data/specKnowledgeTree';
+import { BRIEF_BANDS, SOURCE_TYPE_FOR_FILE, canEditSpecAi } from '../../data/specai';
+import { criticalGaps } from '../../data/specKnowledgeTree';
 import { LeafAnswer, isRunning, useOrchestrator } from './orchestrator';
 import { OpenQuestions } from './WorkspaceTabs';
 import { ImpactPanel } from './ImpactPanel';
 import { ArtifactsPanel } from './ArtifactsPanel';
+import { PhaseRail, WS_ITEMS, Phase, WsKey } from './PhaseRail';
+import { UnderstandingPanel } from './UnderstandingPanel';
 import { lensFor } from './personas';
 /* Nine artifacts carry a full node-and-edge diagram; the old surface rendered
    them and this one did not. */
@@ -28,26 +24,37 @@ const DiagramRenderer = lazy(() =>
 const SpecDocument = lazy(() =>
   import('./SpecDocument').then((m) => ({ default: m.SpecDocument }))
 );
-import { scopeBySource } from '../../data/specDelta';
+import { scopeBySource, scopeItems } from '../../data/specDelta';
 import { hasSystemModel, reconcile } from '../../data/specSystemModel';
 import {
   AlertTriangle,
   ArrowUp,
+  AudioLines,
+  BookOpen,
   Check,
-  CheckSquare,
   ChevronDown,
   ChevronRight,
   ChevronUp,
+  FileStack,
+  FileText,
+  GitBranch,
+  Image as ImageIcon,
+  Link2,
   Loader2,
   Layers,
   Lock,
+  MonitorSmartphone,
+  PanelRightClose,
+  PanelRightOpen,
   Paperclip,
-  Pencil,
   Play,
   RefreshCw,
+  ScrollText,
   Sparkles,
+  Ticket,
   Unlock,
   Upload,
+  Waypoints,
   X,
 } from 'lucide-react';
 
@@ -73,24 +80,54 @@ const DeliveryPanel = lazy(() =>
  */
 const CRITICAL_GROUPS: ArtifactGroup[] = ['Product', 'Architecture'];
 
-type Tab = 'brief' | 'delivery';
+/* Three phases now: define the problem, agree the understanding, decompose it.
+   The rail owns the order and the nesting — see PhaseRail. */
+type Tab = Phase;
 
-/* What the change touches, where it sits, then what is still open. */
-const WS_ORDER = ['impact', 'system', 'questions', 'artifacts'] as const;
-
-/** Openers for the empty thread — a blank field is the hardest thing to answer. */
-const STARTERS = [
-  'Checkout abandonment is up 18% since the loyalty programme launched.',
-  'Our onboarding drops 40% of users at the identity step and we do not know why.',
-  'We need to replace the batch settlement job with something near real-time.',
-];
-
-const EV: Record<EvidenceClass, { cls: string; label: string }> = {
-  'Source fact': { cls: 'fact', label: 'Fact' },
-  'User decision': { cls: 'decision', label: 'Decision' },
-  'Inferred interpretation': { cls: 'inferred', label: 'Inferred' },
-  'AI assumption': { cls: 'assumption', label: 'Assumption' },
+/**
+ * The four connected systems, as marks rather than words. "Code · Jira · Apps ·
+ * Flows" in 9px mono is four labels you have to read; four icons are four things
+ * you recognise, which is what a status strip is for.
+ */
+const SYSTEM_ICON: Record<string, React.ElementType> = {
+  code: GitBranch,
+  jira: Ticket,
+  apps: MonitorSmartphone,
+  flows: Waypoints,
 };
+
+/**
+ * What each kind of attachment looks like at 11px. Attachments were going into
+ * the state and then only being visible through the agent quoting them, so a
+ * file you uploaded left no trace on screen you could point at.
+ */
+const SOURCE_ICON: Record<SourceType, React.ElementType> = {
+  PDF: FileText,
+  DOCX: FileText,
+  TXT: FileText,
+  URL: Link2,
+  Confluence: Layers,
+  Jira: Ticket,
+  Repository: GitBranch,
+  Transcript: AudioLines,
+  App: MonitorSmartphone,
+  Image: ImageIcon,
+  Audio: AudioLines,
+};
+
+/**
+ * What can be brought in by hand.
+ *
+ * Documents and images only. Jira, Confluence and repositories are *connected*
+ * systems — the orchestrator reads them, and it reads all of them, so offering
+ * them here as things to upload one at a time would be offering a worse version
+ * of something already happening. The shared INTAKE_ACCEPT still carries audio
+ * and transcripts for the original surface; this one does not.
+ */
+const V2_ACCEPT = '.pdf,.doc,.docx,.txt,.md,.png,.jpg,.jpeg,.gif,.webp,.svg';
+
+/** Only these reach the strip — a connected system is not an attachment. */
+const ATTACHABLE: SourceType[] = ['PDF', 'DOCX', 'TXT', 'Image'];
 
 const Loading: React.FC = () => (
   <div className="empty-state">
@@ -104,7 +141,6 @@ export const SpecAiV2View: React.FC = () => {
     currentRole,
     currentUser,
     projects,
-    tasks,
     teamMembers,
     specAiFor,
     startFromProblem,
@@ -113,6 +149,7 @@ export const SpecAiV2View: React.FC = () => {
     answerQuestion,
     promoteBriefLine,
     addSpecSource,
+    removeSpecSource,
     lockSpecStage,
     unlockSpecStage,
     reviewArtifact,
@@ -120,7 +157,6 @@ export const SpecAiV2View: React.FC = () => {
     assignArtifact,
     updateArtifact,
     regenerateArtifact,
-    navigateTo,
     addToast,
   } = useApp();
 
@@ -141,24 +177,100 @@ export const SpecAiV2View: React.FC = () => {
   const [openArtifact, setOpenArtifact] = useState<string | null>(null);
   const [artifactDraft, setArtifactDraft] = useState('');
 
-  /* Sources live in the top bar, not the thread. */
-  const [readingOpen, setReadingOpen] = useState(false);
-
   /* The rail collapses to a strip of dots — still readable, 34px wide. */
   /* The panel beside the chat shows one of two readings of the same thing. */
   /* The panel opens where this persona's question lives. */
   const lens = useMemo(() => lensFor(currentRole), [currentRole]);
-  const [wsTab, setWsTab] = useState<'system' | 'impact' | 'questions'>(lens.defaultTab);
-  const [impactLens, setImpactLens] = useState<'jira' | 'code'>(lens.impactLens);
+  /* Change Impact for everyone. What a change touches is the question every role
+     arrives with; the persona difference that earns its keep is which lens it
+     opens in and what the map emphasises, not which tab is in front. */
+  const [wsTab, setWsTab] = useState<WsKey>('impact');
+  /* The rail folds to icons when the work wants the width. */
+  const [railMini, setRailMini] = useState(false);
+
+  /* The five readings are stacked, so the strip jumps rather than filters and
+     `wsTab` is now "what you are looking at" rather than "what is rendered". */
+  const stackRef = useRef<HTMLDivElement>(null);
+  /* Everything starts folded. Five sections open at once is a wall on arrival,
+     and the conversation is what you came for — the panel is reference you pull
+     open, not the first thing competing for the screen. */
+  const [folded, setFolded] = useState<Set<WsKey>>(
+    () => new Set(WS_ITEMS.map((i) => i.key))
+  );
+  /* The panel is open on arrival — the sections inside it are what start folded,
+     so it is present without being a wall to read past. It still closes to a
+     strip of marks when the conversation wants the width. */
+  const [wsOpen, setWsOpen] = useState(true);
+
+  const foldSection = (key: WsKey) =>
+    setFolded((prev) => {
+      const next = new Set(prev);
+      next.has(key) ? next.delete(key) : next.add(key);
+      return next;
+    });
+
+  const jumpTo = (key: WsKey) => {
+    setWsTab(key);
+    setWsOpen(true);
+    /* Unfold what you asked to see — jumping to a folded section lands on a
+       header with nothing under it. */
+    setFolded((prev) => {
+      const next = new Set(prev);
+      next.delete(key);
+      return next;
+    });
+    /* The panel may have been closed a line ago, so wait for it to exist. */
+    window.setTimeout(() => {
+      stackRef.current
+        ?.querySelector(`#wsx-${key}`)
+        ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 0);
+  };
+
+  /* Which section you are actually in, so the strip reflects the scroll rather
+     than only the last thing clicked. */
   useEffect(() => {
-    setWsTab(lens.defaultTab);
-    setImpactLens(lens.impactLens);
-  }, [lens]);
+    const root = stackRef.current;
+    if (!root) return;
+    const onScroll = () => {
+      const top = root.getBoundingClientRect().top;
+      let nearest: WsKey | null = null;
+      let best = Infinity;
+      for (const { key } of WS_ITEMS) {
+        const el = root.querySelector(`#wsx-${key}`);
+        if (!el) continue;
+        const d = Math.abs(el.getBoundingClientRect().top - top);
+        if (d < best) [best, nearest] = [d, key];
+      }
+      if (nearest) setWsTab(nearest);
+    };
+    root.addEventListener('scroll', onScroll, { passive: true });
+    return () => root.removeEventListener('scroll', onScroll);
+  }, [tab]);
+  /* The working is open while it runs and folds to one line once it is done. */
+  const [thinkOpen, setThinkOpen] = useState(true);
+  useEffect(() => {
+    if (orch.thoughtFor) setThinkOpen(false);
+  }, [orch.thoughtFor]);
+
+  /* Nothing has been given yet, so there is nothing for the agent to say. */
+  /* Uploads only. A Jira or Confluence connection is read by the orchestrator,
+     not carried in the strip as though somebody had dragged it in. */
+  const attachments = useMemo(
+    () => state.sources.filter((s) => ATTACHABLE.includes(s.type)),
+    [state.sources]
+  );
+  const hasIntake = state.problemStatement.trim().length > 0 || attachments.length > 0;
+  /* The persona decides which impact tile leads. Both are always shown, so this
+     is an ordering, not a filter. */
 
   /* Scope candidates, clubbed by the system that surfaced them. Everything is in
      by default — the user is trimming, not assembling. */
   const groups = useMemo(() => scopeBySource(), []);
   const scopeAll = useMemo(() => groups.flatMap((g) => g.items), [groups]);
+  /* The panel shows the top few per source. The header says so rather than
+     letting a trimmed list read as the whole of what discovery found. */
+  const scopeFound = useMemo(() => scopeItems().length, []);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   useEffect(() => {
     if (selected.size === 0 && scopeAll.length > 0) {
@@ -219,20 +331,8 @@ export const SpecAiV2View: React.FC = () => {
   const problemRef = useRef<HTMLDivElement>(null);
 
   const locked = state.lockedStages.includes('knowledge');
-  /* Coverage is how much of the specification is actually answered, which is a
-     different question from how far through the stages you are. */
-  const treeRoll = useMemo(() => rollup(KNOWLEDGE_ROOT, state), [state]);
-  const coverage = Math.min(
-    100,
-    Math.round(
-      ((treeRoll.answered + treeRoll.inferred + Object.keys(orch.answers).length) /
-        Math.max(1, treeRoll.total)) *
-        100
-    )
-  );
 
   const openQuestions = state.questions.filter((q) => q.status === 'Open');
-  const pendingTasks = tasks.filter((t) => t.status === 'Needs Approval').length;
 
   /* Who can be handed an artifact — this project's roster, plus whoever is here. */
   const reviewers = useMemo(() => {
@@ -271,6 +371,7 @@ export const SpecAiV2View: React.FC = () => {
   );
 
   const claimCount = claims.reduce((n, g) => n + g.lines.length, 0);
+  /* Kept below with the other claim metrics — see `context`. */
   const unsourced = claims.reduce(
     (n, g) =>
       n +
@@ -279,6 +380,50 @@ export const SpecAiV2View: React.FC = () => {
       ).length,
     0
   );
+
+  /**
+   * How much the workspace is standing on, as one number.
+   *
+   * Coverage in the header answers "how much of the specification is filled in".
+   * This answers the different and more useful question: how much of what is
+   * filled in is actually grounded. Two halves — how much of the connected
+   * estate was read, and how much of what is claimed cites a source — with a
+   * deduction for disagreements, because a conflict is context you have but
+   * cannot rely on yet.
+   */
+  const context = useMemo(() => {
+    const read =
+      orch.sources.length === 0
+        ? 0
+        : orch.sources.reduce(
+            (n, s) => n + (s.status === 'Complete' ? 1 : s.status === 'Partial' ? 0.5 : 0),
+            0
+          ) / orch.sources.length;
+    const grounded = claimCount === 0 ? 0 : (claimCount - unsourced) / claimCount;
+    const score = Math.max(
+      0,
+      Math.round((read * 55 + grounded * 45) - orch.conflicts.length * 5)
+    );
+    return {
+      score,
+      read,
+      grounded,
+      band: score >= 70 ? 'hi' : score >= 40 ? 'md' : 'lo',
+      /* Whichever half is holding the number down is the thing to go fix. */
+      weakest:
+        orch.conflicts.length > 0
+          ? `${orch.conflicts.length} unresolved conflict${
+              orch.conflicts.length === 1 ? '' : 's'
+            }`
+          : read < 0.6
+          ? `${orch.sources.filter((s) => s.status === 'Complete').length}/${
+              orch.sources.length
+            } systems read`
+          : unsourced > 0
+          ? `${unsourced} claim${unsourced === 1 ? '' : 's'} without a source`
+          : 'grounded',
+    };
+  }, [orch.sources, orch.conflicts.length, claimCount, unsourced]);
 
   /* ── Artifacts arrive a few at a time, with what each one is reading. */
   const [building, setBuilding] = useState(false);
@@ -412,9 +557,10 @@ export const SpecAiV2View: React.FC = () => {
     setCurrentBuild(null);
     setBuilding(true);
     lockSpecStage(state.projectId, 'understanding');
-    /* Artifacts live beside the conversation now, so stay on the thread. */
+    /* Artifacts live beside the conversation now, so stay on the thread and
+       scroll the stack to them — setting the key alone moves nothing. */
     setTab('brief');
-    setWsTab('artifacts');
+    jumpTo('artifacts');
   };
 
   /* One door now the two surfaces are one tree. */
@@ -456,51 +602,39 @@ export const SpecAiV2View: React.FC = () => {
         critical.length - criticalApproved.length === 1 ? '' : 's'
       }`;
 
+  /* Understanding opens as soon as there is a brief to read; generating the
+     artifacts from it is the act that closes it. */
+  /* The PRD is written from the artifacts, so it opens when they are signed off.
+     Understanding moved inside Problem Definition — it is read alongside the
+     material it was built from, not after it. */
+  const prd = state.artifacts.find((a) => a.group === 'Product');
+  const prdHint = gateOpen
+    ? undefined
+    : 'Approve the critical artifacts — the PRD is written from them';
+
   return (
     <div className="sx">
-      {/* ── TOP BAR ── */}
-      <header className="topbar">
-        <div className="brand">
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-            <rect x="1" y="10" width="8" height="8" rx="1.6" fill="#3538CD" opacity="0.32" />
-            <rect x="6" y="5" width="8" height="8" rx="1.6" fill="#3538CD" opacity="0.62" />
-            <rect x="11" y="0" width="8" height="8" rx="1.6" fill="#3538CD" />
-          </svg>
-          <div className="brand-text">
-            <span className="wordmark">Spec AI</span>
-            <span className="sub">BRAINSPARK</span>
-          </div>
-        </div>
+      {/* The top bar is gone. Its title repeated whichever phase the rail was
+          already highlighting, and the project, tasks and account moved into the
+          foot of the rail — so the whole strip was a row of height holding one
+          duplicated label. The chat gets it. */}
+      <div className="shell">
+        <PhaseRail
+          collapsed={railMini}
+          onToggleCollapsed={() => setRailMini((v) => !v)}
+          phase={tab}
+          prdOpen={gateOpen}
+          prdHint={prdHint}
+          deliveryOpen={gateOpen}
+          deliveryHint={gateHint}
+          counts={{ stories: state.stories.length }}
+          onPick={(p) => {
+            if (p === 'delivery') return openDelivery();
+            setTab(p);
+          }}
+        />
 
-        <nav className="tabs">
-          <button className={`tab ${tab === 'brief' ? 'active' : ''}`} onClick={() => setTab('brief')}>
-            Problem Definition
-          </button>
-          {/* Decomposition and stories open once the critical artifacts are signed off. */}
-          <button
-            className={`tab ${tab === 'delivery' ? 'active' : ''}`}
-            disabled={!gateOpen}
-            title={gateHint}
-            onClick={openDelivery}
-          >
-            Delivery
-            {state.stories.length > 0 && <span className="badge">{state.stories.length}</span>}
-          </button>
-        </nav>
-
-        <div className="topbar-right">
-          <div className="icon-nav">
-            <button title="My Tasks" onClick={() => navigateTo('My Tasks')}>
-              <CheckSquare size={14} />
-              {pendingTasks > 0 && <span className="dot">{pendingTasks}</span>}
-            </button>
-          </div>
-          <span className="breadcrumb">
-            Project — <b>{project.name}</b>
-          </span>
-          <div className="avatar">{initials}</div>
-        </div>
-      </header>
+        <div className="shell-main">
 
       {/* ── PROBLEM ── */}
       {/* ───────────── PROBLEM STATEMENT — the single trigger ─────────────
@@ -518,30 +652,16 @@ export const SpecAiV2View: React.FC = () => {
           >
             <span className="phead-mini-l">Problem</span>
             <span className="phead-mini-t">{state.problemStatement || 'Not set'}</span>
-            <span className="phead-mini-c">{orch.phase === 'idle' ? '—' : `${coverage}%`}</span>
             <ChevronDown size={12} />
           </button>
         ) : (
         <div className="phead-card">
           <div className="phead-main">
+            {/* Four things, not seven. The pencil went because the statement is
+                already click-to-edit, and the analysis status moved to sit with
+                the number it describes. */}
             <div className="phead-lbl">
               <span>Problem statement</span>
-              <button
-                className="phead-edit"
-                title="Collapse"
-                onClick={() => setPheadOpen(false)}
-              >
-                <ChevronUp size={11} />
-              </button>
-              {!locked && !readOnly && (
-                <button
-                  className="phead-edit"
-                  title="Edit"
-                  onClick={() => problemRef.current?.focus()}
-                >
-                  <Pencil size={11} />
-                </button>
-              )}
               {locked && (
                 <button className="lock-tag" onClick={() => !readOnly && setReopenOpen(true)}>
                   <Lock size={10} /> Locked
@@ -554,12 +674,12 @@ export const SpecAiV2View: React.FC = () => {
                     onClick={() => problemFileRef.current?.click()}
                     title="Upload a PDF, image or document"
                   >
-                    <Upload size={10} /> Upload
+                    <Upload size={12} /> Upload
                   </button>
                   <input
                     ref={problemFileRef}
                     type="file"
-                    accept={INTAKE_ACCEPT}
+                    accept={V2_ACCEPT}
                     hidden
                     onChange={(e) => {
                       const f = e.target.files?.[0];
@@ -572,23 +692,6 @@ export const SpecAiV2View: React.FC = () => {
               {statementFrom && (
                 <span className="phead-from">
                   {extracting ? `reading ${extracting}…` : `from ${statementFrom}`}
-                </span>
-              )}
-              {orch.phase !== 'idle' && (
-                <span className="phead-status">
-                  {orch.phase === 'ready' ? (
-                    <>
-                      <Check size={11} /> {orch.settledCount}/{orch.sources.length} systems analysed
-                    </>
-                  ) : orch.phase === 'scoping' ? (
-                    <>
-                      <Check size={11} /> Discovery complete — confirm scope
-                    </>
-                  ) : (
-                    <>
-                      <Loader2 size={11} className="spinning" /> Analysing {orch.sources.length}…
-                    </>
-                  )}
                 </span>
               )}
             </div>
@@ -609,17 +712,11 @@ export const SpecAiV2View: React.FC = () => {
             </div>
           </div>
 
+          {/* No number here. Coverage and the systems count were both readouts
+              of the run, and the run already reports itself twice — the thinking
+              block while it happens, the indexed strip after. A third copy over
+              the statement was noise on the one thing that should be readable. */}
           <div className="phead-side">
-            <div className="phead-cov">
-              {/* A number before anything has been analysed implies work that
-                  has not happened. */}
-              <b>{orch.phase === 'idle' ? '—' : `${coverage}%`}</b>
-              <span>coverage</span>
-              <i>
-                <i style={{ width: `${coverage}%` }} />
-              </i>
-            </div>
-
             {tab !== 'brief' ? null : orch.phase === 'idle' ? (
               <button
                 className="btn btn-primary"
@@ -641,6 +738,16 @@ export const SpecAiV2View: React.FC = () => {
                 Re-analyse
               </button>
             )}
+
+            {/* Collapsing is a card-level action, so it sits at the card edge
+                rather than inside the label row. */}
+            <button
+              className="phead-edit"
+              title="Collapse"
+              onClick={() => setPheadOpen(false)}
+            >
+              <ChevronUp size={13} />
+            </button>
           </div>
         </div>
         )}
@@ -653,8 +760,9 @@ export const SpecAiV2View: React.FC = () => {
       {orch.phase === 'scoping' && (
         <div className="scope">
           <div className="scope-h">
-            <b>Confirm scope</b> — discovery found {scopeAll.length} things this problem touches
-            across {groups.length} systems. Untick anything that should be left alone.
+            <b>Confirm scope</b> — discovery found {scopeFound} things this problem touches across{' '}
+            {groups.length} systems. The {scopeAll.length} most relevant are below; untick anything
+            that should be left alone.
             <span className="scope-count">
               {selected.size} of {scopeAll.length} selected
             </span>
@@ -724,17 +832,25 @@ export const SpecAiV2View: React.FC = () => {
             <button
               className="btn btn-primary"
               disabled={selected.size === 0}
+              /* Skip only what was actively emptied. A source with nothing in
+                 this panel was never offered, so it is read as normal. */
               onClick={() =>
                 orch.confirmScope(
                   groups
-                    .filter((g) => g.items.some((i) => selected.has(i.node.id)))
+                    .filter((g) => !g.items.some((i) => selected.has(i.node.id)))
                     .map((g) => g.system)
                 )
               }
             >
               Looks right — go deep
             </button>
-            <button className="foot-btn" onClick={() => setWsTab('system')}>
+            {/* The other answer. Until now the only way through assumed a system
+                already exists, which left a new build ticking through somebody
+                else's services to say none of them apply. */}
+            <button className="btn btn-outline" onClick={orch.goGreenfield}>
+              <Sparkles size={13} /> None of this — greenfield
+            </button>
+            <button className="foot-btn" onClick={() => jumpTo('system')}>
               Show me on the map
             </button>
             <span className="scope-note">
@@ -749,38 +865,97 @@ export const SpecAiV2View: React.FC = () => {
       <main className="workspace" ref={workspaceRef}>
         {tab === 'brief' && (
           <>
-            <section className="thread-panel" style={{ flex: `0 0 ${split}%` }}>
+            <section
+              className="thread-panel"
+              style={{ flex: wsOpen ? `0 0 ${split}%` : '1 1 auto' }}
+            >
+              {/* What has been brought in, as a strip rather than a list. It sits
+                  above the thread because it is context for everything in it, and
+                  it stays one line however much gets attached. */}
+              {attachments.length > 0 && (
+                <div className="upstrip">
+                  <span className="upstrip-l">
+                    <Paperclip size={10} />
+                    {attachments.length}
+                  </span>
+                  <div className="upstrip-items">
+                    {attachments.map((s) => {
+                      const Icon = SOURCE_ICON[s.type] ?? FileText;
+                      return (
+                        <span
+                          className={`upchip ${s.ingest}`}
+                          key={s.id}
+                          title={`${s.name} · ${s.type}${s.detail ? ` · ${s.detail}` : ''} · ${
+                            s.ingest
+                          }`}
+                        >
+                          {s.ingest === 'Parsing' || s.ingest === 'Queued' ? (
+                            <Loader2 size={11} className="spinning" />
+                          ) : (
+                            <Icon size={11} />
+                          )}
+                          <b>{s.name}</b>
+                          {!readOnly && !locked && (
+                            <button
+                              className="upchip-x"
+                              title="Remove"
+                              onClick={() => removeSpecSource(state.projectId, s.id)}
+                            >
+                              <X size={9} />
+                            </button>
+                          )}
+                        </span>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
               <div className="messages" ref={messagesRef}>
-                {state.transcript.length === 0 && (
-                  <div className="turn">
+                {/* Nothing until there is something to talk about. The agent
+                    greeting before any input was the agent speaking first about
+                    a problem nobody had stated yet. */}
+                {!hasIntake && state.transcript.length === 0 && (
+                  <div className="thread-empty">
+                    <p>Start with the problem, or upload what you have.</p>
+                  </div>
+                )}
+
+                {/* The working, while it is working. */}
+                {orch.thinking.length > 0 && (
+                  <div className="turn grouped enter">
                     <span className="av">
                       <Sparkles size={12} />
                     </span>
                     <div className="col">
-                      <div className="who">
-                        <span className="nm">Spec Agent</span>
-                      </div>
-                      <div className="say">
-                        <p>
-                          What are we solving? One or two lines is plenty — I will read whatever
-                          you bring in and ask for the rest.
-                        </p>
-                      </div>
-                      <div className="say" style={{ marginTop: 6 }}>
-                        <p style={{ fontSize: 11.5, color: 'var(--ink-faint)' }}>
-                          Or upload a one-pager, a screenshot of a ticket or an exported brief —
-                          the <b>Upload</b> control above the statement takes PDFs, images and
-                          documents.
-                        </p>
-                      </div>
-
-                      {/* Something to press, rather than a blank field to stare at. */}
-                      <div className="starter">
-                        {STARTERS.map((t) => (
-                          <button key={t} onClick={() => setDraft(t)}>
-                            {t}
-                          </button>
-                        ))}
+                      <div className={`think ${orch.thoughtFor ? 'done' : ''}`}>
+                        <button className="think-h" onClick={() => setThinkOpen((v) => !v)}>
+                          {orch.thoughtFor ? (
+                            <Check size={11} />
+                          ) : (
+                            <Loader2 size={11} className="spinning" />
+                          )}
+                          <span>
+                            {orch.thoughtFor
+                              ? `Thought for ${orch.thoughtFor}s`
+                              : orch.thinking[orch.thinking.length - 1].text}
+                          </span>
+                          {thinkOpen ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+                        </button>
+                        {thinkOpen && (
+                          <ol className="think-l">
+                            {orch.thinking.map((t, i) => (
+                              <li
+                                key={t.id}
+                                className={
+                                  !orch.thoughtFor && i === orch.thinking.length - 1 ? 'now' : ''
+                                }
+                              >
+                                {t.text}
+                              </li>
+                            ))}
+                          </ol>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -843,65 +1018,24 @@ export const SpecAiV2View: React.FC = () => {
                   );
                 })}
 
-                {/* The reading is a document, so it gets a card rather than being
-                    poured into the conversation. Collapsed until asked for. */}
-                {claims.length > 0 && (
-                  <div className="turn grouped">
+                {/* The brief moved to its own phase. What stays in the thread is
+                    the pointer to it — a claim list is a document, and it was
+                    living in a disclosure widget between two chat bubbles. */}
+                {claimCount > 0 && (
+                  <div className="turn grouped enter">
                     <span className="av">
                       <Sparkles size={12} />
                     </span>
                     <div className="col">
-                      {state.brief?.stale && state.brief.staleReason && (
-                        <div className="say" style={{ color: 'var(--conf-med)', fontSize: 11.5 }}>
-                          {state.brief.staleReason}{' '}
-                          <button className="chip soft" onClick={() => askAgent(state.projectId, '')}>
-                            Re-read
-                          </button>
-                        </div>
-                      )}
-                      <div className="card">
-                        <button className="card-head" onClick={() => setReadingOpen((v) => !v)}>
-                          {readingOpen ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
-                          <span className="t">What I understand so far</span>
-                          <span className="s">
-                            {claimCount} claim{claimCount === 1 ? '' : 's'}
-                            {unsourced > 0 && ` · ${unsourced} unsourced`}
-                          </span>
-                        </button>
-                        {readingOpen && (
-                          <div className="card-body">
-                            {claims.map((group) => (
-                              <div key={group.band}>
-                                <div className="band-h">{BRIEF_BAND_COPY[group.band].header}</div>
-                                {group.lines.map((line) => (
-                                  <div className="cl" key={line.id}>
-                                    <span
-                                      className={`evd ${EV[line.evidenceClass].cls}`}
-                                      title={line.evidenceClass}
-                                    />
-                                    <span className="tx">
-                                      {line.text}{' '}
-                                      {line.sourceSummary && (
-                                        <button className="cite" onClick={() => setCiteLine(line)}>
-                                          {line.sourceSummary}
-                                        </button>
-                                      )}
-                                    </span>
-                                    {!readOnly && !locked && (
-                                      <button
-                                        className="promote"
-                                        onClick={() => promoteBriefLine(state.projectId, line.id)}
-                                      >
-                                        + Requirement
-                                      </button>
-                                    )}
-                                  </div>
-                                ))}
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
+                      <button className="brief-ptr" onClick={() => setTab('understanding')}>
+                        <BookOpen size={13} />
+                        <span>
+                          The brief is at {claimCount} claim{claimCount === 1 ? '' : 's'}
+                          {unsourced > 0 && ` · ${unsourced} unconfirmed`}
+                        </span>
+                        <em>Open Understanding</em>
+                        <ChevronRight size={12} />
+                      </button>
                     </div>
                   </div>
                 )}
@@ -1016,7 +1150,7 @@ export const SpecAiV2View: React.FC = () => {
                     <input
                       ref={sourceFileRef}
                       type="file"
-                      accept={INTAKE_ACCEPT}
+                      accept={V2_ACCEPT}
                       hidden
                       multiple
                       onChange={(e) => {
@@ -1086,7 +1220,8 @@ export const SpecAiV2View: React.FC = () => {
               </div>
             </section>
 
-            {/* ── RAIL ── */}
+            {/* Only meaningful when there is a second panel to size against. */}
+            {wsOpen && (
             <div
               className="splitter"
               role="separator"
@@ -1103,114 +1238,269 @@ export const SpecAiV2View: React.FC = () => {
             >
               <i />
             </div>
+            )}
 
             {/* ───────────── KNOWLEDGE WORKSPACE ─────────────
-                One panel, four readings of the same retrieved knowledge. The map
-                is the default because it is the thing the problem statement
-                produced; the others are cuts through it. */}
+                Five readings of the same retrieved knowledge, stacked. Closed on
+                arrival: it is reference you pull open, not a thing competing
+                with the conversation for the screen. */}
+            {!wsOpen ? (
+              <div className="ws-shut">
+                <button
+                  className="ws-shut-open"
+                  title="Open the workspace"
+                  onClick={() => setWsOpen(true)}
+                >
+                  <PanelRightOpen size={14} />
+                </button>
+                {WS_ITEMS.map(({ key, label, icon: Icon }) => {
+                  const badge =
+                    key === 'questions' && gaps.length + driftCount > 0
+                      ? gaps.length + driftCount
+                      : key === 'artifacts' && critical.length > 0
+                      ? critical.length - criticalApproved.length || null
+                      : key === 'understanding' && claimCount > 0
+                      ? claimCount
+                      : null;
+                  return (
+                    <button
+                      key={key}
+                      className="ws-shut-i"
+                      title={label}
+                      onClick={() => jumpTo(key)}
+                    >
+                      <Icon size={14} />
+                      {badge ? <i>{badge}</i> : null}
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
             <aside className="ws">
-              <div className="ws-tabs">
-                {WS_ORDER.map((t) => (
-                  <button
-                    key={t}
-                    className={wsTab === t ? 'on' : ''}
-                    onClick={() => setWsTab(t)}
-                  >
-                    {t === 'system'
-                      ? 'System Map'
-                      : t === 'impact'
-                      ? 'Change Impact'
-                      : t === 'artifacts'
-                      ? 'Artifacts'
-                      : 'Open Questions'}
-                    {t === 'questions' && gaps.length + driftCount > 0 && (
-                      <i>{gaps.length + driftCount}</i>
+              {/* What the panel below is standing on. Coverage in the header is
+                  how much is filled in; this is how much of it is grounded. */}
+              {orch.phase !== 'idle' && (
+                <div className={`ctx ${context.band}`} title="Share of the estate read, weighted with how much of the brief cites a source, less unresolved conflicts">
+                  <b>{context.score}%</b>
+                  <span>context confidence</span>
+                  <em>{context.weakest}</em>
+                  <i>
+                    <i style={{ width: `${context.score}%` }} />
+                  </i>
+                </div>
+              )}
+
+              <button
+                className="ws-close"
+                title="Close the workspace"
+                onClick={() => setWsOpen(false)}
+              >
+                <PanelRightClose size={13} /> Close
+              </button>
+
+              {/* Everything, stacked. Switching between five readings meant
+                  holding four of them in your head; scrolling past them does
+                  not. Each section folds when it is in the way — its sticky
+                  header is the only navigation the stack needs. */}
+              <div className="ws-stack" ref={stackRef}>
+                <section className="wsx" id="wsx-impact">
+                  <button className="wsx-h" onClick={() => foldSection('impact')}>
+                    {folded.has('impact') ? <ChevronRight size={13} /> : <ChevronDown size={13} />}
+                    <b>Change Impact</b>
+                    <span>what this touches, in Jira and in the code</span>
+                  </button>
+                  {!folded.has('impact') &&
+                    (modelled ? (
+                      <ImpactPanel onDiscuss={(q) => askFromMap(q)} lens={lens.impactLens} />
+                    ) : (
+                      <div className="wpanel">
+                        <div className="wempty">
+                          <Layers size={22} />
+                          <p>Impact needs a system model.</p>
+                          <p className="sub">
+                            Reach is walked over the graph. Without one there is nothing honest
+                            to report.
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                </section>
+
+                <section className="wsx" id="wsx-system">
+                  <button className="wsx-h" onClick={() => foldSection('system')}>
+                    {folded.has('system') ? <ChevronRight size={13} /> : <ChevronDown size={13} />}
+                    <b>System Map</b>
+                    <span>where it sits</span>
+                  </button>
+                  {!folded.has('system') &&
+                    (modelled ? (
+                      <div className="wsx-map">
+                        <Suspense fallback={<div className="rail-empty">Loading map…</div>}>
+                          <SystemMap
+                            compact
+                            onExpand={() => setMapFull(true)}
+                            onDiscuss={askFromMap}
+                            onSelect={(path, evidence) => setNodeContext({ path, evidence })}
+                            focus={lens.focus}
+                          />
+                        </Suspense>
+                      </div>
+                    ) : (
+                      <div className="wpanel">
+                        <div className="wempty">
+                          <Layers size={22} />
+                          <p>No system model connected for this project.</p>
+                          <p className="sub">
+                            {project.name} has no repositories, APIs or architecture indexed yet,
+                            so there is nothing to map. The conversation and the questions still
+                            work.
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                </section>
+
+                <section className="wsx" id="wsx-questions">
+                  <button className="wsx-h" onClick={() => foldSection('questions')}>
+                    {folded.has('questions') ? (
+                      <ChevronRight size={13} />
+                    ) : (
+                      <ChevronDown size={13} />
                     )}
-                    {t === 'artifacts' && critical.length > 0 && (
+                    <b>Open Questions</b>
+                    {gaps.length + driftCount > 0 && <i>{gaps.length + driftCount}</i>}
+                    <span>what only you can settle</span>
+                  </button>
+                  {!folded.has('questions') && (
+                    <OpenQuestions
+                      state={state}
+                      orch={orch}
+                      onDiscuss={(q) => askFromMap(q)}
+                      onAnswer={settleGap}
+                      onResolveDrift={(property, choice) => settleGap(property, choice)}
+                      onSettle={(id, status, answer) => {
+                        const q = state.questions.find((x) => x.id === id);
+                        answerQuestion(state.projectId, id, status, answer);
+                        if (q) {
+                          setTab('brief');
+                          askAgent(state.projectId, q.text + ' — ' + (answer ?? status));
+                        }
+                      }}
+                    />
+                  )}
+                </section>
+
+                <section className="wsx" id="wsx-artifacts">
+                  <button className="wsx-h" onClick={() => foldSection('artifacts')}>
+                    {folded.has('artifacts') ? (
+                      <ChevronRight size={13} />
+                    ) : (
+                      <ChevronDown size={13} />
+                    )}
+                    <b>Artifacts</b>
+                    {critical.length > 0 && (
                       <i>
                         {criticalApproved.length}/{critical.length}
                       </i>
                     )}
+                    <span>what the definition produced</span>
                   </button>
-                ))}
-              </div>
+                  {!folded.has('artifacts') && (
+                    <ArtifactsPanel
+                      state={state}
+                      readOnly={readOnly}
+                      criticalGroups={CRITICAL_GROUPS}
+                      building={building}
+                      builtIds={builtIds}
+                      currentBuild={currentBuild}
+                      onOpen={(id) => {
+                        const a = state.artifacts.find((x) => x.id === id);
+                        setOpenArtifact(id);
+                        setArtifactDraft(a?.body ?? '');
+                      }}
+                    />
+                  )}
+                </section>
 
-              {wsTab === 'system' && !modelled && (
-                <div className="wpanel">
-                  <div className="wempty">
-                    <Layers size={22} />
-                    <p>No system model connected for this project.</p>
-                    <p className="sub">
-                      {project.name} has no repositories, APIs or architecture indexed yet, so
-                      there is nothing to map. The conversation and the questions still work.
-                    </p>
-                  </div>
-                </div>
-              )}
-              {wsTab === 'system' && modelled && (
-                <Suspense fallback={<div className="rail-empty">Loading map…</div>}>
-                  <SystemMap
-                    compact
-                    onExpand={() => setMapFull(true)}
-                    onDiscuss={askFromMap}
-                    onSelect={(path, evidence) => setNodeContext({ path, evidence })}
-                    focus={lens.focus}
-                  />
-                </Suspense>
-              )}
-              {wsTab === 'impact' && !modelled && (
-                <div className="wpanel">
-                  <div className="wempty">
-                    <Layers size={22} />
-                    <p>Impact needs a system model.</p>
-                    <p className="sub">
-                      Reach is walked over the graph. Without one there is nothing honest to
-                      report.
-                    </p>
-                  </div>
-                </div>
-              )}
-              {wsTab === 'impact' && modelled && (
-                <ImpactPanel
-                  onDiscuss={(q) => askFromMap(q)}
-                  lens={impactLens}
-                  onLens={setImpactLens}
-                />
-              )}
-              {wsTab === 'artifacts' && (
-                <ArtifactsPanel
-                  state={state}
-                  readOnly={readOnly}
-                  criticalGroups={CRITICAL_GROUPS}
-                  building={building}
-                  builtIds={builtIds}
-                  currentBuild={currentBuild}
-                  onOpen={(id) => {
-                    const a = state.artifacts.find((x) => x.id === id);
-                    setOpenArtifact(id);
-                    setArtifactDraft(a?.body ?? '');
-                  }}
-                />
-              )}
-              {wsTab === 'questions' && (
-                <OpenQuestions
-                  state={state}
-                  orch={orch}
-                  onDiscuss={(q) => askFromMap(q)}
-                  onAnswer={settleGap}
-                  onResolveDrift={(property, choice) => settleGap(property, choice)}
-                  onSettle={(id, status, answer) => {
-                    const q = state.questions.find((x) => x.id === id);
-                    answerQuestion(state.projectId, id, status, answer);
-                    if (q) {
-                      setTab('brief');
-                      askAgent(state.projectId, `${q.text} — ${answer ?? status}`);
-                    }
-                  }}
-                />
-              )}
+                <section className="wsx" id="wsx-understanding">
+                  <button className="wsx-h" onClick={() => foldSection('understanding')}>
+                    {folded.has('understanding') ? (
+                      <ChevronRight size={13} />
+                    ) : (
+                      <ChevronDown size={13} />
+                    )}
+                    <b>Understanding</b>
+                    {claimCount > 0 && <i>{claimCount}</i>}
+                    <span>what we now believe</span>
+                  </button>
+                  {!folded.has('understanding') && (
+                    <UnderstandingPanel
+                      state={state}
+                      readOnly={readOnly}
+                      locked={state.lockedStages.includes('understanding')}
+                      building={building}
+                      hasArtifacts={state.artifacts.length > 0}
+                      onPromote={(id) => promoteBriefLine(state.projectId, id)}
+                      onCite={setCiteLine}
+                      onReread={() => askAgent(state.projectId, '')}
+                      onGenerate={createArtifacts}
+                      onOpenSpec={() => setFinalizeOpen(true)}
+                    />
+                  )}
+                </section>
+              </div>
             </aside>
+            )}
           </>
+        )}
+
+        {/* ── PRD — the product requirement document the artifacts produced ── */}
+        {tab === 'prd' && (
+          <div className="prd">
+            {!prd ? (
+              <div className="und-empty">
+                <ScrollText size={22} />
+                <p>No PRD yet.</p>
+                <p className="sub">
+                  It is written from the signed-off artifacts. Generate them from Understanding
+                  first.
+                </p>
+              </div>
+            ) : (
+              <>
+                <header className="prd-head">
+                  <div>
+                    <span className="und-eyebrow">
+                      {prd.group} · v{prd.versions}
+                      {prd.stale && ' · needs review'}
+                    </span>
+                    <h2>{prd.label}</h2>
+                  </div>
+                  <div className="und-acts">
+                    {prd.status === 'Approved' ? (
+                      <span className="und-locked">
+                        <Lock size={11} /> Approved
+                      </span>
+                    ) : (
+                      <button
+                        className="btn btn-primary"
+                        disabled={readOnly}
+                        onClick={() => reviewArtifact(state.projectId, prd.id)}
+                      >
+                        Approve
+                      </button>
+                    )}
+                    <button className="btn btn-ghost" onClick={() => setFinalizeOpen(true)}>
+                      <FileStack size={13} /> Full specification
+                    </button>
+                  </div>
+                </header>
+                <div className="prd-body">
+                  <pre>{prd.body}</pre>
+                </div>
+              </>
+            )}
+          </div>
         )}
 
         {/* ── DELIVERY — modules, features and stories as one tree ── */}
@@ -1227,14 +1517,36 @@ export const SpecAiV2View: React.FC = () => {
       {orch.phase !== 'idle' && (
         <button className="cbar" onClick={() => setBarOpen((v) => !v)}>
           <span className="cbar-l">Indexed</span>
-          {orch.sources.map((src) => (
-            <span key={src.key} className={`cbar-s ${src.status.replace(/ /g, '-')}`}>
-              {src.label} <b>{src.count}</b>
-              {isRunning(src.status) && <i>·{src.status.toLowerCase()}</i>}
-              {src.status === 'Skipped' && <i>·skipped</i>}
-              {src.status === 'Partial' && <i>·partial</i>}
-            </span>
-          ))}
+          <span className="cbar-row">
+            {orch.sources.map((src) => {
+              const Icon = SYSTEM_ICON[src.key] ?? Layers;
+              const pct =
+                src.total && src.done !== undefined
+                  ? Math.round((src.done / src.total) * 100)
+                  : null;
+              return (
+                <span
+                  key={src.key}
+                  className={`csrc ${src.status.replace(/ /g, '-')}`}
+                  title={`${src.label} — ${src.status}${src.detail ? ` · ${src.detail}` : ''}`}
+                >
+                  <span className="csrc-i">
+                    {isRunning(src.status) ? (
+                      <Loader2 size={10} className="spinning" />
+                    ) : (
+                      <Icon size={10} />
+                    )}
+                  </span>
+                  <b>{src.label}</b>
+                  <em>{src.count}</em>
+                  {/* Progress fills the pill itself rather than adding a row. */}
+                  {isRunning(src.status) && pct !== null && (
+                    <span className="csrc-fill" style={{ width: `${pct}%` }} />
+                  )}
+                </span>
+              );
+            })}
+          </span>
           <span className="cbar-more">{barOpen ? 'hide' : 'detail'}</span>
         </button>
       )}
@@ -1254,6 +1566,9 @@ export const SpecAiV2View: React.FC = () => {
           ))}
         </div>
       )}
+
+        </div>
+      </div>
 
       {/* The map, given room when the panel is not enough. */}
       {mapFull && (
@@ -1462,7 +1777,7 @@ export const SpecAiV2View: React.FC = () => {
                 {builtIds.length}/{state.artifacts.length}
               </span>
             </h3>
-            <div className="build" onClick={() => setWsTab('artifacts')}>
+            <div className="build" onClick={() => jumpTo('artifacts')}>
               <span className="spin">
                 <Loader2 size={13} className="spinning" />
               </span>

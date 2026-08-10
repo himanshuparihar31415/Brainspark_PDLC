@@ -59,144 +59,8 @@
 }
 
 /* ---------- TOP BAR ---------- */
-.sx .topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 24px;
-  background: var(--surface);
-  border-bottom: 1px solid var(--line);
-  flex-shrink: 0;
-}
-.sx .brand {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.sx .brand .wordmark {
-  font-family: var(--font-display);
-  font-weight: 600;
-  font-size: 14px;
-  letter-spacing: -0.01em;
-}
-.sx .brand .sub {
-  font-size: 11px;
-  color: var(--ink-faint);
-  font-family: var(--font-mono);
-  letter-spacing: 0.03em;
-}
-.sx .brand-text {
-  display: flex;
-  flex-direction: column;
-  line-height: 1.15;
-}
 
-.sx .tabs {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  margin-left: 28px;
-  flex: 1;
-}
-.sx .tab {
-  position: relative;
-  padding: 8px 14px;
-  border: none;
-  background: none;
-  cursor: pointer;
-  font-size: 12.5px;
-  font-weight: 500;
-  color: var(--ink-soft);
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.sx .tab:hover {
-  color: var(--ink);
-  background: var(--bg);
-}
-.sx .tab.active {
-  color: var(--accent);
-  background: var(--accent-soft);
-}
-.sx .badge {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  background: var(--ink);
-  color: #fff;
-  padding: 1px 6px;
-  border-radius: 20px;
-  min-width: 16px;
-  text-align: center;
-}
-.sx .tab.active .badge {
-  background: var(--accent);
-}
-
-.sx .topbar-right {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-.sx .breadcrumb {
-  font-size: 11.5px;
-  color: var(--ink-faint);
-}
-.sx .breadcrumb b {
-  color: var(--ink-soft);
-  font-weight: 500;
-}
-.sx .avatar {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  background: var(--accent);
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-display);
-  font-size: 12px;
-  font-weight: 600;
-}
 /* Compact platform nav — My Tasks stays outside the workspace (plan D3). */
-.sx .icon-nav {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-}
-.sx .icon-nav button {
-  position: relative;
-  width: 30px;
-  height: 30px;
-  border: none;
-  background: none;
-  border-radius: 8px;
-  cursor: pointer;
-  color: var(--ink-faint);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.sx .icon-nav button:hover {
-  background: var(--bg);
-  color: var(--accent);
-}
-.sx .icon-nav .dot {
-  position: absolute;
-  top: 3px;
-  right: 3px;
-  min-width: 14px;
-  height: 14px;
-  padding: 0 3px;
-  border-radius: 20px;
-  background: var(--accent);
-  color: #fff;
-  font-family: var(--font-mono);
-  font-size: 9px;
-  line-height: 14px;
-}
 
 /* ---------- PROBLEM BAR ---------- */
 .sx .problem-bar {
@@ -719,6 +583,16 @@
 .sx .btn-ghost:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+/* A real second answer rather than a way out — it reads as an alternative to the
+   primary, not as a cancel. */
+.sx .btn-outline {
+  background: var(--surface);
+  border: 1px solid var(--accent);
+  color: var(--accent);
+}
+.sx .btn-outline:hover {
+  background: var(--accent-soft);
 }
 .sx .composer-hint {
   font-size: 10px;
@@ -1487,10 +1361,6 @@
 }
 
 /* ---------- Gate notice on a locked tab ---------- */
-.sx .tab:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
 .sx .gate-note {
   display: flex;
   align-items: center;
@@ -3702,25 +3572,52 @@
   -webkit-line-clamp: none;
 }
 
-/* ---------- Upload as a way in ---------- */
+/* ---------- Upload as a way in ----------
+   It was a 9px uppercase pill in the faint ink used for metadata, sitting in a
+   row of actual metadata — so it read as a label rather than something you can
+   press. It is the second way into the whole workspace; it gets to look like a
+   button. */
 .sx .phead-upload {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  border: 1px solid var(--line);
-  background: var(--surface);
-  border-radius: 20px;
-  padding: 1px 8px;
-  font-family: var(--font-mono);
-  font-size: 9px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--ink-faint);
+  gap: 5px;
+  border: 1px solid var(--accent);
+  background: var(--accent-soft);
+  border-radius: 7px;
+  padding: 3px 10px;
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--accent-dark);
   cursor: pointer;
 }
 .sx .phead-upload:hover {
+  background: var(--accent);
   border-color: var(--accent);
-  color: var(--accent);
+  color: #fff;
+}
+
+/* The caption now carries the run state, so it needs to sit on the icon's
+   baseline and keep its words together. */
+.sx .phead-cov > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+/* Card-level collapse, at the card edge. Always visible — a control nobody can
+   see is a control nobody uses. */
+.sx .phead-side .phead-edit {
+  opacity: 1;
+  width: 22px;
+  height: 22px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+.sx .phead-side .phead-edit:hover {
+  border-color: var(--accent);
 }
 .sx .phead-from {
   font-family: var(--font-mono);
@@ -3921,36 +3818,6 @@
 }
 
 /* ---------- Impact lens: Jira or code ---------- */
-.sx .lens {
-  display: flex;
-  gap: 3px;
-  margin-bottom: 4px;
-}
-.sx .lens button {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  border: 1px solid var(--line);
-  background: var(--surface);
-  border-radius: 7px;
-  padding: 4px 10px;
-  font-family: var(--font-body);
-  font-size: 10.5px;
-  color: var(--ink-soft);
-  cursor: pointer;
-}
-.sx .lens button.on {
-  border-color: var(--accent);
-  color: var(--accent);
-  background: var(--accent-soft);
-  font-weight: 500;
-}
-.sx .lens button i {
-  font-style: normal;
-  font-family: var(--font-mono);
-  font-size: 8.5px;
-  color: var(--ink-faint);
-}
 
 /* ---------- Epic / story / task and repo / module trees ---------- */
 .sx .tree {
@@ -5290,4 +5157,1103 @@
   letter-spacing: 0;
   color: #14171f;
   outline: none;
+}
+
+/* ═══════════ Attachments strip ═══════════
+   Uploads went into state and then had no representation on screen — the only
+   evidence a file existed was the agent happening to quote it. The strip sits
+   above the thread because it is context for the whole conversation, and it
+   stays one line however much gets attached. */
+.sx .upstrip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  padding: 5px 14px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface-2);
+}
+.sx .upstrip-l {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--ink-faint);
+}
+/* Scrolls sideways rather than wrapping — a second row would push the thread
+   down every time somebody attached one more thing. */
+.sx .upstrip-items {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.sx .upstrip-items::-webkit-scrollbar {
+  display: none;
+}
+.sx .upchip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  max-width: 150px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface);
+  padding: 2px 4px 2px 6px;
+  font-size: 10.5px;
+  color: var(--ink-soft);
+}
+.sx .upchip b {
+  font-weight: 400;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sx .upchip svg {
+  flex-shrink: 0;
+  color: var(--ink-faint);
+}
+.sx .upchip.Indexed svg {
+  color: var(--accent);
+}
+.sx .upchip.Failed {
+  border-color: var(--conf-low);
+  color: var(--conf-low);
+}
+.sx .upchip.Failed svg {
+  color: var(--conf-low);
+}
+.sx .upchip-x {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  border: none;
+  background: none;
+  border-radius: 3px;
+  padding: 0;
+  color: var(--ink-faint);
+  cursor: pointer;
+  opacity: 0;
+}
+.sx .upchip:hover .upchip-x {
+  opacity: 1;
+}
+.sx .upchip-x:hover {
+  background: var(--conf-low-bg);
+  color: var(--conf-low);
+}
+
+/* ═══════════ Two phases, shown as two phases ═══════════
+   Flat tabs read as two places you could be. Numbered, with an arrow between
+   them and a lock on the second, they read as an order. */
+
+/* ═══════════ Nothing said yet ═══════════ */
+.sx .thread-empty {
+  margin: auto 0;
+  padding: 40px 0;
+  text-align: center;
+  font-size: 12px;
+  color: var(--ink-faint);
+}
+.sx .thread-empty p {
+  margin: 0;
+}
+
+/* ═══════════ The working ═══════════
+   Between pressing Analyse and the first finding there were four status pills
+   changing colour, which reads as a hang. Open while it runs, folded to one
+   line once it is done — the steps are worth seeing once, not every time. */
+.sx .think {
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface-2);
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+.sx .think.done {
+  background: var(--surface);
+}
+.sx .think-h {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  border: none;
+  background: none;
+  padding: 6px 10px;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: var(--ink-soft);
+}
+.sx .think-h > span {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sx .think-h svg {
+  flex-shrink: 0;
+  color: var(--ink-faint);
+}
+.sx .think.done .think-h svg:first-child {
+  color: var(--conf-high);
+}
+.sx .think-h:hover {
+  color: var(--ink);
+}
+.sx .think-l {
+  list-style: none;
+  margin: 0;
+  padding: 2px 10px 9px 12px;
+  border-top: 1px solid var(--line);
+}
+.sx .think-l li {
+  position: relative;
+  padding: 3px 0 3px 15px;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--ink-faint);
+}
+/* The rail makes it one train of thought rather than a bulleted list. */
+.sx .think-l li::before {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 9px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--line-strong);
+}
+.sx .think-l li::after {
+  content: '';
+  position: absolute;
+  left: 4.2px;
+  top: 14px;
+  bottom: -3px;
+  width: 1px;
+  background: var(--line);
+}
+.sx .think-l li:last-child::after {
+  display: none;
+}
+.sx .think-l li.now {
+  color: var(--ink);
+}
+.sx .think-l li.now::before {
+  background: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+/* ═══════════ Context confidence ═══════════
+   Header coverage says how much of the specification is filled in. This says how
+   much of what is filled in is actually standing on something. */
+.sx .ctx {
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  flex-shrink: 0;
+  padding: 7px 14px 9px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+}
+.sx .ctx b {
+  font-family: var(--font-display);
+  font-size: 15px;
+  color: var(--ink);
+  line-height: 1;
+}
+.sx .ctx > span {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-faint);
+}
+.sx .ctx em {
+  margin-left: auto;
+  font-style: normal;
+  font-size: 10px;
+  color: var(--ink-faint);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sx .ctx > i {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: var(--line);
+}
+.sx .ctx > i > i {
+  display: block;
+  height: 100%;
+  background: var(--conf-high);
+  transition: width var(--duration-slow, 320ms) ease;
+}
+.sx .ctx.md > i > i {
+  background: var(--conf-med);
+}
+.sx .ctx.lo > i > i {
+  background: var(--conf-low);
+}
+.sx .ctx.md b {
+  color: var(--conf-med);
+}
+.sx .ctx.lo b {
+  color: var(--conf-low);
+}
+
+/* ═══════════ Indexed sources, as marks ═══════════
+   Four labels in 9px mono is four things you have to read. Four icons with a
+   count are four things you recognise — which is what a status strip is for.
+   Same band, same height: the pills sit inside the row the words used to. */
+.sx .cbar {
+  gap: 12px;
+  padding: 5px 18px;
+}
+.sx .cbar-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.sx .cbar-row::-webkit-scrollbar {
+  display: none;
+}
+.sx .csrc {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--surface);
+  padding: 2px 9px 2px 3px;
+  overflow: hidden;
+}
+.sx .csrc-i {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 17px;
+  height: 17px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--bg);
+  color: var(--ink-faint);
+}
+.sx .csrc b {
+  font-family: var(--font-body);
+  font-size: 10.5px;
+  font-weight: 500;
+  color: var(--ink-soft);
+}
+.sx .csrc em {
+  font-style: normal;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--ink-faint);
+}
+
+/* Status lives in the icon disc, so the label stays legible at every state. */
+.sx .csrc.Complete .csrc-i {
+  background: var(--conf-high-bg);
+  color: var(--conf-high);
+}
+.sx .csrc.Complete b {
+  color: var(--ink);
+}
+.sx .csrc.Partial {
+  border-color: var(--conf-med);
+}
+.sx .csrc.Partial .csrc-i {
+  background: var(--conf-med-bg);
+  color: var(--conf-med);
+}
+.sx .csrc.Unavailable,
+.sx .csrc.Permission-required {
+  border-color: var(--conf-low);
+}
+.sx .csrc.Unavailable .csrc-i,
+.sx .csrc.Permission-required .csrc-i {
+  background: var(--conf-low-bg);
+  color: var(--conf-low);
+}
+/* Skipped is dimmed, not struck through — it was a choice, not a failure. */
+.sx .csrc.Skipped {
+  opacity: 0.45;
+  border-style: dashed;
+}
+.sx .csrc.Retrieving .csrc-i,
+.sx .csrc.Analysing .csrc-i,
+.sx .csrc.Discovering .csrc-i,
+.sx .csrc.Connecting .csrc-i {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+/* Progress fills the pill rather than adding a bar under the row. */
+.sx .csrc-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  background: var(--accent);
+  opacity: 0.07;
+  transition: width 300ms ease;
+  pointer-events: none;
+}
+.sx .cbar:hover .csrc {
+  border-color: var(--line-strong);
+}
+
+/* ═══════════ Top bar, reclaimed ═══════════
+   The wordmark is gone, and with it the reason the bar had to be two lines tall.
+   The chrome that told you which product you are in was costing the thread the
+   height it needed to show one more exchange without scrolling. */
+
+/* The statement card gives back the same way — it is reference material once a
+   run is under way, not a header. */
+.sx .phead {
+  padding: 5px 18px 6px;
+}
+.sx .phead-card {
+  padding: 6px 11px;
+}
+
+/* All of it lands in the thread. */
+.sx .messages {
+  padding: 14px 22px 8px;
+}
+
+/* ═══════════ Shell — rail beside the work ═══════════ */
+.sx .shell {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+.sx .shell-main {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ═══════════ The phase rail ═══════════
+   The phases were a horizontal row of peers, which is not their shape: the four
+   readings sit inside Problem Definition, and Understanding and Delivery follow
+   it. A bar has nowhere to put that, so it flattened the hierarchy and pushed
+   the readings into a second tab strip on the opposite edge of the screen.
+   One rail, one hierarchy, folds to icons when the work wants the width. */
+.sx .rail {
+  flex: 0 0 202px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 7px 7px 12px;
+  background: var(--surface-2);
+  border-right: 1px solid var(--line);
+  overflow-y: auto;
+  transition: flex-basis 160ms ease;
+}
+.sx .rail.mini {
+  flex-basis: 46px;
+  align-items: center;
+}
+.sx .rail-fold {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  margin: 0 0 6px auto;
+  border: 1px solid transparent;
+  background: none;
+  border-radius: 7px;
+  color: var(--ink-faint);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.sx .rail.mini .rail-fold {
+  margin: 0 0 6px;
+}
+.sx .rail-fold:hover {
+  border-color: var(--line);
+  color: var(--accent);
+  background: var(--surface);
+}
+
+.sx .rail-i {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  border: 1px solid transparent;
+  background: none;
+  border-radius: 8px;
+  padding: 6px 8px;
+  font-family: var(--font-body);
+  font-size: 11.5px;
+  color: var(--ink-soft);
+  cursor: pointer;
+  text-align: left;
+  flex-shrink: 0;
+}
+.sx .rail-i > span {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sx .rail-i svg {
+  flex-shrink: 0;
+  color: var(--ink-faint);
+}
+.sx .rail-i:hover:not(:disabled) {
+  background: var(--surface);
+  color: var(--ink);
+}
+.sx .rail-i.on {
+  background: var(--surface);
+  border-color: var(--line);
+  color: var(--ink);
+  font-weight: 500;
+}
+.sx .rail-i.on svg {
+  color: var(--accent);
+}
+.sx .rail-i:disabled {
+  color: var(--ink-faint);
+  cursor: not-allowed;
+}
+.sx .rail-i:disabled svg {
+  opacity: 0.5;
+}
+
+/* The step number carries the order, and the lock carries the gate. */
+.sx .rail-n {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 17px;
+  height: 17px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--line);
+  color: var(--ink-faint);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-style: normal;
+}
+.sx .rail-i.on .rail-n {
+  background: var(--accent);
+  color: #fff;
+}
+.sx .rail-i.group {
+  margin-top: 5px;
+}
+.sx .rail-i.group:first-of-type {
+  margin-top: 0;
+}
+
+/* Children are indented and quieter — they are inside the phase, not beside it. */
+
+.sx .rail-i i {
+  font-style: normal;
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  flex-shrink: 0;
+  background: var(--ink);
+  color: #fff;
+  border-radius: 20px;
+  padding: 1px 5px;
+}
+
+/* The workspace panel lost its tab strip to the rail; a caption says which
+   reading is showing without offering the choice a second time. */
+
+/* The top bar keeps the name of where you are, since the tabs no longer do. */
+
+/* ═══════════ The brief, pointed at from the thread ═══════════ */
+.sx .brief-ptr {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  border-radius: 9px;
+  background: var(--surface);
+  padding: 8px 10px;
+  font-family: var(--font-body);
+  font-size: 11.5px;
+  color: var(--ink);
+  cursor: pointer;
+  text-align: left;
+}
+.sx .brief-ptr:hover {
+  background: var(--accent-soft);
+}
+.sx .brief-ptr > span {
+  flex: 1;
+  min-width: 0;
+}
+.sx .brief-ptr svg {
+  flex-shrink: 0;
+  color: var(--accent);
+}
+.sx .brief-ptr em {
+  font-style: normal;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+/* ═══════════ Understanding ═══════════
+   It was a collapsed card between two chat bubbles titled "What I understand so
+   far" — a disclosure widget holding the one artefact the whole run produces and
+   the thing you sign off. It gets a surface. */
+.sx .und {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+}
+.sx .und-head {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  flex-shrink: 0;
+  padding: 12px 24px 11px;
+  border-bottom: 1px solid var(--line);
+}
+.sx .und-eyebrow {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+}
+.sx .und-head h2 {
+  margin: 2px 0 0;
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+}
+.sx .und-head h2 em {
+  font-style: normal;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink-faint);
+}
+.sx .und-acts {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.sx .und-soft {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10.5px;
+  color: var(--conf-med);
+}
+.sx .und-locked {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--conf-high);
+}
+.sx .und-stale {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-shrink: 0;
+  padding: 8px 24px;
+  background: var(--conf-med-bg);
+  border-bottom: 1px solid var(--line);
+  font-size: 11.5px;
+  color: var(--ink);
+}
+.sx .und-stale svg {
+  color: var(--conf-med);
+  flex-shrink: 0;
+}
+.sx .und-stale span {
+  flex: 1;
+}
+
+.sx .und-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 18px 24px 40px;
+}
+.sx .und-summary {
+  max-width: 78ch;
+  margin: 0 0 22px;
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--ink);
+}
+.sx .und-band {
+  max-width: 92ch;
+  margin-bottom: 22px;
+}
+.sx .und-bh {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  padding-bottom: 5px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--line);
+}
+.sx .und-bh b {
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 600;
+}
+.sx .und-bh span {
+  flex: 1;
+  font-size: 10.5px;
+  color: var(--ink-faint);
+}
+.sx .und-bh i {
+  font-style: normal;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--ink-faint);
+}
+.sx .und-line {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--surface-2);
+}
+.sx .und-line:hover .promote {
+  opacity: 1;
+}
+/* The evidence class is the whole point of the band: a dot you can learn. */
+.sx .und-ev {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  margin-top: 5px;
+  flex-shrink: 0;
+  background: var(--line-strong);
+}
+.sx .und-ev.fact {
+  background: var(--conf-high);
+}
+.sx .und-ev.decision {
+  background: var(--accent);
+}
+.sx .und-ev.inferred {
+  background: var(--conf-med);
+}
+.sx .und-ev.assumption {
+  background: var(--conf-low);
+}
+.sx .und-tx {
+  flex: 1;
+  min-width: 0;
+  font-size: 12.5px;
+  line-height: 1.6;
+}
+.sx .und-empty {
+  margin: auto;
+  padding: 60px 24px;
+  text-align: center;
+  color: var(--ink-faint);
+  max-width: 42ch;
+}
+.sx .und-empty svg {
+  margin-bottom: 10px;
+}
+.sx .und-empty p {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--ink-soft);
+}
+.sx .und-empty p.sub {
+  margin-top: 6px;
+  font-size: 11.5px;
+  color: var(--ink-faint);
+  line-height: 1.6;
+}
+
+/* ═══════════ Rail foot ═══════════
+   The top bar's title repeated whichever phase the rail already had highlighted,
+   which left a full-width strip carrying one duplicated label plus three things
+   that fit here. */
+
+
+/* ═══════════ Stacked tiles ═══════════
+   Jira and Code were behind a toggle, so reading one cost you sight of the
+   other — and the question the panel answers is "what does this change touch",
+   whose answer is both. Stacked, each foldable, the persona deciding which
+   leads rather than which exists. */
+.sx .wpanel.tiles {
+  padding: 9px 10px 24px;
+}
+.sx .tile {
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface);
+  margin-bottom: 9px;
+  overflow: hidden;
+}
+.sx .tile-h {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  border: none;
+  background: var(--surface-2);
+  padding: 7px 10px;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-body);
+  border-bottom: 1px solid var(--line);
+}
+.sx .tile-h:hover {
+  background: var(--accent-soft);
+}
+.sx .tile-h > svg {
+  flex-shrink: 0;
+  color: var(--ink-faint);
+}
+.sx .tile-h b {
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.sx .tile-h span {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--ink-faint);
+  flex-shrink: 0;
+}
+.sx .tile-b {
+  padding: 6px 9px 10px;
+}
+
+/* ═══════════ PRD ═══════════
+   What the signed-off artifacts produced, read as a document rather than a row
+   in a list. */
+.sx .prd {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+}
+.sx .prd-head {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  flex-shrink: 0;
+  padding: 12px 26px 11px;
+  border-bottom: 1px solid var(--line);
+}
+.sx .prd-head h2 {
+  margin: 2px 0 0;
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.sx .prd-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 22px 26px 48px;
+}
+.sx .prd-body pre {
+  max-width: 84ch;
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--ink);
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+/* ── Understanding, now that it lives in the panel rather than the full width ──
+   Same content; the header stacks instead of running off the edge, and the
+   reading measures give way to the column it actually has. */
+.sx .ws .und-head {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  padding: 10px 14px;
+}
+.sx .ws .und-head h2 {
+  font-size: 14px;
+}
+.sx .ws .und-acts {
+  margin-left: 0;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.sx .ws .und-acts .btn {
+  height: 26px;
+  font-size: 10.5px;
+  padding: 0 9px;
+}
+.sx .ws .und-stale {
+  padding: 7px 14px;
+  font-size: 11px;
+}
+.sx .ws .und-body {
+  padding: 12px 14px 30px;
+}
+.sx .ws .und-summary {
+  max-width: none;
+  font-size: 12px;
+  margin-bottom: 16px;
+}
+.sx .ws .und-band {
+  max-width: none;
+  margin-bottom: 16px;
+}
+.sx .ws .und-tx {
+  font-size: 11.5px;
+}
+.sx .ws .und-bh span {
+  display: none;
+}
+
+/* The rail's third phase carries a second line, because "Specs" alone does not
+   say what it contains. */
+.sx .rail-sub-note {
+  padding: 0 8px 0 34px;
+  margin-top: -2px;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-faint);
+}
+
+/* ═══════════ The five readings, switchable in the panel too ═══════════
+   The rail carries them as the hierarchy they belong to; this carries them where
+   the content is, so switching does not mean crossing the screen. Both render
+   from WS_ITEMS, so they cannot list different things or drift out of order.
+   Labels only — five labelled tabs fit forty per cent of the width, five with
+   icons do not, and it scrolls rather than wraps if the panel gets narrower. */
+
+/* ═══════════ The five readings, stacked ═══════════
+   Switching between them meant holding four in your head to compare against the
+   fifth. Stacked, comparing is scrolling. The strip above jumps to a section and
+   tracks which one you are in; each section folds when it is in the way. */
+.sx .ws-stack {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+}
+.sx .wsx {
+  border-bottom: 1px solid var(--line);
+}
+.sx .wsx:last-child {
+  border-bottom: none;
+  /* Room to scroll the last section to the top, so jumping to it works. */
+  padding-bottom: 45vh;
+}
+/* Sticky headers: in a long stack, what you are reading must stay named. */
+.sx .wsx-h {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  border: none;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface-2);
+  padding: 7px 12px;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-body);
+}
+.sx .wsx-h:hover {
+  background: var(--accent-soft);
+}
+.sx .wsx-h > svg {
+  flex-shrink: 0;
+  color: var(--ink-faint);
+}
+.sx .wsx-h b {
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink);
+  flex-shrink: 0;
+}
+.sx .wsx-h i {
+  font-style: normal;
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  background: var(--ink);
+  color: #fff;
+  border-radius: 20px;
+  padding: 1px 5px;
+  flex-shrink: 0;
+}
+.sx .wsx-h span {
+  margin-left: auto;
+  font-size: 10px;
+  color: var(--ink-faint);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Inside the stack a panel grows to its content — it must not become its own
+   scroll region, or the page would scroll in five independent places. */
+.sx .ws-stack .wpanel {
+  flex: none;
+  min-height: 0;
+  overflow: visible;
+}
+.sx .ws-stack .und {
+  flex: none;
+  display: block;
+}
+.sx .ws-stack .und-body {
+  overflow: visible;
+}
+/* The map is a canvas and needs a height given to it. */
+.sx .wsx-map {
+  height: 330px;
+  display: flex;
+  flex-direction: column;
+}
+.sx .wsx-map > * {
+  flex: 1;
+  min-height: 0;
+}
+
+/* ═══════════ The workspace, shut ═══════════
+   Closed on arrival: the conversation is what you came for, and five sections of
+   reference open beside it is a wall to read past. What stays is a strip of
+   marks — enough to see that eight questions are open without giving the panel
+   the width to say so. */
+.sx .ws-shut {
+  flex: 0 0 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 7px 0;
+  background: var(--surface-2);
+  border-left: 1px solid var(--line);
+}
+.sx .ws-shut-open,
+.sx .ws-shut-i {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid transparent;
+  background: none;
+  border-radius: 7px;
+  color: var(--ink-faint);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.sx .ws-shut-open {
+  margin-bottom: 5px;
+}
+.sx .ws-shut-open:hover,
+.sx .ws-shut-i:hover {
+  background: var(--surface);
+  border-color: var(--line);
+  color: var(--accent);
+}
+/* A count is the only thing worth 40px of width. */
+.sx .ws-shut-i i {
+  position: absolute;
+  top: -1px;
+  right: -3px;
+  font-style: normal;
+  font-family: var(--font-mono);
+  font-size: 7.5px;
+  min-width: 13px;
+  text-align: center;
+  background: var(--accent);
+  color: #fff;
+  border-radius: 20px;
+  padding: 1px 3px;
+}
+
+.sx .ws-close {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  width: 100%;
+  border: none;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface-2);
+  padding: 5px 12px;
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--ink-faint);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.sx .ws-close:hover {
+  color: var(--accent);
+}
+
+/* A folded section is a header and nothing else, so it should not also carry a
+   divider that reads as an empty body. */
+.sx .wsx-h {
+  border-bottom: none;
+}
+.sx .wsx {
+  border-bottom: 1px solid var(--line);
 }

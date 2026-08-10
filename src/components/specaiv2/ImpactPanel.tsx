@@ -1,5 +1,14 @@
 import React, { useState } from 'react';
-import { ChevronDown, ChevronRight, Database, FileCode, FileCog, FlaskConical } from 'lucide-react';
+import {
+  ChevronDown,
+  ChevronRight,
+  Database,
+  FileCode,
+  FileCog,
+  FlaskConical,
+  GitBranch,
+  Ticket,
+} from 'lucide-react';
 import { ModuleKind, codeImpact, jiraImpact } from '../../data/specImpact';
 
 /**
@@ -8,6 +17,13 @@ import { ModuleKind, codeImpact, jiraImpact } from '../../data/specImpact';
  * Jira reads epic → story → task; the codebase reads repository → schema →
  * contract → code → test. Neither is a summary of the other: they are two
  * projections of one delta, which is why they cannot fall out of step.
+ *
+ * They used to be behind a toggle, which meant reading one cost you sight of the
+ * other and answering "what does this change touch" took two clicks and a memory
+ * of what the first tab said. Both are stacked now — the question is what the
+ * change touches, and the answer is all of it.
+ *
+ * The persona decides which tile leads, not which tile exists.
  */
 
 const KIND_ICON: Record<ModuleKind, React.ReactNode> = {
@@ -19,14 +35,23 @@ const KIND_ICON: Record<ModuleKind, React.ReactNode> = {
 
 export const ImpactPanel: React.FC<{
   onDiscuss: (question: string) => void;
-  /** Which lens this persona reasons in. */
+  /** Which projection this persona leads with. */
   lens: 'jira' | 'code';
-  onLens: (lens: 'jira' | 'code') => void;
-}> = ({ onDiscuss, lens, onLens }) => {
+}> = ({ onDiscuss, lens }) => {
   const [open, setOpen] = useState<Set<string>>(() => new Set(['AUTH-61', 'mobile-app']));
+  /* Both tiles start open. A collapsed tile is a tile you have to remember to
+     look in, and there are only two. */
+  const [tiles, setTiles] = useState<Set<string>>(() => new Set(['jira', 'code']));
 
   const toggle = (id: string) =>
     setOpen((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+
+  const toggleTile = (id: string) =>
+    setTiles((prev) => {
       const next = new Set(prev);
       next.has(id) ? next.delete(id) : next.add(id);
       return next;
@@ -37,19 +62,19 @@ export const ImpactPanel: React.FC<{
   const taskCount = epic.stories.reduce((n, s) => n + s.tasks.length, 0);
   const moduleCount = repos.reduce((n, r) => n + r.modules.length, 0);
 
-  return (
-    <div className="wpanel">
-      <div className="lens">
-        <button className={lens === 'jira' ? 'on' : ''} onClick={() => onLens('jira')}>
-          Jira <i>{taskCount}</i>
-        </button>
-        <button className={lens === 'code' ? 'on' : ''} onClick={() => onLens('code')}>
-          Code <i>{moduleCount}</i>
-        </button>
-      </div>
+  const jiraTile = (
+    <section className="tile" key="jira">
+      <button className="tile-h" onClick={() => toggleTile('jira')}>
+        {tiles.has('jira') ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
+        <Ticket size={13} />
+        <b>Jira</b>
+        <span>
+          {epic.stories.length} stor{epic.stories.length === 1 ? 'y' : 'ies'} · {taskCount} tasks
+        </span>
+      </button>
 
-      {lens === 'jira' ? (
-        <>
+      {tiles.has('jira') && (
+        <div className="tile-b">
           <div className="wsec">
             {epic.key} {epic.title} <span>{epic.status}</span>
           </div>
@@ -80,13 +105,24 @@ export const ImpactPanel: React.FC<{
               </div>
             );
           })}
-        </>
-      ) : (
-        <>
-          <div className="wsec">
-            Repositories <span>{repos.length} touched</span>
-          </div>
+        </div>
+      )}
+    </section>
+  );
 
+  const codeTile = (
+    <section className="tile" key="code">
+      <button className="tile-h" onClick={() => toggleTile('code')}>
+        {tiles.has('code') ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
+        <GitBranch size={13} />
+        <b>Code</b>
+        <span>
+          {repos.length} repos · {moduleCount} files
+        </span>
+      </button>
+
+      {tiles.has('code') && (
+        <div className="tile-b">
           {repos.map((repo) => {
             const isOpen = open.has(repo.repo);
             return (
@@ -117,8 +153,14 @@ export const ImpactPanel: React.FC<{
             Schema first: a migration gates everything that reads it, so the order above is the
             order it would be built in.
           </div>
-        </>
+        </div>
       )}
+    </section>
+  );
+
+  return (
+    <div className="wpanel tiles">
+      {lens === 'code' ? [codeTile, jiraTile] : [jiraTile, codeTile]}
     </div>
   );
 };

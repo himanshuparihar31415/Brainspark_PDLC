@@ -51,7 +51,7 @@ export const ArtifactsPanel: React.FC<{
     <div className="wpanel">
       {gateOpen ? (
         <div className="unlock-banner">
-          <CheckCircle2 size={14} /> Critical artifacts approved — Delivery is open.
+          <CheckCircle2 size={14} /> Critical artifacts approved — Modules and User Stories is open.
         </div>
       ) : (
         <div className="gate-note">
