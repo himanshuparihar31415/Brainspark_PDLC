@@ -4835,3 +4835,12 @@
     flex: 1 1 auto !important;
   }
 }
+
+/* Objective answers, inline. A question you can settle with a click beats one
+   that needs a sentence. */
+.sx .wq-opts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 7px;
+}

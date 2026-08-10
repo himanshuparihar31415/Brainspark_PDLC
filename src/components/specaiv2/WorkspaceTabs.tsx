@@ -1,6 +1,6 @@
 import React from 'react';
 import { SpecAiState } from '../../types/specai';
-import { criticalGaps } from '../../data/specKnowledgeTree';
+import { criticalGaps, optionsFor } from '../../data/specKnowledgeTree';
 import { LeafAnswer, Orchestrator } from './orchestrator';
 import { deltaImpact } from '../../data/specDelta';
 import { AUTHORITY_COPY, SysNode, reconcile } from '../../data/specSystemModel';
@@ -20,7 +20,11 @@ export const OpenQuestions: React.FC<{
   state: SpecAiState;
   orch: Orchestrator;
   onDiscuss: (question: string) => void;
-}> = ({ state, orch, onDiscuss }) => {
+  /** Answering settles it and puts the exchange into the agent session. */
+  onAnswer: (question: string, answer: string, nodeId?: string, branch?: string) => void;
+  onResolveDrift: (property: string, choice: string) => void;
+  onSettle: (questionId: string, status: 'Answered' | 'Assumed' | 'Deferred', answer?: string) => void;
+}> = ({ state, orch, onDiscuss, onAnswer, onResolveDrift, onSettle }) => {
   const gaps = criticalGaps(state).filter((g) => !orch.answers[g.node.id]);
   /* Drift is a conflict the sources produced, not one somebody wrote down. */
   const drifts = reconcile().filter((r) => r.drift);
@@ -46,31 +50,44 @@ export const OpenQuestions: React.FC<{
           <div className="wsec">
             Drift <span>{drifts.length} where sources disagree</span>
           </div>
-          {drifts.map((r) => (
-            <div className="wq crit" key={r.property}>
-              <div className="wq-h">
-                <AlertTriangle size={11} />
-                {r.property}
-              </div>
-              <div className="wq-claims">
-                {(['verified', 'observed', 'intended', 'permitted'] as const).map((a) =>
-                  r.by[a] ? (
-                    <span key={a}>
-                      <b>{AUTHORITY_COPY[a].label}</b> {r.by[a]!.value} — {r.by[a]!.system}
-                    </span>
-                  ) : null
-                )}
-              </div>
-              <div className="wq-why">{r.summary}</div>
-              {r.decision && (
-                <div className="wq-acts">
-                  <button className="chip soft" onClick={() => onDiscuss(r.decision!)}>
-                    Decide in chat
+          {drifts.map((r) => {
+            const observed = (r.by.verified ?? r.by.observed)?.value;
+            const intended = r.by.intended?.value;
+            return (
+              <div className="wq crit" key={r.property}>
+                <div className="wq-h">
+                  <AlertTriangle size={11} />
+                  {r.property}
+                </div>
+                <div className="wq-claims">
+                  {(['verified', 'observed', 'intended', 'permitted'] as const).map((a) =>
+                    r.by[a] ? (
+                      <span key={a}>
+                        <b>{AUTHORITY_COPY[a].label}</b> {r.by[a]!.value} — {r.by[a]!.system}
+                      </span>
+                    ) : null
+                  )}
+                </div>
+                <div className="wq-why">{r.summary}</div>
+                {/* Two concrete sides, not an essay. */}
+                <div className="wq-opts">
+                  {observed && (
+                    <button className="chip" onClick={() => onResolveDrift(r.property, `Keep ${observed}`)}>
+                      Keep {observed}
+                    </button>
+                  )}
+                  {intended && (
+                    <button className="chip" onClick={() => onResolveDrift(r.property, `Align to ${intended}`)}>
+                      Align to {intended}
+                    </button>
+                  )}
+                  <button className="chip soft" onClick={() => onDiscuss(r.decision ?? r.property)}>
+                    Discuss
                   </button>
                 </div>
-              )}
-            </div>
-          ))}
+              </div>
+            );
+          })}
         </>
       )}
 
@@ -86,11 +103,19 @@ export const OpenQuestions: React.FC<{
                 {g.node.label}
               </div>
               <div className="wq-q">{g.question}</div>
-              <div className="wq-why">No source-backed answer found.</div>
               <div className="wq-path">{g.path.slice(1).join(' › ')}</div>
-              <div className="wq-acts">
+              <div className="wq-opts">
+                {optionsFor(g.node).map((o) => (
+                  <button
+                    key={o}
+                    className="chip"
+                    onClick={() => onAnswer(g.question, o, g.node.id, g.path[1])}
+                  >
+                    {o}
+                  </button>
+                ))}
                 <button className="chip soft" onClick={() => onDiscuss(g.question)}>
-                  Answer in chat
+                  Something else
                 </button>
               </div>
             </div>
@@ -111,9 +136,18 @@ export const OpenQuestions: React.FC<{
               </div>
               <div className="wq-q">{q.text}</div>
               <div className="wq-why">{q.rationale || 'Business decision required.'}</div>
-              <div className="wq-acts">
-                <button className="chip soft" onClick={() => onDiscuss(q.text)}>
-                  Answer in chat
+              <div className="wq-opts">
+                <button className="chip" onClick={() => onSettle(q.id, 'Answered', 'Yes')}>
+                  Yes
+                </button>
+                <button className="chip" onClick={() => onSettle(q.id, 'Answered', 'No')}>
+                  No
+                </button>
+                <button className="chip soft" onClick={() => onSettle(q.id, 'Assumed')}>
+                  Assume
+                </button>
+                <button className="chip soft" onClick={() => onSettle(q.id, 'Deferred')}>
+                  Defer
                 </button>
               </div>
             </div>

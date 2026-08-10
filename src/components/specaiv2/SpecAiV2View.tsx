@@ -15,7 +15,6 @@ import {
   SOURCE_TYPE_FOR_FILE,
   StoryTrack,
   canEditSpecAi,
-  workspaceProgress,
 } from '../../data/specai';
 import { KNOWLEDGE_ROOT, criticalGaps, rollup } from '../../data/specKnowledgeTree';
 import { LeafAnswer, isRunning, useOrchestrator } from './orchestrator';
@@ -23,11 +22,16 @@ import { OpenQuestions } from './WorkspaceTabs';
 import { ImpactPanel } from './ImpactPanel';
 import { JourneyStrip } from './JourneyStrip';
 import { JourneyStep, lensFor } from './personas';
+/* Nine artifacts carry a full node-and-edge diagram; the old surface rendered
+   them and this one did not. */
+const DiagramRenderer = lazy(() =>
+  import('../specai/DiagramRenderer').then((m) => ({ default: m.DiagramRenderer }))
+);
 const SpecDocument = lazy(() =>
   import('./SpecDocument').then((m) => ({ default: m.SpecDocument }))
 );
 import { scopeBySource } from '../../data/specDelta';
-import { reconcile } from '../../data/specSystemModel';
+import { hasSystemModel, reconcile } from '../../data/specSystemModel';
 import {
   AlertTriangle,
   ArrowUp,
@@ -39,6 +43,7 @@ import {
   ChevronUp,
   Circle,
   Loader2,
+  Layers,
   Lock,
   Paperclip,
   Pencil,
@@ -76,6 +81,9 @@ const Stage5Stories = lazy(() =>
 const CRITICAL_GROUPS: ArtifactGroup[] = ['Product', 'Architecture'];
 
 type Tab = 'brief' | 'artifacts' | 'modules' | 'stories';
+
+/* Questions first: settle it, then see what it moves, then where it lands. */
+const WS_ORDER = ['questions', 'impact', 'system'] as const;
 
 /** Openers for the empty thread — a blank field is the hardest thing to answer. */
 const STARTERS = [
@@ -221,8 +229,6 @@ export const SpecAiV2View: React.FC = () => {
   const problemRef = useRef<HTMLDivElement>(null);
 
   const locked = state.lockedStages.includes('knowledge');
-  const briefLocked = state.lockedStages.includes('understanding');
-  const progress = workspaceProgress(state);
   /* Coverage is how much of the specification is actually answered, which is a
      different question from how far through the stages you are. */
   const treeRoll = useMemo(() => rollup(KNOWLEDGE_ROOT, state), [state]);
@@ -338,11 +344,24 @@ export const SpecAiV2View: React.FC = () => {
     else askAgent(state.projectId, text);
   };
 
+  /**
+   * The agent refuses a new turn while one is running, and a click that does
+   * nothing reads as a broken button. Anything asked mid-turn waits and goes in
+   * when the turn finishes.
+   */
+  const queued = useRef<string[]>([]);
+  useEffect(() => {
+    if (state.generating || queued.current.length === 0) return;
+    const next = queued.current.shift();
+    if (next) askAgent(state.projectId, next);
+  }, [state.generating, state.projectId, askAgent]);
+
   const askFromMap = (question: string, path?: string[]) => {
     setTab('brief');
     setMapFull(false);
     if (path) setNodeContext({ path });
-    askAgent(state.projectId, question);
+    if (state.generating) queued.current.push(question);
+    else askAgent(state.projectId, question);
   };
 
   /* Where the statement came from, when it did not come from typing. */
@@ -376,6 +395,21 @@ export const SpecAiV2View: React.FC = () => {
           'weakening device security or changing the shared OAuth gateway.'
       );
     }, 1300);
+  };
+
+  /**
+   * Settling something in the panel puts it into the conversation.
+   *
+   * An answer given in a side panel that the agent never hears is a decision
+   * with no consequence — the thread is the record, so it goes there, and the
+   * systems the answer touches get read again.
+   */
+  const settleGap = (question: string, answer: string, nodeId?: string, branch?: string) => {
+    if (nodeId && branch) orch.answerLeaf(nodeId, answer, branch);
+    setTab('brief');
+    const line = `${question} — ${answer}`;
+    if (state.generating) queued.current.push(line);
+    else askAgent(state.projectId, line);
   };
 
   const commitProblem = () => {
@@ -421,6 +455,10 @@ export const SpecAiV2View: React.FC = () => {
   }
 
   /* Expanded only on the thread, and only while the user wants it. */
+  /* Only some projects have a system indexed; the rest say so rather than
+     being shown somebody else's. */
+  const modelled = hasSystemModel(project?.id ?? '');
+
   const headerOpen = pheadOpen && tab === 'brief';
 
   const initials = (currentUser?.name ?? 'You')
@@ -507,7 +545,21 @@ export const SpecAiV2View: React.FC = () => {
           One card rather than four things pinned to the edges of a wide band.
           The statement keeps a reading measure; the action sits with the number
           it affects. */}
-      <div className="phead">
+      <div className={`phead ${headerOpen ? '' : 'mini'}`}>
+        {!headerOpen ? (
+          <button
+            className="phead-mini"
+            onClick={() => {
+              setTab('brief');
+              setPheadOpen(true);
+            }}
+          >
+            <span className="phead-mini-l">Problem</span>
+            <span className="phead-mini-t">{state.problemStatement || 'Not set'}</span>
+            <span className="phead-mini-c">{orch.phase === 'idle' ? '—' : `${coverage}%`}</span>
+            <ChevronDown size={12} />
+          </button>
+        ) : (
         <div className="phead-card">
           <div className="phead-main">
             <div className="phead-lbl">
@@ -597,7 +649,9 @@ export const SpecAiV2View: React.FC = () => {
 
           <div className="phead-side">
             <div className="phead-cov">
-              <b>{coverage}%</b>
+              {/* A number before anything has been analysed implies work that
+                  has not happened. */}
+              <b>{orch.phase === 'idle' ? '—' : `${coverage}%`}</b>
               <span>coverage</span>
               <i>
                 <i style={{ width: `${coverage}%` }} />
@@ -627,6 +681,7 @@ export const SpecAiV2View: React.FC = () => {
             )}
           </div>
         </div>
+        )}
       </div>
 
       {/* The one interruption in the run: confirm what we are about to read
@@ -1157,7 +1212,7 @@ export const SpecAiV2View: React.FC = () => {
 
               {/* Ordered the way this persona would order them. */}
               <div className="ws-tabs">
-                {lens.tabs.map((t) => (
+                {WS_ORDER.map((t) => (
                   <button
                     key={t}
                     className={wsTab === t ? 'on' : ''}
@@ -1171,7 +1226,19 @@ export const SpecAiV2View: React.FC = () => {
                 ))}
               </div>
 
-              {wsTab === 'system' && (
+              {wsTab === 'system' && !modelled && (
+                <div className="wpanel">
+                  <div className="wempty">
+                    <Layers size={22} />
+                    <p>No system model connected for this project.</p>
+                    <p className="sub">
+                      {project.name} has no repositories, APIs or architecture indexed yet, so
+                      there is nothing to map. The conversation and the questions still work.
+                    </p>
+                  </div>
+                </div>
+              )}
+              {wsTab === 'system' && modelled && (
                 <Suspense fallback={<div className="rail-empty">Loading map…</div>}>
                   <SystemMap
                     compact
@@ -1182,7 +1249,19 @@ export const SpecAiV2View: React.FC = () => {
                   />
                 </Suspense>
               )}
-              {wsTab === 'impact' && (
+              {wsTab === 'impact' && !modelled && (
+                <div className="wpanel">
+                  <div className="wempty">
+                    <Layers size={22} />
+                    <p>Impact needs a system model.</p>
+                    <p className="sub">
+                      Reach is walked over the graph. Without one there is nothing honest to
+                      report.
+                    </p>
+                  </div>
+                </div>
+              )}
+              {wsTab === 'impact' && modelled && (
                 <ImpactPanel
                   onDiscuss={(q) => askFromMap(q)}
                   lens={impactLens}
@@ -1190,7 +1269,21 @@ export const SpecAiV2View: React.FC = () => {
                 />
               )}
               {wsTab === 'questions' && (
-                <OpenQuestions state={state} orch={orch} onDiscuss={(q) => askFromMap(q)} />
+                <OpenQuestions
+                  state={state}
+                  orch={orch}
+                  onDiscuss={(q) => askFromMap(q)}
+                  onAnswer={settleGap}
+                  onResolveDrift={(property, choice) => settleGap(property, choice)}
+                  onSettle={(id, status, answer) => {
+                    const q = state.questions.find((x) => x.id === id);
+                    answerQuestion(state.projectId, id, status, answer);
+                    if (q) {
+                      setTab('brief');
+                      askAgent(state.projectId, `${q.text} — ${answer ?? status}`);
+                    }
+                  }}
+                />
               )}
             </aside>
           </>
@@ -1463,6 +1556,11 @@ export const SpecAiV2View: React.FC = () => {
                     <AlertTriangle size={13} />
                     <div>Something upstream changed after this was written. Worth a read before approving.</div>
                   </div>
+                )}
+                {art.flowDiagram && (
+                  <Suspense fallback={null}>
+                    <DiagramRenderer diagram={art.flowDiagram} />
+                  </Suspense>
                 )}
                 <textarea
                   className="art-body"
