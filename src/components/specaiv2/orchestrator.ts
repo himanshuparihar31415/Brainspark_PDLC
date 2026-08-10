@@ -64,6 +64,13 @@ export const isRunning = (s: SourceStatus) =>
  */
 const SOURCES: Omit<KnowledgeSource, 'status' | 'done' | 'total'>[] = [
   {
+    key: 'code',
+    label: 'Code',
+    count: '3 repos',
+    detail: '3 repositories · services, schema and tests',
+    feeds: ['Context', 'System Design', 'Functional Requirements', 'Risks and Unknowns'],
+  },
+  {
     key: 'jira',
     label: 'Jira',
     count: '24 items',
@@ -71,43 +78,32 @@ const SOURCES: Omit<KnowledgeSource, 'status' | 'done' | 'total'>[] = [
     feeds: ['Context', 'Problem Definition', 'Validation'],
   },
   {
-    key: 'git',
-    label: 'Git',
-    count: '3 repos',
-    detail: '3 repositories · 37 relevant changes',
-    feeds: ['Context', 'System Design', 'Functional Requirements', 'Risks and Unknowns'],
+    key: 'apps',
+    label: 'Apps',
+    count: '9 screens',
+    detail: '1 application · 9 screens inspected',
+    feeds: ['Experience', 'Inputs'],
   },
   {
-    key: 'swagger',
-    label: 'Swagger',
-    count: '18 endpoints',
-    detail: '18 endpoints across 2 specifications',
-    feeds: ['Inputs', 'System Design'],
-  },
-  {
-    key: 'docs',
-    label: 'Documents',
-    count: '12 docs',
-    detail: '12 documents · security policy, briefs',
-    feeds: ['Context', 'Constraints', 'Quality Attributes'],
+    key: 'flows',
+    label: 'Flows',
+    count: '7 journeys',
+    detail: '7 journeys traced end to end',
+    feeds: ['Experience', 'Problem Definition'],
   },
 ];
 
 /** What the agent says when a system comes back — findings, never progress logs. */
 const FINDINGS: Record<string, string[]> = {
+  code: [
+    'There is an existing PIN fallback in the mobile repository — wired, but not surfaced in the current journey.',
+    'Session handling last changed four months ago, and that commit removed a device-binding check nothing replaced.',
+  ],
   jira: [
     'The backlog already has an authentication epic with five open stories, so this is not starting from nothing.',
   ],
-  git: [
-    'There is an existing PIN fallback flow in the mobile repository — wired, but not surfaced in the current journey.',
-    'Session handling last changed four months ago, and that commit removed a device-binding check nothing replaced.',
-  ],
-  swagger: [
-    'The identity specification already exposes device registration, so enrolment may not need a new endpoint.',
-  ],
-  docs: [
-    'The security policy sets a 15-minute session ceiling. Worth holding on to — the running configuration disagrees.',
-  ],
+  apps: ['No screen exists for a biometric prompt or its failure state.'],
+  flows: ['Login and recovery both route through PIN entry, so removing it would break recovery too.'],
 };
 
 export interface Conflict {
@@ -227,7 +223,7 @@ export const useOrchestrator = () => {
         /* Not everything comes back clean, and pretending otherwise would make a
            reading look more complete than it is. */
         const status: SourceStatus =
-          s.key === 'docs' ? 'Partial' : 'Complete';
+          s.key === 'flows' ? 'Partial' : 'Complete';
         patch(s.key, { status, done: status === 'Partial' ? Math.floor(total * 0.6) : total, total });
 
         const lines = FINDINGS[s.key] ?? [];

@@ -20,8 +20,7 @@ import { KNOWLEDGE_ROOT, criticalGaps, rollup } from '../../data/specKnowledgeTr
 import { LeafAnswer, isRunning, useOrchestrator } from './orchestrator';
 import { OpenQuestions } from './WorkspaceTabs';
 import { ImpactPanel } from './ImpactPanel';
-import { JourneyStrip } from './JourneyStrip';
-import { JourneyStep, lensFor } from './personas';
+import { lensFor } from './personas';
 /* Nine artifacts carry a full node-and-edge diagram; the old surface rendered
    them and this one did not. */
 const DiagramRenderer = lazy(() =>
@@ -82,8 +81,8 @@ const CRITICAL_GROUPS: ArtifactGroup[] = ['Product', 'Architecture'];
 
 type Tab = 'brief' | 'artifacts' | 'modules' | 'stories';
 
-/* Questions first: settle it, then see what it moves, then where it lands. */
-const WS_ORDER = ['questions', 'impact', 'system'] as const;
+/* What the change touches, where it sits, then what is still open. */
+const WS_ORDER = ['impact', 'system', 'questions'] as const;
 
 /** Openers for the empty thread — a blank field is the hardest thing to answer. */
 const STARTERS = [
@@ -158,11 +157,9 @@ export const SpecAiV2View: React.FC = () => {
   const lens = useMemo(() => lensFor(currentRole), [currentRole]);
   const [wsTab, setWsTab] = useState<'system' | 'impact' | 'questions'>(lens.defaultTab);
   const [impactLens, setImpactLens] = useState<'jira' | 'code'>(lens.impactLens);
-  const [visited, setVisited] = useState<Set<string>>(new Set());
   useEffect(() => {
     setWsTab(lens.defaultTab);
     setImpactLens(lens.impactLens);
-    setVisited(new Set());
   }, [lens]);
 
   /* Scope candidates, clubbed by the system that surfaced them. Everything is in
@@ -824,24 +821,22 @@ export const SpecAiV2View: React.FC = () => {
                   </div>
                 )}
 
-                {/* What the systems turned up, in findings rather than logs. */}
-                {orch.narration.map((n) => (
-                  <div className="turn grouped enter" key={n.id}>
+                {/* One turn, not one bubble per system. Five separate messages saying
+                    five separate things is a log again. */}
+                {orch.narration.length > 0 && (
+                  <div className="turn grouped enter">
                     <span className="av">
                       <Sparkles size={12} />
                     </span>
                     <div className="col">
-                      {n.from && (
-                        <div className="who">
-                          <span className="sub">from {n.from}</span>
-                        </div>
-                      )}
                       <div className="say">
-                        <p>{n.text}</p>
+                        {orch.narration.map((n) => (
+                          <p key={n.id}>{n.text}</p>
+                        ))}
                       </div>
                     </div>
                   </div>
-                ))}
+                )}
 
                 {state.transcript.map((turn, i) => {
                   const mine = turn.from === 'you';
@@ -1003,55 +998,13 @@ export const SpecAiV2View: React.FC = () => {
                   </div>
                 )}
 
-                {/* Gaps the map found that nothing in the sources covers. Only the
-                    critical ones reach the conversation. */}
-                {!current && gaps.length > 0 && !locked && (
-                  <div className="turn grouped">
-                    <span className="av">
-                      <Sparkles size={12} />
-                    </span>
-                    <div className="col">
-                      <div className="q">
-                        <div className="q-top">
-                          <span className="track architecture">Gap</span>
-                          <span className="q-n">{gaps.length} critical</span>
-                        </div>
-                        <div className="q-text">{gaps[0].question}</div>
-                        <div className="q-why">
-                          Nothing in your sources covers {gaps[0].path.slice(1).join(' › ')}, and
-                          the rest of the specification leans on it.
-                        </div>
-                        {!readOnly && (
-                          <div className="chips">
-                            <button
-                              className="chip"
-                              onClick={() => {
-                                setDraft(gaps[0].question + ' ');
-                                inputRef.current?.focus();
-                              }}
-                            >
-                              Answer it
-                            </button>
-                            <button className="chip soft" onClick={() => setTab('map')}>
-                              See all {gaps.length} in the map
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
                 {state.generating && (
                   <div className="turn grouped">
                     <span className="av">
                       <Sparkles size={12} />
                     </span>
                     <div className="col">
-                      <div className="say" style={{ color: 'var(--ink-faint)', fontSize: 11.5 }}>
-                        {state.generating}
-                        <span className="caret" />
-                      </div>
+                      <div className="thinking">{state.generating}</div>
                     </div>
                   </div>
                 )}
@@ -1191,26 +1144,6 @@ export const SpecAiV2View: React.FC = () => {
                 is the default because it is the thing the problem statement
                 produced; the others are cuts through it. */}
             <aside className="ws">
-              <JourneyStrip
-                lens={lens}
-                activeTab={wsTab}
-                readOnly={readOnly}
-                visited={visited}
-                state={{
-                  scope: orch.phase === 'retrieving' || orch.phase === 'ready',
-                  decisions: gaps.length + driftCount === 0,
-                  approved: locked,
-                  drift: driftCount === 0,
-                  generated: state.artifacts.length > 0,
-                }}
-                onGo={(step: JourneyStep) => {
-                  setWsTab(step.tab);
-                  if (step.lens) setImpactLens(step.lens);
-                  setVisited((prev) => new Set(prev).add(step.id));
-                }}
-              />
-
-              {/* Ordered the way this persona would order them. */}
               <div className="ws-tabs">
                 {WS_ORDER.map((t) => (
                   <button
