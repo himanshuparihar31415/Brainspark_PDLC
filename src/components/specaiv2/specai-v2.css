@@ -5147,3 +5147,147 @@
   font-size: 11px;
   outline: none;
 }
+
+/* ---------- Artifacts in the panel ----------
+   A five-column table does not survive being moved into forty per cent of the
+   width. A row carries the two things a list needs — is it done, and is it mine
+   — and everything else lives in the artifact itself. */
+.sx .afx {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  margin-bottom: 5px;
+  padding-right: 7px;
+}
+.sx .afx.ok {
+  border-color: #b9e3cf;
+  background: #f6fdfa;
+}
+.sx .afx.stale {
+  border-color: var(--conf-med);
+}
+.sx .afx-open {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: none;
+  padding: 7px 9px;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-body);
+}
+.sx .afx-open:hover .afx-l {
+  color: var(--accent);
+}
+.sx .afx-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--ink-faint);
+}
+.sx .afx.ok .afx-dot {
+  background: var(--conf-high);
+  color: #fff;
+}
+.sx .afx-body {
+  min-width: 0;
+  flex: 1;
+}
+.sx .afx-l {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sx .afx-l i {
+  font-style: normal;
+  font-family: var(--font-mono);
+  font-size: 7.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: var(--ink);
+  color: #fff;
+  border-radius: 3px;
+  padding: 0 4px;
+  flex-shrink: 0;
+}
+.sx .afx-m {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  color: var(--ink-faint);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sx .afx-act {
+  border: 1px solid var(--accent);
+  background: var(--surface);
+  color: var(--accent);
+  border-radius: 6px;
+  padding: 3px 9px;
+  font-family: var(--font-body);
+  font-size: 10px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.sx .afx-act:hover:not(:disabled) {
+  background: var(--accent);
+  color: #fff;
+}
+.sx .afx-act:disabled {
+  border-color: var(--line);
+  color: var(--ink-faint);
+  cursor: default;
+}
+.sx .afx-act.undo {
+  border-color: var(--conf-high);
+  color: var(--conf-high);
+  width: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px;
+}
+.sx .afx-act.undo:hover {
+  background: var(--conf-high);
+  color: #fff;
+}
+
+/* Reviewer sits in the viewer, where there is room for a label. */
+.art-assign-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #98a2b3;
+}
+.art-assign-row select {
+  border: 1px solid #e4e7ec;
+  border-radius: 7px;
+  padding: 5px 9px;
+  font-family: Inter, sans-serif;
+  font-size: 12px;
+  text-transform: none;
+  letter-spacing: 0;
+  color: #14171f;
+  outline: none;
+}

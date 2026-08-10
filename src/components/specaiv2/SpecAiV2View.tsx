@@ -2,7 +2,6 @@ import React, { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'rea
 import './specai-v2.css';
 import { useApp } from '../../context/AppContext';
 import {
-  ArchArtifact,
   ArtifactGroup,
   BriefLine,
   EvidenceClass,
@@ -19,6 +18,7 @@ import { KNOWLEDGE_ROOT, criticalGaps, rollup } from '../../data/specKnowledgeTr
 import { LeafAnswer, isRunning, useOrchestrator } from './orchestrator';
 import { OpenQuestions } from './WorkspaceTabs';
 import { ImpactPanel } from './ImpactPanel';
+import { ArtifactsPanel } from './ArtifactsPanel';
 import { lensFor } from './personas';
 /* Nine artifacts carry a full node-and-edge diagram; the old surface rendered
    them and this one did not. */
@@ -34,12 +34,10 @@ import {
   AlertTriangle,
   ArrowUp,
   Check,
-  CheckCircle2,
   CheckSquare,
   ChevronDown,
   ChevronRight,
   ChevronUp,
-  Circle,
   Loader2,
   Layers,
   Lock,
@@ -75,10 +73,10 @@ const DeliveryPanel = lazy(() =>
  */
 const CRITICAL_GROUPS: ArtifactGroup[] = ['Product', 'Architecture'];
 
-type Tab = 'brief' | 'artifacts' | 'delivery';
+type Tab = 'brief' | 'delivery';
 
 /* What the change touches, where it sits, then what is still open. */
-const WS_ORDER = ['impact', 'system', 'questions'] as const;
+const WS_ORDER = ['impact', 'system', 'questions', 'artifacts'] as const;
 
 /** Openers for the empty thread — a blank field is the hardest thing to answer. */
 const STARTERS = [
@@ -414,13 +412,9 @@ export const SpecAiV2View: React.FC = () => {
     setCurrentBuild(null);
     setBuilding(true);
     lockSpecStage(state.projectId, 'understanding');
-    setTab('artifacts');
-  };
-
-  const approveAllCritical = () => {
-    critical
-      .filter((a) => a.status !== 'Approved')
-      .forEach((a) => reviewArtifact(state.projectId, a.id));
+    /* Artifacts live beside the conversation now, so stay on the thread. */
+    setTab('brief');
+    setWsTab('artifacts');
   };
 
   /* One door now the two surfaces are one tree. */
@@ -481,17 +475,6 @@ export const SpecAiV2View: React.FC = () => {
         <nav className="tabs">
           <button className={`tab ${tab === 'brief' ? 'active' : ''}`} onClick={() => setTab('brief')}>
             Problem Definition
-          </button>
-          <button
-            className={`tab ${tab === 'artifacts' ? 'active' : ''}`}
-            onClick={() => setTab('artifacts')}
-          >
-            Artifacts
-            {state.artifacts.length > 0 && (
-              <span className="badge">
-                {criticalApproved.length}/{critical.length}
-              </span>
-            )}
           </button>
           {/* Decomposition and stories open once the critical artifacts are signed off. */}
           <button
@@ -1133,9 +1116,20 @@ export const SpecAiV2View: React.FC = () => {
                     className={wsTab === t ? 'on' : ''}
                     onClick={() => setWsTab(t)}
                   >
-                    {t === 'system' ? 'System Map' : t === 'impact' ? 'Change Impact' : 'Open Questions'}
+                    {t === 'system'
+                      ? 'System Map'
+                      : t === 'impact'
+                      ? 'Change Impact'
+                      : t === 'artifacts'
+                      ? 'Artifacts'
+                      : 'Open Questions'}
                     {t === 'questions' && gaps.length + driftCount > 0 && (
                       <i>{gaps.length + driftCount}</i>
+                    )}
+                    {t === 'artifacts' && critical.length > 0 && (
+                      <i>
+                        {criticalApproved.length}/{critical.length}
+                      </i>
                     )}
                   </button>
                 ))}
@@ -1183,6 +1177,21 @@ export const SpecAiV2View: React.FC = () => {
                   onLens={setImpactLens}
                 />
               )}
+              {wsTab === 'artifacts' && (
+                <ArtifactsPanel
+                  state={state}
+                  readOnly={readOnly}
+                  criticalGroups={CRITICAL_GROUPS}
+                  building={building}
+                  builtIds={builtIds}
+                  currentBuild={currentBuild}
+                  onOpen={(id) => {
+                    const a = state.artifacts.find((x) => x.id === id);
+                    setOpenArtifact(id);
+                    setArtifactDraft(a?.body ?? '');
+                  }}
+                />
+              )}
               {wsTab === 'questions' && (
                 <OpenQuestions
                   state={state}
@@ -1202,145 +1211,6 @@ export const SpecAiV2View: React.FC = () => {
               )}
             </aside>
           </>
-        )}
-
-        {/* ── ARTIFACTS ── */}
-        {tab === 'artifacts' && (
-          <section className="panel">
-            <div className="panel-header">
-              <h1>Artifacts</h1>
-              <p>
-                {building
-                  ? 'Being written now — open any of them as they arrive.'
-                  : `Approve the critical ones — ${CRITICAL_GROUPS.join(' and ')} — to unlock decomposition.`}
-              </p>
-            </div>
-
-            {state.artifacts.length === 0 ? (
-              <div className="empty-state">
-                <p>No artifacts yet.</p>
-                <p className="sub">Confirm the Project Brief in the thread, then create them.</p>
-              </div>
-            ) : (
-              <>
-                {gateOpen ? (
-                  <div className="unlock-banner">
-                    <CheckCircle2 size={15} /> Critical artifacts approved — Modules &amp; Features
-                    and Stories are open.
-                  </div>
-                ) : (
-                  <div className="gate-note">
-                    <Circle size={9} />
-                    {criticalApproved.length} of {critical.length} critical artifacts approved.
-                    {!readOnly && (
-                      <button
-                        className="chip soft"
-                        style={{ marginLeft: 'auto' }}
-                        onClick={approveAllCritical}
-                      >
-                        Approve all critical
-                      </button>
-                    )}
-                  </div>
-                )}
-
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Artifact</th>
-                      <th>Group</th>
-                      <th>Status</th>
-                      <th>Assigned</th>
-                      <th />
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {state.artifacts.map((a: ArchArtifact) => {
-                      const isBuilding = currentBuild?.id === a.id;
-                      const built = builtIds.includes(a.id) || !building;
-                      const isCritical = CRITICAL_GROUPS.includes(a.group);
-                      return (
-                        <tr key={a.id}>
-                          <td className="art-name">
-                            <button
-                              className="art-open"
-                              onClick={() => {
-                                setOpenArtifact(a.id);
-                                setArtifactDraft(a.body);
-                              }}
-                            >
-                              {a.label}
-                            </button>
-                            {isCritical && (
-                              <span className="ev fact" style={{ marginLeft: 6 }}>
-                                critical
-                              </span>
-                            )}
-                            {isBuilding && currentBuild && (
-                              <div className="reading">reading {currentBuild.reading}…</div>
-                            )}
-                          </td>
-                          <td className="art-type">{a.group}</td>
-                          <td>
-                            {isBuilding ? (
-                              <span className="status-pill building">Writing</span>
-                            ) : !built ? (
-                              <span className="status-pill pending">Queued</span>
-                            ) : (
-                              <span
-                                className={`status-pill ${
-                                  a.status === 'Approved' ? 'approved' : 'pending'
-                                }`}
-                              >
-                                {a.status === 'Approved' ? 'Approved' : 'Pending'}
-                              </span>
-                            )}
-                          </td>
-                          <td>
-                            <select
-                              className="art-assign"
-                              value={a.assignee ?? ''}
-                              disabled={readOnly}
-                              onChange={(e) =>
-                                assignArtifact(state.projectId, a.id, e.target.value)
-                              }
-                            >
-                              <option value="">Unassigned</option>
-                              {reviewers.map((m) => (
-                                <option key={m} value={m}>
-                                  {m}
-                                </option>
-                              ))}
-                            </select>
-                          </td>
-                          <td className="art-acts">
-                            {a.status === 'Approved' ? (
-                              <button
-                                className="approve-btn undo"
-                                disabled={readOnly}
-                                title="Reopen for changes"
-                                onClick={() => unlockArtifact(state.projectId, a.id)}
-                              >
-                                <Unlock size={11} /> Unlock
-                              </button>
-                            ) : (
-                              <button
-                                className="approve-btn"
-                                disabled={readOnly || !built}
-                                onClick={() => reviewArtifact(state.projectId, a.id)}
-                              >
-                                Approve
-                              </button>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </>
-            )}
-          </section>
         )}
 
         {/* ── DELIVERY — modules, features and stories as one tree ── */}
@@ -1442,6 +1312,22 @@ export const SpecAiV2View: React.FC = () => {
                 {art.status === 'Approved' && (
                   <p className="doc-note">Approved and read-only. Unlock it to make changes.</p>
                 )}
+
+                <label className="art-assign-row">
+                  Reviewer
+                  <select
+                    value={art.assignee ?? ''}
+                    disabled={readOnly}
+                    onChange={(e) => assignArtifact(state.projectId, art.id, e.target.value)}
+                  >
+                    <option value="">Unassigned</option>
+                    {reviewers.map((m) => (
+                      <option key={m} value={m}>
+                        {m}
+                      </option>
+                    ))}
+                  </select>
+                </label>
               </div>
 
               <footer className="doc-foot">
@@ -1567,7 +1453,7 @@ export const SpecAiV2View: React.FC = () => {
       )}
 
       {/* Build progress, while you keep working in the thread. */}
-      {building && currentBuild && tab === 'brief' && (
+      {building && currentBuild && wsTab !== 'artifacts' && (
         <div style={{ position: 'fixed', right: 16, bottom: 16, zIndex: 80 }}>
           <div className="rail-card" style={{ width: 230 }}>
             <h3>
@@ -1576,7 +1462,7 @@ export const SpecAiV2View: React.FC = () => {
                 {builtIds.length}/{state.artifacts.length}
               </span>
             </h3>
-            <div className="build" onClick={() => setTab('artifacts')}>
+            <div className="build" onClick={() => setWsTab('artifacts')}>
               <span className="spin">
                 <Loader2 size={13} className="spinning" />
               </span>
