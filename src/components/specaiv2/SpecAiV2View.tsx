@@ -13,7 +13,6 @@ import {
   BRIEF_BANDS,
   INTAKE_ACCEPT,
   SOURCE_TYPE_FOR_FILE,
-  StoryTrack,
   canEditSpecAi,
 } from '../../data/specai';
 import { KNOWLEDGE_ROOT, criticalGaps, rollup } from '../../data/specKnowledgeTree';
@@ -54,19 +53,16 @@ import {
   X,
 } from 'lucide-react';
 
-/* Modules & Features and Stories are the original Spec AI surfaces, kept whole.
-   Lazily loaded so the v2 chunk does not carry them until a spec gets that far. */
+/* Delivery carries the module tree and the story list; loaded when a spec gets
+   that far rather than up front. */
 /* The map carries the whole taxonomy and React Flow, so it loads on demand. */
 /* The system map is the default view: it is what the problem statement
    actually produced. The taxonomy stays as a completeness checklist. */
 const SystemMap = lazy(() =>
   import('./SystemMap').then((m) => ({ default: m.SystemMap }))
 );
-const Stage4Modules = lazy(() =>
-  import('../specai/Stage4Modules').then((m) => ({ default: m.Stage4Modules }))
-);
-const Stage5Stories = lazy(() =>
-  import('../specai/Stage5Stories').then((m) => ({ default: m.Stage5Stories }))
+const DeliveryPanel = lazy(() =>
+  import('./DeliveryPanel').then((m) => ({ default: m.DeliveryPanel }))
 );
 
 /**
@@ -79,7 +75,7 @@ const Stage5Stories = lazy(() =>
  */
 const CRITICAL_GROUPS: ArtifactGroup[] = ['Product', 'Architecture'];
 
-type Tab = 'brief' | 'artifacts' | 'modules' | 'stories';
+type Tab = 'brief' | 'artifacts' | 'delivery';
 
 /* What the change touches, where it sits, then what is still open. */
 const WS_ORDER = ['impact', 'system', 'questions'] as const;
@@ -146,7 +142,6 @@ export const SpecAiV2View: React.FC = () => {
   const [citeLine, setCiteLine] = useState<BriefLine | null>(null);
   const [openArtifact, setOpenArtifact] = useState<string | null>(null);
   const [artifactDraft, setArtifactDraft] = useState('');
-  const [track, setTrack] = useState<StoryTrack | 'All'>('All');
 
   /* Sources live in the top bar, not the thread. */
   const [readingOpen, setReadingOpen] = useState(false);
@@ -428,15 +423,10 @@ export const SpecAiV2View: React.FC = () => {
       .forEach((a) => reviewArtifact(state.projectId, a.id));
   };
 
-  const openModules = () => {
+  /* One door now the two surfaces are one tree. */
+  const openDelivery = () => {
     if (state.modules.length === 0) lockSpecStage(state.projectId, 'artifacts');
-    setTab('modules');
-  };
-
-  const openStories = () => {
-    if (state.modules.length === 0) lockSpecStage(state.projectId, 'artifacts');
-    if (state.stories.length === 0) lockSpecStage(state.projectId, 'modules');
-    setTab('stories');
+    setTab('delivery');
   };
 
   if (!project) {
@@ -505,20 +495,12 @@ export const SpecAiV2View: React.FC = () => {
           </button>
           {/* Decomposition and stories open once the critical artifacts are signed off. */}
           <button
-            className={`tab ${tab === 'modules' ? 'active' : ''}`}
+            className={`tab ${tab === 'delivery' ? 'active' : ''}`}
             disabled={!gateOpen}
             title={gateHint}
-            onClick={openModules}
+            onClick={openDelivery}
           >
-            Modules &amp; Features
-          </button>
-          <button
-            className={`tab ${tab === 'stories' ? 'active' : ''}`}
-            disabled={!gateOpen}
-            title={gateHint}
-            onClick={openStories}
-          >
-            Stories
+            Delivery
             {state.stories.length > 0 && <span className="badge">{state.stories.length}</span>}
           </button>
         </nav>
@@ -1361,57 +1343,13 @@ export const SpecAiV2View: React.FC = () => {
           </section>
         )}
 
-        {/* ── MODULES & FEATURES — the original surface, kept whole ── */}
-        {tab === 'modules' && (
-          <div className="legacy">
-            {state.modules.length === 0 ? (
-              <div className="empty-state" style={{ fontFamily: 'var(--font-body)' }}>
-                <p>No module map yet.</p>
-                <p className="sub">Generated from the approved artifacts.</p>
-                {!readOnly && (
-                  <button
-                    className="chip selected"
-                    style={{ marginTop: 14 }}
-                    onClick={() => lockSpecStage(state.projectId, 'artifacts')}
-                  >
-                    Generate module map
-                  </button>
-                )}
-              </div>
-            ) : (
-              <Suspense fallback={<Loading />}>
-                <Stage4Modules state={state} readOnly={readOnly} locked={false} />
-              </Suspense>
-            )}
-          </div>
+        {/* ── DELIVERY — modules, features and stories as one tree ── */}
+        {tab === 'delivery' && (
+          <Suspense fallback={<Loading />}>
+            <DeliveryPanel state={state} readOnly={readOnly} />
+          </Suspense>
         )}
 
-        {/* ── STORIES — the original surface, kept whole ── */}
-        {tab === 'stories' && (
-          <div className="legacy">
-            {state.stories.length === 0 ? (
-              <div className="empty-state" style={{ fontFamily: 'var(--font-body)' }}>
-                <p>No stories yet.</p>
-                <p className="sub">Created straight from the module map.</p>
-                {!readOnly && (
-                  <button className="chip selected" style={{ marginTop: 14 }} onClick={openStories}>
-                    Create stories
-                  </button>
-                )}
-              </div>
-            ) : (
-              <Suspense fallback={<Loading />}>
-                <Stage5Stories
-                  state={state}
-                  readOnly={readOnly}
-                  onViewSource={() => setTab('artifacts')}
-                  track={track}
-                  onTrackChange={setTrack}
-                />
-              </Suspense>
-            )}
-          </div>
-        )}
       </main>
 
       {/* Indexed sources, along the bottom. The only place they are reported —

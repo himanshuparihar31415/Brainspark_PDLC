@@ -4727,3 +4727,423 @@
   vertical-align: 1px;
   animation: sx-blink 1s steps(2, start) infinite;
 }
+
+/* ═══════════ Delivery — one tree, one list ═══════════
+   Replaces two screens that drew the same hierarchy twice. Selecting a node is
+   the module filter, so four of the five filter groups stopped earning space. */
+.sx .dlv {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+}
+.sx .dlv-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 16px;
+  border-bottom: 1px solid var(--line);
+  flex-shrink: 0;
+}
+.sx .dlv-track {
+  display: flex;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  overflow: hidden;
+}
+.sx .dlv-track button {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  border: none;
+  border-right: 1px solid var(--line);
+  background: var(--surface);
+  padding: 4px 10px;
+  font-family: var(--font-body);
+  font-size: 10.5px;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+.sx .dlv-track button:last-child {
+  border-right: none;
+}
+.sx .dlv-track button.on {
+  background: var(--ink);
+  color: #fff;
+}
+.sx .dlv-track button i {
+  font-style: normal;
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  opacity: 0.7;
+}
+.sx .dlv-status,
+.sx .dlv-set {
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  padding: 4px 8px;
+  font-family: var(--font-body);
+  font-size: 10.5px;
+  color: var(--ink-soft);
+  background: var(--surface);
+  outline: none;
+}
+.sx .dlv-count {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  color: var(--ink-faint);
+  margin-left: auto;
+}
+.sx .dlv-gear {
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink-faint);
+  cursor: pointer;
+}
+.sx .dlv-gear:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.sx .dlv-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+.sx .dlv-tree {
+  flex: 0 0 210px;
+  overflow-y: auto;
+  border-right: 1px solid var(--line);
+  padding: 8px 6px;
+  background: var(--surface-2);
+}
+.sx .dlv-n {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  width: 100%;
+  border: 1px solid transparent;
+  background: none;
+  border-radius: 6px;
+  padding: 3px 6px;
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: var(--ink);
+  cursor: pointer;
+  text-align: left;
+}
+.sx .dlv-n:hover {
+  background: var(--surface);
+}
+.sx .dlv-n.on {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent-dark);
+}
+.sx .dlv-n.root {
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+.sx .dlv-n.feat {
+  padding-left: 22px;
+  font-size: 10.5px;
+  color: var(--ink-soft);
+}
+.sx .dlv-n.orphan {
+  color: var(--conf-low);
+  margin-top: 6px;
+}
+.sx .dlv-n i {
+  margin-left: auto;
+  font-style: normal;
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  color: var(--ink-faint);
+}
+.sx .dlv-tw,
+.sx .dlv-more {
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  color: var(--ink-faint);
+  display: flex;
+  flex-shrink: 0;
+}
+.sx .dlv-more:hover {
+  color: var(--accent);
+}
+.sx .dlv-nl {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sx .dlv-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin: 2px 0 4px 22px;
+  padding: 5px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--surface);
+}
+.sx .dlv-menu input,
+.sx .dlv-add {
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  padding: 3px 6px;
+  font-family: var(--font-body);
+  font-size: 10px;
+  outline: none;
+  width: 100%;
+}
+.sx .dlv-add {
+  margin-top: 8px;
+  background: none;
+}
+.sx .dlv-menu button {
+  border: none;
+  background: none;
+  text-align: left;
+  font-family: var(--font-body);
+  font-size: 10px;
+  color: var(--ink-soft);
+  padding: 2px 4px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.sx .dlv-menu button:hover {
+  background: var(--bg);
+  color: var(--accent);
+}
+
+.sx .dlv-list {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+  padding: 8px 14px 18px;
+}
+.sx .dlv-scope {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--ink-faint);
+  margin-bottom: 6px;
+}
+.sx .dlv-none {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 30px 0;
+  font-size: 12px;
+  color: var(--ink-faint);
+}
+.sx .dlv-s {
+  border-bottom: 1px solid var(--line);
+}
+.sx .dlv-s.stale {
+  background: rgba(251, 243, 223, 0.4);
+}
+/* Five fields visible; the traceability is a click away, not gone. */
+.sx .dlv-sh {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  border: none;
+  background: none;
+  padding: 6px 4px;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-body);
+}
+.sx .dlv-sh:hover {
+  background: var(--surface-2);
+}
+.sx .dlv-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.sx .dlv-key {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  color: var(--ink-faint);
+  flex-shrink: 0;
+  width: 92px;
+}
+.sx .dlv-t {
+  flex: 1;
+  min-width: 0;
+  font-size: 11.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sx .dlv-p {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  border-radius: 3px;
+  padding: 1px 5px;
+  flex-shrink: 0;
+}
+.sx .dlv-p.P0 {
+  background: var(--conf-low-bg);
+  color: var(--conf-low);
+}
+.sx .dlv-p.P1 {
+  background: var(--conf-med-bg);
+  color: var(--conf-med);
+}
+.sx .dlv-p.P2 {
+  background: var(--bg);
+  color: var(--ink-faint);
+}
+.sx .dlv-pts,
+.sx .dlv-own {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--ink-faint);
+  flex-shrink: 0;
+}
+.sx .dlv-own {
+  width: 74px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sx .dlv-st {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  border-radius: 20px;
+  padding: 1px 7px;
+  flex-shrink: 0;
+  background: var(--bg);
+  color: var(--ink-soft);
+}
+.sx .dlv-st.Done {
+  background: var(--conf-high-bg);
+  color: var(--conf-high);
+}
+.sx .dlv-st.Blocked {
+  background: var(--conf-low-bg);
+  color: var(--conf-low);
+}
+.sx .dlv-st.Exported,
+.sx .dlv-st.In-progress {
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+}
+
+.sx .dlv-sb {
+  padding: 4px 4px 12px 23px;
+}
+.sx .dlv-story {
+  font-size: 11.5px;
+  line-height: 1.55;
+  margin: 0 0 7px;
+}
+.sx .dlv-ac {
+  font-size: 10.5px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+  padding-left: 9px;
+  border-left: 2px solid var(--line);
+  margin-bottom: 4px;
+}
+.sx .dlv-ac span {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-right: 3px;
+}
+.sx .dlv-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 7px 0;
+}
+.sx .dlv-links span {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 1px 5px;
+  color: var(--ink-faint);
+}
+.sx .dlv-links em {
+  font-style: normal;
+  font-size: 9px;
+  color: var(--ink-faint);
+}
+.sx .dlv-stale {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 10.5px;
+  color: var(--conf-med);
+  margin-bottom: 7px;
+}
+.sx .dlv-map {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.sx .dlv-map label {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #98a2b3;
+}
+.sx .dlv-map input {
+  border: 1px solid #e4e7ec;
+  border-radius: 7px;
+  padding: 6px 9px;
+  font-family: Inter, sans-serif;
+  font-size: 12px;
+  outline: none;
+  text-transform: none;
+  letter-spacing: 0;
+  color: #14171f;
+}
+.sx .dlv-map-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 5px 0;
+  border-bottom: 1px solid #e4e7ec;
+  font-size: 11.5px;
+}
+.sx .dlv-map-row select {
+  border: 1px solid #e4e7ec;
+  border-radius: 6px;
+  padding: 3px 7px;
+  font-size: 11px;
+  outline: none;
+}
