@@ -33,7 +33,6 @@ export interface JourneyStep {
 
 export interface Lens {
   role: string;
-  title: string;
   blurb: string;
   tabs: WsTab[];
   defaultTab: WsTab;
@@ -45,7 +44,6 @@ export interface Lens {
 
 const PM: Lens = {
   role: 'Product Manager',
-  title: 'Decide what gets built',
   blurb: 'Confirm the shape of the change, settle what only you can settle, then approve it.',
   tabs: ['questions', 'impact', 'system'],
   defaultTab: 'questions',
@@ -85,7 +83,6 @@ const PM: Lens = {
 
 const ARCHITECT: Lens = {
   role: 'Architect',
-  title: 'Make the change coherent',
   blurb: 'Reconcile what the sources disagree about, then check the shape of what gets added.',
   tabs: ['system', 'impact', 'questions'],
   defaultTab: 'system',
@@ -124,7 +121,6 @@ const ARCHITECT: Lens = {
 
 const ENGINEER: Lens = {
   role: 'Engineering',
-  title: 'Know what you are being asked to build',
   blurb: 'Read the delta against the repositories it lands on, and say what is missing.',
   tabs: ['impact', 'system', 'questions'],
   defaultTab: 'impact',
@@ -140,7 +136,6 @@ const ENGINEER: Lens = {
 
 const QA: Lens = {
   role: 'Quality',
-  title: 'Find what nothing covers',
   blurb: 'The delta says what changes; the tests say what is actually checked. Mind the gap.',
   tabs: ['impact', 'questions', 'system'],
   defaultTab: 'impact',
@@ -155,7 +150,6 @@ const QA: Lens = {
 
 const DESIGN: Lens = {
   role: 'Design',
-  title: 'See the journey that changes',
   blurb: 'Which screens exist, which are being asked for, and where the flow branches.',
   tabs: ['system', 'questions', 'impact'],
   defaultTab: 'system',
@@ -170,7 +164,6 @@ const DESIGN: Lens = {
 
 const RELEASE: Lens = {
   role: 'Release',
-  title: 'Judge whether this can ship',
   blurb: 'What has to land together, what can be flagged off, and what rollback costs.',
   tabs: ['impact', 'system', 'questions'],
   defaultTab: 'impact',
