@@ -6529,44 +6529,6 @@
 }
 
 /* ── Scope integrity: counts, hints on hover ── */
-.sx .dsh-gaps {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-}
-.sx .dsh-gap {
-  display: flex;
-  align-items: baseline;
-  gap: 7px;
-  padding: 10px 14px;
-  border-right: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
-  cursor: help;
-}
-.sx .dsh-gap:nth-child(2n) {
-  border-right: none;
-}
-.sx .dsh-gap:nth-last-child(-n + 2) {
-  border-bottom: none;
-}
-.sx .dsh-gap b {
-  font-family: var(--font-display);
-  font-size: 17px;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  color: var(--conf-low);
-}
-.sx .dsh-gap.zero b,
-.sx .dsh-gap.neutral b {
-  color: var(--ink);
-}
-.sx .dsh-gap.zero b {
-  color: var(--line-strong);
-}
-.sx .dsh-gap span {
-  font-size: 10.5px;
-  color: var(--ink-faint);
-}
-
 .sx .dsh-warn {
   display: flex;
   align-items: center;
@@ -6588,110 +6550,6 @@
 }
 
 /* ── By feature ── */
-.sx .dsh-feats {
-  padding: 4px 0 6px;
-}
-.sx .dsh-feat {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 6px 14px;
-}
-.sx .dsh-fn {
-  flex: 0 0 200px;
-  min-width: 0;
-  font-size: 11.5px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.sx .dsh-fn em {
-  display: block;
-  font-style: normal;
-  font-family: var(--font-mono);
-  font-size: 8.5px;
-  color: var(--ink-faint);
-}
-.sx .dsh-bar {
-  flex: 1;
-  height: 5px;
-  border-radius: 20px;
-  background: var(--bg);
-  overflow: hidden;
-}
-.sx .dsh-bar i {
-  display: block;
-  height: 100%;
-  border-radius: 20px;
-  background: var(--accent);
-}
-.sx .dsh-fp {
-  flex: 0 0 32px;
-  text-align: right;
-  font-family: var(--font-mono);
-  font-size: 10px;
-}
-.sx .dsh-fc {
-  flex: 0 0 32px;
-  text-align: right;
-  font-family: var(--font-mono);
-  font-size: 9px;
-  color: var(--ink-faint);
-}
-
-/* ── Nothing reporting ── */
-.sx .dsh-dark {
-  max-width: 480px;
-  margin: 60px auto;
-  text-align: center;
-}
-.sx .dsh-dark b {
-  font-family: var(--font-display);
-  font-size: 40px;
-  font-weight: 600;
-  color: var(--line-strong);
-  line-height: 1;
-}
-.sx .dsh-dark p {
-  margin: 12px 0 0;
-  font-size: 12px;
-  line-height: 1.6;
-  color: var(--ink-faint);
-}
-.sx .dsh-cta {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 16px;
-  border: 1px solid var(--accent);
-  border-radius: 8px;
-  background: var(--surface);
-  padding: 6px 13px;
-  font-family: var(--font-body);
-  font-size: 11.5px;
-  font-weight: 500;
-  color: var(--accent);
-  cursor: pointer;
-}
-.sx .dsh-cta:hover {
-  background: var(--accent);
-  color: #fff;
-}
-
-@media (max-width: 1180px) {
-  .sx .dsh-tiles {
-    grid-template-columns: repeat(4, 1fr);
-  }
-}
-@media (max-width: 900px) {
-  .sx .dsh-cols {
-    grid-template-columns: 1fr;
-  }
-  .sx .dsh-tiles {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
 /* ── Metric tooltips ──
    A dashboard figure is only actionable if you know what it counts and why it
    moved. Native `title` cannot carry that: it waits a second, truncates, cannot
@@ -6711,8 +6569,7 @@
   outline-offset: 2px;
 }
 /* No data is not zero, and should not be read as one. */
-.sx .dsh-tile.nodata b,
-.sx .dsh-gap.nodata b {
+.sx .dsh-tile.nodata b {
   color: var(--line-strong);
 }
 
@@ -6744,7 +6601,7 @@
   transform: translateY(0);
 }
 
-/* Written out because .dsh-tile and .dsh-gap already style bare b/span. */
+/* Written out because .dsh-tile already styles bare b and span. */
 .sx .dsh-tip b {
   font-family: var(--font-body);
   font-size: 10px;
@@ -6773,8 +6630,7 @@
 }
 
 /* Near an edge the card would run off the surface, so it flips its anchor. */
-.sx .dsh-tiles .dsh-tip-host:nth-last-child(-n + 2) .dsh-tip,
-.sx .dsh-gaps .dsh-tip-host:nth-child(2n) .dsh-tip {
+.sx .dsh-tiles .dsh-tip-host:nth-last-child(-n + 2) .dsh-tip {
   left: auto;
   right: 0;
 }
@@ -6796,7 +6652,7 @@
   padding: 0;
 }
 .sx .dsh-tiles.pm {
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 150px));
   gap: 8px;
   padding: 12px 14px 2px;
   margin-bottom: 0;
@@ -6805,10 +6661,20 @@
   background: var(--surface-2);
 }
 
+/* The core band is three or four tiles, so it sizes to its content instead of
+   stretching each one across an eighth of the page. */
+.sx .dsh-tiles.lean {
+  grid-template-columns: repeat(4, minmax(0, 150px));
+  max-width: none;
+}
+
 @media (max-width: 1180px) {
-  .sx .dsh-tiles,
-  .sx .dsh-tiles.pm {
+  .sx .dsh-tiles {
     grid-template-columns: repeat(4, 1fr);
+  }
+  .sx .dsh-tiles.lean,
+  .sx .dsh-tiles.pm {
+    grid-template-columns: repeat(2, minmax(0, 150px));
   }
 }
 
