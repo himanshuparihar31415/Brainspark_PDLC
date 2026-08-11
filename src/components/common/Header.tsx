@@ -4,17 +4,14 @@ import { Role } from '../../types';
 import { isGovernanceRole, isModuleWorkspace } from '../../data/rbac';
 import {
   Search,
-  Bell,
+  Activity,
   ChevronDown,
   User,
   ShieldAlert,
-  SlidersHorizontal,
   Check,
-  ExternalLink,
   Layers,
   Building2,
   FolderGit2,
-  Sparkles,
   LogOut,
   PanelLeftClose,
   PanelLeftOpen,
@@ -46,8 +43,7 @@ export const Header: React.FC = () => {
     setCurrentScope,
     searchQuery,
     setSearchQuery,
-    notifications,
-    markNotificationRead,
+    tasks,
     departments,
     projects,
     setActiveNav,
@@ -63,7 +59,43 @@ export const Header: React.FC = () => {
   const [notifOpen, setNotifOpen] = useState(false);
   const [searchFocused, setSearchFocused] = useState(false);
 
-  const unreadNotifs = notifications.filter((n) => !n.read);
+  /*
+   * Mine, everywhere. Filtered on the display name because that is what a task
+   * carries; `assigneeId` is the stable reference and is preferred where it is
+   * set. Completed work is excluded — activity is what is still true.
+   */
+  const myItems = tasks.filter(
+    (t) =>
+      (t.assigneeId ? t.assigneeId === currentUser?.memberId : t.assignee === currentUser?.name) &&
+      t.status !== 'Completed'
+  );
+
+  /* Grouped by project, with the one you are in first — you are most likely to
+     act on where you already are. */
+  const activityProjects = [...new Set(myItems.map((t) => t.projectId))].sort((a, b) =>
+    a === currentScope.projectId ? -1 : b === currentScope.projectId ? 1 : 0
+  );
+
+  /*
+   * Selecting an item moves the global scope to that project. Deliberately not
+   * gated on `canSwitchScope`: that rule stops people browsing projects they
+   * have no business in, and this only ever offers projects where they already
+   * hold assigned work.
+   */
+  const openActivity = (projectId: string) => {
+    const proj = projects.find((x) => x.id === projectId);
+    if (proj) {
+      setCurrentScope({
+        type: 'project',
+        departmentId: proj.departmentId,
+        departmentName: proj.departmentName,
+        projectId: proj.id,
+        projectName: proj.name,
+      });
+    }
+    setNotifOpen(false);
+    setActiveNav('My Tasks');
+  };
 
   // Only the roles the signed-in identity is entitled to act as.
   const rolesList: { role: Role; category: string }[] = (currentUser?.roles ?? []).map((role) => ({
@@ -339,43 +371,88 @@ export const Header: React.FC = () => {
           )}
         </div>
 
-        {/* Notifications */}
+        {/*
+          My Activity — everything of mine, across every project.
+
+          It replaced the notification bell, which listed things that had
+          happened. This lists things that are still true and still mine, which
+          is the only version worth opening. Selecting one moves the global
+          project scope to wherever that work lives, so the whole app follows the
+          thing you clicked rather than making you find the switcher yourself.
+        */}
         <div className="relative">
           <button
             onClick={() => setNotifOpen(!notifOpen)}
-            className="relative rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 cursor-pointer"
+            className="relative flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 cursor-pointer"
           >
-            <Bell className="w-4 h-4" />
-            {unreadNotifs.length > 0 && (
-              <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500 ring-1 ring-white" />
+            <Activity className="w-4 h-4" />
+            <span className="text-[11px] font-semibold">My Activity</span>
+            {myItems.length > 0 && (
+              <span className="rounded-full bg-indigo-600 px-1.5 py-px text-[9px] font-bold text-white">
+                {myItems.length}
+              </span>
             )}
           </button>
 
           {notifOpen && (
-            <div className="absolute top-full right-0 z-50 mt-1.5 w-72 rounded-xl border border-slate-200 bg-white py-1 shadow-lg shadow-slate-900/8 text-xs">
-              <div className="flex items-center justify-between px-3 py-2 border-b border-slate-100">
-                <span className="font-semibold text-slate-900">Notifications</span>
-                {unreadNotifs.length > 0 && (
-                  <span className="rounded-full bg-red-50 px-1.5 py-0.5 text-[10px] font-semibold text-red-600">{unreadNotifs.length}</span>
-                )}
+            <div className="absolute top-full right-0 z-50 mt-1.5 w-80 rounded-xl border border-slate-200 bg-white py-1 shadow-lg shadow-slate-900/8 text-xs">
+              <div className="flex items-center justify-between border-b border-slate-100 px-3 py-2">
+                <span className="font-semibold text-slate-900">My Activity</span>
+                <span className="text-[10px] text-slate-400">
+                  {activityProjects.length} project{activityProjects.length === 1 ? '' : 's'}
+                </span>
               </div>
-              {notifications.length === 0 ? (
-                <div className="p-5 text-center text-slate-400">All clear</div>
+
+              {myItems.length === 0 ? (
+                <div className="p-5 text-center text-slate-400">Nothing assigned to you.</div>
               ) : (
-                <div className="max-h-64 overflow-y-auto divide-y divide-slate-50">
-                  {notifications.map((n) => (
-                    <div
-                      key={n.id}
-                      onClick={() => markNotificationRead(n.id)}
-                      className={`px-3 py-2.5 transition-colors cursor-pointer hover:bg-slate-50 ${!n.read ? 'bg-indigo-50/20' : ''}`}
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <span className={`leading-tight ${!n.read ? 'font-semibold text-slate-900' : 'text-slate-600'}`}>{n.title}</span>
-                        <span className="text-[10px] text-slate-400 shrink-0">{n.timestamp}</span>
+                <div className="max-h-80 overflow-y-auto">
+                  {activityProjects.map((pid) => {
+                    const proj = projects.find((x) => x.id === pid);
+                    const rows = myItems.filter((t) => t.projectId === pid);
+                    const here = currentScope.projectId === pid;
+                    return (
+                      <div key={pid}>
+                        <div className="flex items-center gap-1.5 bg-slate-50/70 px-3 py-1.5">
+                          <FolderGit2 className="h-3 w-3 text-slate-400" />
+                          <span className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                            {proj?.name ?? pid}
+                          </span>
+                          {here && (
+                            <span className="ml-auto text-[9px] font-semibold text-indigo-600">
+                              current
+                            </span>
+                          )}
+                        </div>
+                        {rows.map((t) => (
+                          <button
+                            key={t.id}
+                            onClick={() => openActivity(t.projectId)}
+                            className="flex w-full items-start gap-2 px-3 py-2 text-left transition-colors hover:bg-indigo-50/40 cursor-pointer"
+                          >
+                            <span
+                              className={`mt-1 h-1.5 w-1.5 shrink-0 rounded-full ${
+                                t.status === 'Blocked'
+                                  ? 'bg-rose-500'
+                                  : t.status === 'Needs Approval'
+                                  ? 'bg-amber-500'
+                                  : 'bg-indigo-400'
+                              }`}
+                            />
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate font-medium leading-tight text-slate-800">
+                                {t.title}
+                              </span>
+                              <span className="text-[10px] text-slate-400">
+                                {t.status}
+                                {t.reviewHoursOpen ? ` · waiting ${t.reviewHoursOpen}h` : ''}
+                              </span>
+                            </span>
+                          </button>
+                        ))}
                       </div>
-                      {n.link && <div className="mt-1 text-[10px] text-indigo-600 font-medium">{n.link} →</div>}
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>

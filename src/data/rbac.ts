@@ -52,6 +52,12 @@ export const NAV_VISIBILITY: Record<NavView, Role[]> = {
   'Spec AI': ['Project Admin', ...PDLC_ROLES],
   // The redesigned conversational surface, on its own path beside the original.
   'Spec AI v2': ['Project Admin', ...PDLC_ROLES],
+  /*
+   * Intent-to-code adjudication. Everyone downstream of the spec reads it — the
+   * developer at their own PR, the lead at review, the EM on the rollup — so it
+   * carries no narrower visibility than the pipeline it reports on.
+   */
+  CodeIQ: ['Project Admin', ...PDLC_ROLES],
 };
 
 /**
@@ -75,7 +81,7 @@ export const navLabel = (nav: NavView): string => NAV_LABELS[nav] ?? nav;
  * rather than the sidebar, and collapse the platform nav on entry so the module
  * gets the whole viewport.
  */
-export const MODULE_WORKSPACES: NavView[] = ['Spec AI', 'Spec AI v2'];
+export const MODULE_WORKSPACES: NavView[] = ['Spec AI', 'Spec AI v2', 'CodeIQ'];
 
 export const isModuleWorkspace = (nav: NavView) => MODULE_WORKSPACES.includes(nav);
 
