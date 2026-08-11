@@ -6736,3 +6736,123 @@
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+/* ── Metric tooltips ──
+   A dashboard figure is only actionable if you know what it counts and why it
+   moved. Native `title` cannot carry that: it waits a second, truncates, cannot
+   be styled and never fires on focus. This is the replacement, and it appears
+   on hover and on keyboard focus alike. */
+.sx .dsh-tip-host {
+  position: relative;
+  cursor: help;
+  /* The tile clips its own state hairline; the tooltip has to escape it. */
+  overflow: visible;
+}
+.sx .dsh-tile.dsh-tip-host::before {
+  border-radius: var(--radius) var(--radius) 0 0;
+}
+.sx .dsh-tip-host:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+/* No data is not zero, and should not be read as one. */
+.sx .dsh-tile.nodata b,
+.sx .dsh-gap.nodata b {
+  color: var(--line-strong);
+}
+
+.sx .dsh-tip {
+  position: absolute;
+  z-index: 60;
+  top: calc(100% + 7px);
+  left: 0;
+  width: 268px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 11px 12px;
+  border-radius: 9px;
+  border: 1px solid var(--line-strong);
+  background: var(--ink);
+  box-shadow: 0 10px 28px rgba(16, 24, 40, 0.22);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-3px);
+  transition: opacity 0.11s ease, transform 0.11s ease, visibility 0.11s;
+  pointer-events: none;
+  text-align: left;
+}
+.sx .dsh-tip-host:hover .dsh-tip,
+.sx .dsh-tip-host:focus-visible .dsh-tip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+/* Written out because .dsh-tile and .dsh-gap already style bare b/span. */
+.sx .dsh-tip b {
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #ffffff;
+  opacity: 0.55;
+}
+.sx .dsh-tip span {
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: #ffffff;
+  white-space: normal;
+  overflow: visible;
+}
+/* The second line — why it matters — is deliberately quieter than the first. */
+.sx .dsh-tip em {
+  font-style: normal;
+  font-size: 11px;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.66);
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
+  padding-top: 6px;
+}
+
+/* Near an edge the card would run off the surface, so it flips its anchor. */
+.sx .dsh-tiles .dsh-tip-host:nth-last-child(-n + 2) .dsh-tip,
+.sx .dsh-gaps .dsh-tip-host:nth-child(2n) .dsh-tip {
+  left: auto;
+  right: 0;
+}
+
+/* ── The Product Manager's band ── */
+.sx .dsh-pm {
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+}
+.sx .dsh-pm > header i {
+  font-style: normal;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  background: transparent;
+  border: 0;
+  padding: 0;
+}
+.sx .dsh-tiles.pm {
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+  padding: 12px 14px 2px;
+  margin-bottom: 0;
+}
+.sx .dsh-tiles.pm .dsh-tile {
+  background: var(--surface-2);
+}
+
+@media (max-width: 1180px) {
+  .sx .dsh-tiles,
+  .sx .dsh-tiles.pm {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
