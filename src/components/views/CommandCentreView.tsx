@@ -61,7 +61,10 @@ export const CommandCentreView: React.FC = () => {
   const pipelineHealthy = blockers.length === 0 && myTasks.every((t) => t.status !== 'Blocked');
 
   /** Module workspaces that exist as real destinations rather than a stub. */
-  const WORKSPACE_ROUTE: Partial<Record<ModuleKey, NavView>> = { specai: 'Spec AI' };
+  const WORKSPACE_ROUTE: Partial<Record<ModuleKey, NavView>> = {
+    specai: 'Spec AI',
+    codeiq: 'CodeIQ',
+  };
 
   const openWorkspace = (module: ModuleKey) => {
     const def = moduleDef(module);
