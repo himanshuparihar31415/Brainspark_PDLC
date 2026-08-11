@@ -1,10 +1,18 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import { Role } from '../../types';
+import { Role, Task } from '../../types';
 import { isGovernanceRole, isModuleWorkspace } from '../../data/rbac';
+import {
+  REASON_CHIP,
+  REASON_TONE,
+  REVIEW_STALE_HOURS,
+  criticalElsewhere,
+  criticalReason,
+} from '../../data/activity';
 import {
   Search,
   Activity,
+  AlertTriangle,
   ChevronDown,
   User,
   ShieldAlert,
@@ -47,6 +55,7 @@ export const Header: React.FC = () => {
     departments,
     projects,
     setActiveNav,
+    navigateTo,
     logout,
     currentUser,
     activeNav,
@@ -64,11 +73,20 @@ export const Header: React.FC = () => {
    * carries; `assigneeId` is the stable reference and is preferred where it is
    * set. Completed work is excluded — activity is what is still true.
    */
-  const myItems = tasks.filter(
-    (t) =>
-      (t.assigneeId ? t.assigneeId === currentUser?.memberId : t.assignee === currentUser?.name) &&
-      t.status !== 'Completed'
-  );
+  const isMine = (t: Task) =>
+    t.assigneeId ? t.assigneeId === currentUser?.memberId : t.assignee === currentUser?.name;
+
+  const myItems = tasks.filter((t) => isMine(t) && t.status !== 'Completed');
+
+  /*
+   * Critical work in other projects that is not yours.
+   *
+   * Yours is already grouped by project above, so this is the part you would
+   * otherwise only find by switching projects one at a time and looking. It is
+   * not a second inbox — nothing here is assigned to you and none of it is
+   * asking you to act. It is the thing that has stopped somewhere you are not.
+   */
+  const elsewhere = criticalElsewhere(tasks, currentScope.projectId, isMine);
 
   /* Grouped by project, with the one you are in first — you are most likely to
      act on where you already are. */
@@ -82,8 +100,8 @@ export const Header: React.FC = () => {
    * have no business in, and this only ever offers projects where they already
    * hold assigned work.
    */
-  const openActivity = (projectId: string) => {
-    const proj = projects.find((x) => x.id === projectId);
+  const openActivity = (task: Task) => {
+    const proj = projects.find((x) => x.id === task.projectId);
     if (proj) {
       setCurrentScope({
         type: 'project',
@@ -94,7 +112,16 @@ export const Header: React.FC = () => {
       });
     }
     setNotifOpen(false);
-    setActiveNav('My Tasks');
+
+    /* The task id travels with the navigation, so Project Tasks opens the row
+       you clicked. Without it the destination lands on its own default and the
+       thing you were looking at is somewhere in a list. */
+    navigateTo('My Tasks', {
+      taskId: task.id,
+      note: isMine(task)
+        ? undefined
+        : `Opened from My Activity — ${task.assignee}'s task in ${proj?.name ?? task.project}.`,
+    });
   };
 
   // Only the roles the signed-in identity is entitled to act as.
@@ -403,10 +430,15 @@ export const Header: React.FC = () => {
                 </span>
               </div>
 
-              {myItems.length === 0 ? (
+              {myItems.length === 0 && elsewhere.length === 0 ? (
                 <div className="p-5 text-center text-slate-400">Nothing assigned to you.</div>
               ) : (
-                <div className="max-h-80 overflow-y-auto">
+                <div className="max-h-96 overflow-y-auto">
+                  {myItems.length === 0 && (
+                    <div className="px-3 py-3 text-center text-[11px] text-slate-400">
+                      Nothing assigned to you.
+                    </div>
+                  )}
                   {activityProjects.map((pid) => {
                     const proj = projects.find((x) => x.id === pid);
                     const rows = myItems.filter((t) => t.projectId === pid);
@@ -427,7 +459,7 @@ export const Header: React.FC = () => {
                         {rows.map((t) => (
                           <button
                             key={t.id}
-                            onClick={() => openActivity(t.projectId)}
+                            onClick={() => openActivity(t)}
                             className="flex w-full items-start gap-2 px-3 py-2 text-left transition-colors hover:bg-indigo-50/40 cursor-pointer"
                           >
                             <span
@@ -453,6 +485,64 @@ export const Header: React.FC = () => {
                       </div>
                     );
                   })}
+
+                  {/*
+                    Critical elsewhere.
+
+                    Separated from your own queue rather than mixed into it,
+                    because the two ask different things of you: above is work
+                    you owe someone, below is work that has stopped in a project
+                    you are not currently in. Blurring them turns a queue you can
+                    finish into a feed you cannot.
+                  */}
+                  {elsewhere.length > 0 && (
+                    <div>
+                      <div className="flex items-center gap-1.5 border-t border-slate-100 bg-rose-50/50 px-3 py-1.5">
+                        <AlertTriangle className="h-3 w-3 text-rose-500" />
+                        <span className="text-[10px] font-bold uppercase tracking-wide text-rose-700">
+                          Critical elsewhere
+                        </span>
+                        <span
+                          className="ml-auto text-[9px] text-slate-400"
+                          title={`Blocked, overdue, or an approval waiting more than ${REVIEW_STALE_HOURS} hours. Not assigned to you.`}
+                        >
+                          {elsewhere.length} in other projects
+                        </span>
+                      </div>
+
+                      {elsewhere.map((t) => {
+                        const reason = criticalReason(t)!;
+                        const proj = projects.find((x) => x.id === t.projectId);
+                        return (
+                          <button
+                            key={t.id}
+                            onClick={() => openActivity(t)}
+                            className="flex w-full items-start gap-2 px-3 py-2 text-left transition-colors hover:bg-rose-50/40 cursor-pointer"
+                          >
+                            <span
+                              className={`mt-1 h-1.5 w-1.5 shrink-0 rounded-full ${REASON_TONE[reason]}`}
+                            />
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate font-medium leading-tight text-slate-800">
+                                {t.title}
+                              </span>
+                              <span className="mt-0.5 flex items-center gap-1.5">
+                                {/* Why it is here, said rather than colour-coded. */}
+                                <span
+                                  className={`rounded border px-1 py-px text-[9px] font-bold ${REASON_CHIP[reason]}`}
+                                >
+                                  {reason}
+                                </span>
+                                <span className="truncate text-[10px] text-slate-400">
+                                  {proj?.name ?? t.project} · {t.assignee}
+                                </span>
+                              </span>
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               )}
             </div>

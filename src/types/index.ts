@@ -422,4 +422,10 @@ export interface NavIntent {
   teamTab?: 'roster' | 'shared';
   projectSort?: 'completion-asc' | 'spend-desc';
   projectModule?: ModuleKey;
+  /**
+   * A specific task to land on. Set when arriving from My Activity, so the
+   * destination opens the row that was clicked rather than its own default —
+   * and shows it even when the screen would normally filter it out.
+   */
+  taskId?: string;
 }
