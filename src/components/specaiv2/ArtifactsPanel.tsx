@@ -17,18 +17,30 @@ export const ArtifactsPanel: React.FC<{
   state: SpecAiState;
   readOnly: boolean;
   criticalGroups: ArtifactGroup[];
+  /** The PRD has its own phase; it is not one of the artifacts listed here. */
+  excludeGroup: ArtifactGroup;
   building: boolean;
   builtIds: string[];
   currentBuild: { id: string; reading: string } | null;
   onOpen: (id: string) => void;
-}> = ({ state, readOnly, criticalGroups, building, builtIds, currentBuild, onOpen }) => {
+}> = ({
+  state,
+  readOnly,
+  criticalGroups,
+  excludeGroup,
+  building,
+  builtIds,
+  currentBuild,
+  onOpen,
+}) => {
   const { reviewArtifact, unlockArtifact } = useApp();
 
-  const critical = state.artifacts.filter((a) => criticalGroups.includes(a.group));
+  const artifacts = state.artifacts.filter((a) => a.group !== excludeGroup);
+  const critical = artifacts.filter((a) => criticalGroups.includes(a.group));
   const approved = critical.filter((a) => a.status === 'Approved');
   const gateOpen = critical.length > 0 && approved.length === critical.length;
 
-  if (state.artifacts.length === 0) {
+  if (artifacts.length === 0) {
     return (
       <div className="wpanel">
         <div className="wempty">
@@ -44,14 +56,14 @@ export const ArtifactsPanel: React.FC<{
 
   const byGroup = ARTIFACT_GROUP_ORDER.map((g) => ({
     group: g,
-    items: state.artifacts.filter((a) => a.group === g),
+    items: artifacts.filter((a) => a.group === g),
   })).filter((g) => g.items.length > 0);
 
   return (
     <div className="wpanel">
       {gateOpen ? (
         <div className="unlock-banner">
-          <CheckCircle2 size={14} /> Critical artifacts approved — Modules and User Stories is open.
+          <CheckCircle2 size={14} /> Critical artifacts approved — the PRD is open.
         </div>
       ) : (
         <div className="gate-note">

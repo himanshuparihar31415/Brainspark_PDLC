@@ -6257,3 +6257,482 @@
 .sx .wsx {
   border-bottom: 1px solid var(--line);
 }
+
+/* ═══════════ PRD → Specs ═══════════
+   The PRD was gated on the same condition as the specs, so both opened at once
+   and the document you were meant to agree could simply be walked past. It is
+   its own gate now, and a gate you pass needs somewhere to go. */
+.sx .prd-next {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 84ch;
+  margin-top: 32px;
+  border: 1px solid var(--accent);
+  border-radius: 10px;
+  background: var(--accent-soft);
+  padding: 13px 16px;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-body);
+  color: var(--accent-dark);
+}
+.sx .prd-next:hover {
+  background: var(--accent);
+  color: #fff;
+}
+.sx .prd-next svg {
+  flex-shrink: 0;
+}
+.sx .prd-next span {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.sx .prd-next b {
+  font-size: 13px;
+  font-weight: 600;
+}
+.sx .prd-next em {
+  font-style: normal;
+  font-size: 11px;
+  opacity: 0.8;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PROJECT DASHBOARD
+
+   Drawn in the workspace design system, not the platform's slate-and-card one:
+   this is the surface a PM lives on, and it should not read as another
+   governance table.
+
+   Numbers, not sentences. The prose that explained each state was something you
+   read once and then read past every day after. Labels are two or three words;
+   the figures carry the meaning, and anything needing a sentence is a tooltip.
+   ═══════════════════════════════════════════════════════════════════════════ */
+.sx.dsh {
+  height: 100%;
+  overflow-y: auto;
+  padding: 24px 28px 60px;
+  display: block;
+}
+.sx .dsh-empty {
+  margin: 80px auto;
+  text-align: center;
+  font-size: 12.5px;
+  color: var(--ink-faint);
+}
+
+/* ── Head ── */
+.sx .dsh-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  max-width: 1120px;
+  margin-bottom: 16px;
+}
+.sx .dsh-id {
+  flex: 1;
+  min-width: 0;
+}
+.sx .dsh-eyebrow {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--ink-faint);
+}
+.sx .dsh-head h1 {
+  margin: 3px 0 0;
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+/* The state is one word. */
+.sx .dsh-chip {
+  flex-shrink: 0;
+  font-family: var(--font-body);
+  font-size: 11.5px;
+  font-weight: 500;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 4px 12px;
+  color: var(--ink-soft);
+  background: var(--surface);
+}
+.sx .dsh-chip.needs-you {
+  border-color: var(--conf-low);
+  background: var(--conf-low-bg);
+  color: var(--conf-low);
+}
+.sx .dsh-chip.drifting {
+  border-color: var(--conf-med);
+  background: var(--conf-med-bg);
+  color: var(--conf-med);
+}
+.sx .dsh-chip.clear {
+  border-color: var(--conf-high);
+  background: var(--conf-high-bg);
+  color: var(--conf-high);
+}
+
+.sx .dsh-when {
+  flex-shrink: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink-faint);
+}
+.sx .dsh-when b {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+.sx .dsh-when em {
+  font-style: normal;
+  margin-left: 7px;
+}
+
+/* ── The numbers ── */
+.sx .dsh-tiles {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 8px;
+  max-width: 1120px;
+  margin-bottom: 12px;
+}
+.sx .dsh-tile {
+  position: relative;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  padding: 12px 12px 13px;
+  overflow: hidden;
+}
+/* A hairline of state, rather than colouring a whole tile. */
+.sx .dsh-tile::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 2px;
+  background: transparent;
+}
+.sx .dsh-tile.low::before {
+  background: var(--conf-low);
+}
+.sx .dsh-tile.med::before {
+  background: var(--conf-med);
+}
+.sx .dsh-tile.high::before {
+  background: var(--conf-high);
+}
+.sx .dsh-tile b {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  line-height: 1;
+}
+.sx .dsh-tile.low b {
+  color: var(--conf-low);
+}
+.sx .dsh-tile span {
+  display: block;
+  margin-top: 5px;
+  font-size: 10px;
+  color: var(--ink-faint);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Cards ── */
+.sx .dsh-cols {
+  display: grid;
+  grid-template-columns: 1.25fr 1fr;
+  gap: 12px;
+  max-width: 1120px;
+  margin-bottom: 12px;
+}
+.sx .dsh-card {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  max-width: 1120px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+.sx .dsh-cols .dsh-card {
+  margin-bottom: 0;
+}
+.sx .dsh-card > header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface-2);
+}
+.sx .dsh-card > header b {
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 600;
+}
+.sx .dsh-card > header i {
+  margin-left: auto;
+  font-style: normal;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  background: var(--ink);
+  color: #fff;
+  border-radius: 20px;
+  padding: 1px 6px;
+}
+
+/* ── Waiting ── */
+.sx .dsh-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.sx .dsh-list li {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 14px;
+  border-bottom: 1px solid var(--surface-2);
+}
+.sx .dsh-list li:last-child {
+  border-bottom: none;
+}
+.sx .dsh-k {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  border-radius: 50%;
+}
+.sx .dsh-k.blocked {
+  background: var(--conf-low-bg);
+  color: var(--conf-low);
+}
+.sx .dsh-k.approval {
+  background: var(--conf-med-bg);
+  color: var(--conf-med);
+}
+.sx .dsh-k.decision {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.sx .dsh-t {
+  flex: 1;
+  min-width: 0;
+  font-size: 11.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sx .dsh-m {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--ink-faint);
+}
+.sx .dsh-none {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 20px 14px;
+  font-size: 11.5px;
+  color: var(--ink-faint);
+}
+.sx .dsh-none svg {
+  color: var(--conf-high);
+}
+.sx .dsh-more {
+  margin: 0;
+  padding: 7px 14px;
+  border-top: 1px solid var(--line);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--ink-faint);
+}
+
+/* ── Scope integrity: counts, hints on hover ── */
+.sx .dsh-gaps {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+.sx .dsh-gap {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  padding: 10px 14px;
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  cursor: help;
+}
+.sx .dsh-gap:nth-child(2n) {
+  border-right: none;
+}
+.sx .dsh-gap:nth-last-child(-n + 2) {
+  border-bottom: none;
+}
+.sx .dsh-gap b {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--conf-low);
+}
+.sx .dsh-gap.zero b,
+.sx .dsh-gap.neutral b {
+  color: var(--ink);
+}
+.sx .dsh-gap.zero b {
+  color: var(--line-strong);
+}
+.sx .dsh-gap span {
+  font-size: 10.5px;
+  color: var(--ink-faint);
+}
+
+.sx .dsh-warn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 8px 14px;
+  background: var(--conf-med-bg);
+  font-size: 11px;
+  color: var(--ink);
+}
+.sx .dsh-warn svg {
+  color: var(--conf-med);
+  flex-shrink: 0;
+}
+.sx .dsh-warn.standalone {
+  max-width: 1120px;
+  border: 1px solid var(--conf-med);
+  border-radius: var(--radius);
+}
+
+/* ── By feature ── */
+.sx .dsh-feats {
+  padding: 4px 0 6px;
+}
+.sx .dsh-feat {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 14px;
+}
+.sx .dsh-fn {
+  flex: 0 0 200px;
+  min-width: 0;
+  font-size: 11.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sx .dsh-fn em {
+  display: block;
+  font-style: normal;
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  color: var(--ink-faint);
+}
+.sx .dsh-bar {
+  flex: 1;
+  height: 5px;
+  border-radius: 20px;
+  background: var(--bg);
+  overflow: hidden;
+}
+.sx .dsh-bar i {
+  display: block;
+  height: 100%;
+  border-radius: 20px;
+  background: var(--accent);
+}
+.sx .dsh-fp {
+  flex: 0 0 32px;
+  text-align: right;
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+.sx .dsh-fc {
+  flex: 0 0 32px;
+  text-align: right;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--ink-faint);
+}
+
+/* ── Nothing reporting ── */
+.sx .dsh-dark {
+  max-width: 480px;
+  margin: 60px auto;
+  text-align: center;
+}
+.sx .dsh-dark b {
+  font-family: var(--font-display);
+  font-size: 40px;
+  font-weight: 600;
+  color: var(--line-strong);
+  line-height: 1;
+}
+.sx .dsh-dark p {
+  margin: 12px 0 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--ink-faint);
+}
+.sx .dsh-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 16px;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  background: var(--surface);
+  padding: 6px 13px;
+  font-family: var(--font-body);
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--accent);
+  cursor: pointer;
+}
+.sx .dsh-cta:hover {
+  background: var(--accent);
+  color: #fff;
+}
+
+@media (max-width: 1180px) {
+  .sx .dsh-tiles {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+@media (max-width: 900px) {
+  .sx .dsh-cols {
+    grid-template-columns: 1fr;
+  }
+  .sx .dsh-tiles {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

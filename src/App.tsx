@@ -40,8 +40,8 @@ const PromptControlsView = lazy(() =>
 const SecurityView = lazy(() =>
   import('./components/views/SecurityView').then((m) => ({ default: m.SecurityView }))
 );
-const MyServicesView = lazy(() =>
-  import('./components/views/MyServicesView').then((m) => ({ default: m.MyServicesView }))
+const ProjectDashboardView = lazy(() =>
+  import('./components/views/ProjectDashboardView').then((m) => ({ default: m.ProjectDashboardView }))
 );
 const CommandCentreView = lazy(() =>
   import('./components/views/CommandCentreView').then((m) => ({ default: m.CommandCentreView }))
@@ -95,7 +95,7 @@ const AppContent: React.FC = () => {
       case 'Security':
         return <SecurityView />;
       case 'My Services':
-        return <MyServicesView />;
+        return <ProjectDashboardView />;
       case 'Command Centre':
         return <CommandCentreView />;
       case 'Spec AI':

@@ -40,6 +40,7 @@ import {
   GitBranch,
   Image as ImageIcon,
   Link2,
+  ListTree,
   Loader2,
   Layers,
   Lock,
@@ -71,14 +72,19 @@ const DeliveryPanel = lazy(() =>
 );
 
 /**
- * Which artifacts have to be signed off before decomposition can start.
+ * Artifacts are what the definition produced *other than* the PRD.
  *
- * Product and Architecture are the load-bearing ones — the PRD and the design a
- * module map would be derived from. Contracts, decision records and diagrams are
- * real work but nothing downstream is shaped by them, so holding the gate on them
- * would be ceremony.
+ * The PRD is a phase of its own — it is the product document you sign off, and
+ * the functional and non-functional requirements are sections of it rather than
+ * separate deliverables. What is left here is the work an architect and an
+ * engineer produce alongside it: the design, the contracts, the decisions and
+ * the context diagram. None of it belongs in a PRD, which is the test for
+ * whether it belongs in this list.
  */
-const CRITICAL_GROUPS: ArtifactGroup[] = ['Product', 'Architecture'];
+const PRD_GROUP: ArtifactGroup = 'Product';
+
+/** Of those, the ones the PRD is actually written from. */
+const CRITICAL_GROUPS: ArtifactGroup[] = ['Architecture', 'Contracts'];
 
 /* Three phases now: define the problem, agree the understanding, decompose it.
    The rail owns the order and the nesting — see PhaseRail. */
@@ -353,7 +359,9 @@ export const SpecAiV2View: React.FC = () => {
     [state, orch.answers]
   );
 
-  const critical = state.artifacts.filter((a) => CRITICAL_GROUPS.includes(a.group));
+  /* The PRD has its own phase, so it is not one of the artifacts listed here. */
+  const supporting = state.artifacts.filter((a) => a.group !== PRD_GROUP);
+  const critical = supporting.filter((a) => CRITICAL_GROUPS.includes(a.group));
   const criticalApproved = critical.filter((a) => a.status === 'Approved');
   const gateOpen = critical.length > 0 && criticalApproved.length === critical.length;
 
@@ -594,23 +602,24 @@ export const SpecAiV2View: React.FC = () => {
     .slice(0, 2)
     .join('');
 
-  const gateHint = gateOpen
-    ? undefined
-    : critical.length === 0
-    ? 'Create the artifacts first'
-    : `Approve the ${critical.length - criticalApproved.length} remaining critical artifact${
-        critical.length - criticalApproved.length === 1 ? '' : 's'
-      }`;
-
-  /* Understanding opens as soon as there is a brief to read; generating the
-     artifacts from it is the act that closes it. */
   /* The PRD is written from the artifacts, so it opens when they are signed off.
      Understanding moved inside Problem Definition — it is read alongside the
      material it was built from, not after it. */
-  const prd = state.artifacts.find((a) => a.group === 'Product');
+  const prd = state.artifacts.find((a) => a.group === PRD_GROUP);
+  const prdApproved = prd?.status === 'Approved';
+  const remaining = critical.length - criticalApproved.length;
   const prdHint = gateOpen
     ? undefined
-    : 'Approve the critical artifacts — the PRD is written from them';
+    : critical.length === 0
+    ? 'Create the artifacts first — the PRD is written from them'
+    : `Approve the ${remaining} remaining critical artifact${remaining === 1 ? '' : 's'}`;
+  /* Specs decompose the PRD, so the PRD has to be agreed first. Sharing one gate
+     meant both opened together and the PRD was a document you could skip. */
+  const specsHint = !gateOpen
+    ? 'Approve the critical artifacts first'
+    : !prdApproved
+    ? 'Approve the PRD — the modules and stories are decomposed from it'
+    : undefined;
 
   return (
     <div className="sx">
@@ -625,8 +634,8 @@ export const SpecAiV2View: React.FC = () => {
           phase={tab}
           prdOpen={gateOpen}
           prdHint={prdHint}
-          deliveryOpen={gateOpen}
-          deliveryHint={gateHint}
+          deliveryOpen={gateOpen && prdApproved}
+          deliveryHint={specsHint}
           counts={{ stories: state.stories.length }}
           onPick={(p) => {
             if (p === 'delivery') return openDelivery();
@@ -1410,6 +1419,7 @@ export const SpecAiV2View: React.FC = () => {
                       state={state}
                       readOnly={readOnly}
                       criticalGroups={CRITICAL_GROUPS}
+                      excludeGroup={PRD_GROUP}
                       building={building}
                       builtIds={builtIds}
                       currentBuild={currentBuild}
@@ -1477,7 +1487,10 @@ export const SpecAiV2View: React.FC = () => {
                     <h2>{prd.label}</h2>
                   </div>
                   <div className="und-acts">
-                    {prd.status === 'Approved' ? (
+                    <button className="btn btn-ghost" onClick={() => setFinalizeOpen(true)}>
+                      <FileStack size={13} /> Full specification
+                    </button>
+                    {prdApproved ? (
                       <span className="und-locked">
                         <Lock size={11} /> Approved
                       </span>
@@ -1485,18 +1498,37 @@ export const SpecAiV2View: React.FC = () => {
                       <button
                         className="btn btn-primary"
                         disabled={readOnly}
-                        onClick={() => reviewArtifact(state.projectId, prd.id)}
+                        /* Approving is what opens Specs, so it says so and goes
+                           there. A gate you pass with no way onward is a wall. */
+                        onClick={() => {
+                          reviewArtifact(state.projectId, prd.id);
+                          openDelivery();
+                        }}
                       >
-                        Approve
+                        Approve and decompose <ChevronRight size={13} />
                       </button>
                     )}
-                    <button className="btn btn-ghost" onClick={() => setFinalizeOpen(true)}>
-                      <FileStack size={13} /> Full specification
-                    </button>
                   </div>
                 </header>
                 <div className="prd-body">
                   <pre>{prd.body}</pre>
+
+                  {/* Once it is agreed, the only thing left to do with it is
+                      break it down. */}
+                  {prdApproved && (
+                    <button className="prd-next" onClick={openDelivery}>
+                      <ListTree size={15} />
+                      <span>
+                        <b>Decompose into modules and stories</b>
+                        <em>
+                          {state.stories.length > 0
+                            ? `${state.stories.length} stories already derived from this`
+                            : 'Specs are generated from the sections above'}
+                        </em>
+                      </span>
+                      <ChevronRight size={15} />
+                    </button>
+                  )}
                 </div>
               </>
             )}
