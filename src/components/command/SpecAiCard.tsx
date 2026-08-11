@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { SpecAiState } from '../../types/specai';
+import { canEditSpecAi } from '../../data/specai';
 import {
-  canEditSpecAi,
-  knowledgeReadiness,
-  stageDef,
-  activeStage,
-  workspaceProgress,
-} from '../../data/specai';
+  V2_PHASE_LABEL,
+  v2NextAction,
+  v2Phase,
+  v2Progress,
+  v2Signals,
+} from '../../data/specV2';
 import { ArrowRight, Lock, MessageSquare, Sparkles } from 'lucide-react';
 
 /**
@@ -17,8 +18,13 @@ import { ArrowRight, Lock, MessageSquare, Sparkles } from 'lucide-react';
  * A spec begins with a problem statement and nothing else, so that is what this
  * card asks for — the field is the entry point, not a button that opens a wizard
  * which then asks the same question. Once a spec exists the card stops asking and
- * starts reporting: the statement it is working from, and the two counts that
- * decide whether the reading can be trusted yet.
+ * starts reporting.
+ *
+ * What it reports is the v2 model, because v2 is what the button opens. It used
+ * to describe the original five-stage pipeline — "Knowledge Creation &
+ * Contextualization", a stage-weighted percentage — which is an accurate account
+ * of a surface this card does not lead to. The derivations are shared with the
+ * workspace (see data/specV2) so the two cannot drift apart again.
  */
 export const SpecAiCard: React.FC<{ projectId: string; projectName: string }> = ({
   projectId,
@@ -31,12 +37,11 @@ export const SpecAiCard: React.FC<{ projectId: string; projectName: string }> = 
 
   const [draft, setDraft] = useState('');
 
-  /* The intake is what makes a spec exist. Before it, everything else is empty. */
-  const started = Boolean(state.intake?.acceptedAt);
-  const readiness = knowledgeReadiness(state);
-  const openQuestions = state.questions.filter((q) => q.status === 'Open').length;
-  const progress = workspaceProgress(state);
-  const stage = stageDef(activeStage(state));
+  const signals = v2Signals(state);
+  const started = signals.started;
+  const phase = v2Phase(state);
+  const progress = v2Progress(state);
+  const next = v2NextAction(signals);
 
   /* The redesigned conversational surface. */
   const open = () => navigateTo('Spec AI v2');
@@ -70,7 +75,7 @@ export const SpecAiCard: React.FC<{ projectId: string; projectName: string }> = 
               <h2 className="text-sm font-bold text-slate-900">
                 Spec AI
                 {started && (
-                  <span className="font-medium text-slate-500"> · {stage.title}</span>
+                  <span className="font-medium text-slate-500"> · {V2_PHASE_LABEL[phase]}</span>
                 )}
               </h2>
               <p className="text-[10px] font-medium text-slate-600">
@@ -104,25 +109,37 @@ export const SpecAiCard: React.FC<{ projectId: string; projectName: string }> = 
             </div>
 
             <div className="flex flex-wrap items-center justify-between gap-3">
-              {/* Only the two things that block trusting the reading. */}
+              {/*
+                What the workspace would tell you if you opened it: the one thing
+                it is waiting on, and the state of the brief behind it. Both are
+                read from the same derivation the workspace uses, so the card can
+                never claim a gate the rail has already opened.
+              */}
               <div className="flex flex-wrap items-center gap-2 text-[10px] font-semibold">
-                {readiness.conflictsOpen > 0 && (
-                  <span className="rounded-md border border-violet-200 bg-violet-50 px-2 py-1 text-violet-700">
-                    {readiness.conflictsOpen} to decide
-                  </span>
-                )}
-                {openQuestions > 0 && (
+                {next ? (
                   <span className="rounded-md border border-amber-200 bg-amber-50 px-2 py-1 text-amber-800">
-                    {openQuestions} to answer
+                    {next}
                   </span>
-                )}
-                {readiness.conflictsOpen === 0 && openQuestions === 0 && (
+                ) : (
                   <span className="rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-emerald-700">
                     Nothing outstanding
                   </span>
                 )}
+
+                {signals.unconfirmed > 0 && (
+                  <span
+                    className="rounded-md border border-violet-200 bg-violet-50 px-2 py-1 text-violet-700"
+                    title="Claims classed as an inference or an assumption — nothing has confirmed them."
+                  >
+                    {signals.unconfirmed} unconfirmed
+                  </span>
+                )}
+
                 <span className="text-slate-500">
-                  {readiness.sourcesReady} of {state.sources.length} sources read
+                  {signals.claims} claim{signals.claims === 1 ? '' : 's'}
+                  {signals.criticalTotal > 0 &&
+                    ` · ${signals.criticalApproved}/${signals.criticalTotal} approved`}
+                  {signals.stories > 0 && ` · ${signals.stories} stories`}
                 </span>
               </div>
 

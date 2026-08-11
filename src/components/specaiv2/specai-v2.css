@@ -6016,51 +6016,6 @@
   word-wrap: break-word;
 }
 
-/* ── Understanding, now that it lives in the panel rather than the full width ──
-   Same content; the header stacks instead of running off the edge, and the
-   reading measures give way to the column it actually has. */
-.sx .ws .und-head {
-  flex-direction: column;
-  align-items: stretch;
-  gap: 8px;
-  padding: 10px 14px;
-}
-.sx .ws .und-head h2 {
-  font-size: 14px;
-}
-.sx .ws .und-acts {
-  margin-left: 0;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-.sx .ws .und-acts .btn {
-  height: 26px;
-  font-size: 10.5px;
-  padding: 0 9px;
-}
-.sx .ws .und-stale {
-  padding: 7px 14px;
-  font-size: 11px;
-}
-.sx .ws .und-body {
-  padding: 12px 14px 30px;
-}
-.sx .ws .und-summary {
-  max-width: none;
-  font-size: 12px;
-  margin-bottom: 16px;
-}
-.sx .ws .und-band {
-  max-width: none;
-  margin-bottom: 16px;
-}
-.sx .ws .und-tx {
-  font-size: 11.5px;
-}
-.sx .ws .und-bh span {
-  display: none;
-}
-
 /* The rail's third phase carries a second line, because "Specs" alone does not
    say what it contains. */
 .sx .rail-sub-note {
@@ -6855,4 +6810,50 @@
   .sx .dsh-tiles.pm {
     grid-template-columns: repeat(4, 1fr);
   }
+}
+
+/* ── The brief, read inside the thread ──
+   The panel was built for the workspace column, where it is the only thing on
+   screen and owns the height. Inline it is a turn in a conversation, so it takes
+   a bounded box: `.und-body` already scrolls itself, so capping the panel keeps
+   a long brief from pushing the composer off the bottom of the screen. */
+.sx .brief-ptr.open {
+  border-radius: 9px 9px 0 0;
+  background: var(--accent-soft);
+}
+.sx .und-inline {
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  border-top: 0;
+  border-radius: 0 0 9px 9px;
+  background: var(--surface);
+  overflow: hidden;
+}
+.sx .und-inline .und {
+  max-height: 52vh;
+}
+/* Tighter gutters: the thread column is roughly half the width the workspace
+   panel had, and 24px on both sides eats the claim text. Same treatment the
+   workspace panel already gives it. */
+.sx .und-inline .und-head {
+  padding: 10px 14px;
+}
+.sx .und-inline .und-head h2 {
+  font-size: 15px;
+}
+.sx .und-inline .und-body {
+  padding: 12px 14px 24px;
+}
+.sx .und-inline .und-summary {
+  max-width: none;
+  font-size: 12px;
+}
+.sx .und-inline .und-stale {
+  padding: 7px 14px;
+  font-size: 11px;
+}
+/* The header wraps rather than squeezing the sign-off button to an ellipsis. */
+.sx .und-inline .und-acts {
+  flex-wrap: wrap;
+  gap: 6px;
 }

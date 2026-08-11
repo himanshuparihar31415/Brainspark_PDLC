@@ -1,12 +1,7 @@
 import React, { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
 import './specai-v2.css';
 import { useApp } from '../../context/AppContext';
-import {
-  ArtifactGroup,
-  BriefLine,
-  SourceType,
-  SpecAiState,
-} from '../../types/specai';
+import { BriefLine, SourceType, SpecAiState } from '../../types/specai';
 import { BRIEF_BANDS, SOURCE_TYPE_FOR_FILE, canEditSpecAi } from '../../data/specai';
 import { criticalGaps } from '../../data/specKnowledgeTree';
 import { LeafAnswer, isRunning, useOrchestrator } from './orchestrator';
@@ -24,6 +19,7 @@ const DiagramRenderer = lazy(() =>
 const SpecDocument = lazy(() =>
   import('./SpecDocument').then((m) => ({ default: m.SpecDocument }))
 );
+import { CRITICAL_GROUPS, PRD_GROUP } from '../../data/specV2';
 import { scopeBySource, scopeItems } from '../../data/specDelta';
 import { hasSystemModel, reconcile } from '../../data/specSystemModel';
 import {
@@ -71,20 +67,21 @@ const DeliveryPanel = lazy(() =>
   import('./DeliveryPanel').then((m) => ({ default: m.DeliveryPanel }))
 );
 
-/**
+/*
  * Artifacts are what the definition produced *other than* the PRD.
  *
  * The PRD is a phase of its own — it is the product document you sign off, and
  * the functional and non-functional requirements are sections of it rather than
- * separate deliverables. What is left here is the work an architect and an
- * engineer produce alongside it: the design, the contracts, the decisions and
- * the context diagram. None of it belongs in a PRD, which is the test for
- * whether it belongs in this list.
+ * separate deliverables. What is left is the work an architect and an engineer
+ * produce alongside it: the design, the contracts, the decisions and the context
+ * diagram. None of it belongs in a PRD, which is the test for whether it belongs
+ * in that list. Of those, Architecture and Contracts are what the PRD is
+ * actually written from, so they are what gates it.
+ *
+ * Both groupings live in data/specV2 because the Command Centre card reports the
+ * same gates. Two copies meant the door and the room could disagree about
+ * whether the PRD was open.
  */
-const PRD_GROUP: ArtifactGroup = 'Product';
-
-/** Of those, the ones the PRD is actually written from. */
-const CRITICAL_GROUPS: ArtifactGroup[] = ['Architecture', 'Contracts'];
 
 /* Three phases now: define the problem, agree the understanding, decompose it.
    The rail owns the order and the nesting — see PhaseRail. */
@@ -180,6 +177,10 @@ export const SpecAiV2View: React.FC = () => {
   const [finalizeOpen, setFinalizeOpen] = useState(false);
   const [reopenOpen, setReopenOpen] = useState(false);
   const [citeLine, setCiteLine] = useState<BriefLine | null>(null);
+  /* The brief reads inside the thread. Closed until asked for — it is a
+     document, and a document unfurled by default is a wall between you and the
+     composer. */
+  const [briefOpen, setBriefOpen] = useState(false);
   const [openArtifact, setOpenArtifact] = useState<string | null>(null);
   const [artifactDraft, setArtifactDraft] = useState('');
 
@@ -1027,24 +1028,55 @@ export const SpecAiV2View: React.FC = () => {
                   );
                 })}
 
-                {/* The brief moved to its own phase. What stays in the thread is
-                    the pointer to it — a claim list is a document, and it was
-                    living in a disclosure widget between two chat bubbles. */}
+                {/*
+                  The brief, opened where it was built.
+
+                  This used to send you to the right-hand panel, which is the
+                  wrong direction: the brief is the accumulation of *this*
+                  conversation, so reading it should not mean leaving the
+                  conversation. It expands in place instead, as the last turn —
+                  the pointer stays a one-line summary until you want the detail.
+
+                  (It also used to set the phase to 'understanding', which is not
+                  a phase. Every branch went false and the workspace rendered
+                  nothing at all.)
+                */}
                 {claimCount > 0 && (
                   <div className="turn grouped enter">
                     <span className="av">
                       <Sparkles size={12} />
                     </span>
                     <div className="col">
-                      <button className="brief-ptr" onClick={() => setTab('understanding')}>
+                      <button
+                        className={`brief-ptr ${briefOpen ? 'open' : ''}`}
+                        onClick={() => setBriefOpen((v) => !v)}
+                        aria-expanded={briefOpen}
+                      >
                         <BookOpen size={13} />
                         <span>
                           The brief is at {claimCount} claim{claimCount === 1 ? '' : 's'}
                           {unsourced > 0 && ` · ${unsourced} unconfirmed`}
                         </span>
-                        <em>Open Understanding</em>
-                        <ChevronRight size={12} />
+                        <em>{briefOpen ? 'Hide' : 'Open Understanding'}</em>
+                        {briefOpen ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
                       </button>
+
+                      {briefOpen && (
+                        <div className="und-inline">
+                          <UnderstandingPanel
+                            state={state}
+                            readOnly={readOnly}
+                            locked={state.lockedStages.includes('understanding')}
+                            building={building}
+                            hasArtifacts={state.artifacts.length > 0}
+                            onPromote={(id) => promoteBriefLine(state.projectId, id)}
+                            onCite={setCiteLine}
+                            onReread={() => askAgent(state.projectId, '')}
+                            onGenerate={createArtifacts}
+                            onOpenSpec={() => setFinalizeOpen(true)}
+                          />
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
@@ -1268,8 +1300,6 @@ export const SpecAiV2View: React.FC = () => {
                       ? gaps.length + driftCount
                       : key === 'artifacts' && critical.length > 0
                       ? critical.length - criticalApproved.length || null
-                      : key === 'understanding' && claimCount > 0
-                      ? claimCount
                       : null;
                   return (
                     <button
@@ -1432,32 +1462,11 @@ export const SpecAiV2View: React.FC = () => {
                   )}
                 </section>
 
-                <section className="wsx" id="wsx-understanding">
-                  <button className="wsx-h" onClick={() => foldSection('understanding')}>
-                    {folded.has('understanding') ? (
-                      <ChevronRight size={13} />
-                    ) : (
-                      <ChevronDown size={13} />
-                    )}
-                    <b>Understanding</b>
-                    {claimCount > 0 && <i>{claimCount}</i>}
-                    <span>what we now believe</span>
-                  </button>
-                  {!folded.has('understanding') && (
-                    <UnderstandingPanel
-                      state={state}
-                      readOnly={readOnly}
-                      locked={state.lockedStages.includes('understanding')}
-                      building={building}
-                      hasArtifacts={state.artifacts.length > 0}
-                      onPromote={(id) => promoteBriefLine(state.projectId, id)}
-                      onCite={setCiteLine}
-                      onReread={() => askAgent(state.projectId, '')}
-                      onGenerate={createArtifacts}
-                      onOpenSpec={() => setFinalizeOpen(true)}
-                    />
-                  )}
-                </section>
+                {/* Understanding is not here. The brief is the accumulation of
+                    the conversation, so it reads in the thread where it was
+                    built — see the pointer above the composer. Two homes for one
+                    document meant two places to keep in step and no answer to
+                    which one you were meant to sign off. */}
               </div>
             </aside>
             )}
