@@ -1,7 +1,6 @@
 import React from 'react';
 import {
   Activity,
-  BookOpen,
   FileText,
   HelpCircle,
   ListTree,
@@ -27,20 +26,22 @@ import {
  */
 
 export type Phase = 'brief' | 'prd' | 'delivery';
-export type WsKey = 'impact' | 'system' | 'questions' | 'artifacts' | 'understanding';
+export type WsKey = 'impact' | 'system' | 'questions' | 'artifacts';
 
 /*
  * The order is the order you work in: what does this touch, where does it sit,
- * what is still open, what did that produce, and what do we now believe. The
- * last one is deliberately last — the brief is the thing you sign off, so it
- * comes after the material it was built from.
+ * what is still open, and what did that produce.
+ *
+ * Understanding is not in this list. The brief is what the conversation
+ * accumulates, so it reads in the thread rather than beside it — a document
+ * with two homes is two things to keep in step and no answer to which one you
+ * are signing off.
  */
 export const WS_ITEMS: { key: WsKey; label: string; icon: React.ElementType }[] = [
   { key: 'impact', label: 'Change Impact', icon: Activity },
   { key: 'system', label: 'System Map', icon: Network },
   { key: 'questions', label: 'Open Questions', icon: HelpCircle },
   { key: 'artifacts', label: 'Artifacts', icon: FileText },
-  { key: 'understanding', label: 'Understanding', icon: BookOpen },
 ];
 
 export const PhaseRail: React.FC<{

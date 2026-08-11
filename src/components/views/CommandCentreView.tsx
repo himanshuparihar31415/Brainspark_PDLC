@@ -60,9 +60,16 @@ export const CommandCentreView: React.FC = () => {
     blockers.length === 0 && reviewRows.length === 0 && myTasks.length === 0;
   const pipelineHealthy = blockers.length === 0 && myTasks.every((t) => t.status !== 'Blocked');
 
-  /** Module workspaces that exist as real destinations rather than a stub. */
+  /*
+   * Module workspaces that exist as real destinations rather than a stub.
+   *
+   * `specai` points at the v2 surface, which is the one under development and
+   * the one the Spec AI card above already opens. The module cards were still
+   * sending people to the original five-stage surface, so the same project
+   * opened in two different products depending on which tile you pressed.
+   */
   const WORKSPACE_ROUTE: Partial<Record<ModuleKey, NavView>> = {
-    specai: 'Spec AI',
+    specai: 'Spec AI v2',
     codeiq: 'CodeIQ',
   };
 

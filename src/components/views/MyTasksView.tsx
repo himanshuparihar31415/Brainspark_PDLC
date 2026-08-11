@@ -1,22 +1,51 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { Task } from '../../types';
 import { isGovernanceRole } from '../../data/rbac';
-import { CheckSquare, Check, X, Calendar, User, FileText, Sparkles, CheckCircle2 } from 'lucide-react';
+import { REASON_CHIP, criticalReason } from '../../data/activity';
+import { Check, Sparkles, CheckCircle2, Activity } from 'lucide-react';
 
 export const MyTasksView: React.FC = () => {
-  const { tasks, completeTask, approveTaskArtifact, currentUser, currentRole, currentScope } = useApp();
+  const {
+    tasks,
+    completeTask,
+    approveTaskArtifact,
+    currentUser,
+    currentRole,
+    currentScope,
+    navIntent,
+    clearNavIntent,
+  } = useApp();
 
   const [filterStatus, setFilterStatus] = useState<string>('All');
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+
+  /*
+   * Arriving from My Activity carries the row that was clicked. Without this the
+   * screen lands on its own default and the thing you were looking at is
+   * somewhere in a list — which is the same as not having navigated at all.
+   */
+  const arrivedFor = navIntent?.taskId;
+  useEffect(() => {
+    if (arrivedFor) setSelectedTaskId(arrivedFor);
+  }, [arrivedFor]);
 
   // Project Admins oversee the whole project queue; PDLC personas see only what
   // is assigned to them.
   const isOversight = isGovernanceRole(currentRole);
-  const myTasks = tasks.filter((t) =>
-    isOversight ? t.project === currentScope.projectName : t.assignee === currentUser?.name
-  );
+  const scoped = tasks.filter((t) => t.projectId === currentScope.projectId);
+  const owned = scoped.filter((t) => (isOversight ? true : t.assignee === currentUser?.name));
 
-  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  /*
+   * A task opened from My Activity is shown even when it is someone else's.
+   * Following a link into a screen that then refuses to display the thing you
+   * followed is the worst version of this feature, and the banner says plainly
+   * whose it is rather than letting it pass as your own work.
+   */
+  const linked = arrivedFor ? tasks.find((t) => t.id === arrivedFor) : undefined;
+  const borrowed = linked && !owned.some((t) => t.id === linked.id) ? linked : undefined;
+  const myTasks = borrowed ? [borrowed, ...owned] : owned;
+
   const selectedTask: Task | null =
     myTasks.find((t) => t.id === selectedTaskId) || myTasks[0] || null;
 
@@ -27,13 +56,35 @@ export const MyTasksView: React.FC = () => {
 
   return (
     <div className="p-6 md:p-8 space-y-6 max-w-7xl mx-auto animate-in fade-in duration-200">
-      {/* Header */}
+      {/* Header — the project is named, because you can arrive here from
+          another one and the queue would otherwise change under you silently. */}
       <div>
-        <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">Project Tasks</h1>
+        <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600">
+          {currentScope.projectName ?? 'No project in scope'}
+        </span>
+        <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">
+          Project Tasks
+        </h1>
         <p className="text-xs md:text-sm text-slate-500 mt-1">
-          Personal task queue and human-in-the-loop approval sign-offs for AI generated artifacts
+          {isOversight
+            ? 'Every task on this project, with human-in-the-loop sign-off for AI generated artifacts.'
+            : 'Your task queue on this project, with human-in-the-loop sign-off for AI generated artifacts.'}
         </p>
       </div>
+
+      {/* Why the screen looks like this, when you did not navigate here yourself. */}
+      {navIntent?.note && (
+        <div className="flex items-start gap-2.5 rounded-xl border border-indigo-200 bg-indigo-50/60 px-4 py-2.5">
+          <Activity className="mt-px h-3.5 w-3.5 shrink-0 text-indigo-600" />
+          <span className="flex-1 text-xs font-semibold text-indigo-900">{navIntent.note}</span>
+          <button
+            onClick={clearNavIntent}
+            className="cursor-pointer text-[11px] font-bold text-indigo-600 hover:underline"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
 
       {/* Filter Tabs */}
       <div className="flex items-center gap-2 border-b border-slate-200">
@@ -96,7 +147,26 @@ export const MyTasksView: React.FC = () => {
                   </div>
 
                   <h3 className="text-xs font-bold text-slate-900 leading-snug">{t.title}</h3>
-                  <div className="text-[11px] text-slate-500 mt-1">Project: {t.project}</div>
+
+                  <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px] text-slate-500">
+                    {/* Whose it is, when it is not yours. */}
+                    {borrowed?.id === t.id && (
+                      <span className="rounded-md border border-slate-200 bg-slate-50 px-1.5 py-px text-[10px] font-bold text-slate-600">
+                        {t.assignee}
+                      </span>
+                    )}
+                    {(() => {
+                      const reason = criticalReason(t);
+                      return reason ? (
+                        <span
+                          className={`rounded-md border px-1.5 py-px text-[10px] font-bold ${REASON_CHIP[reason]}`}
+                        >
+                          {reason}
+                        </span>
+                      ) : null;
+                    })()}
+                    <span>{t.project}</span>
+                  </div>
 
                   <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-400 font-mono">
                     <span>Due {t.dueDate}</span>
