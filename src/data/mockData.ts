@@ -436,6 +436,15 @@ export const INITIAL_TEAM_MEMBERS: TeamMember[] = [
   },
 ];
 
+/**
+ * Connectors, seeded across the real departments and projects.
+ *
+ * Deliberately uneven. Engineering has three projects and Data & Analytics two;
+ * Digital Practice has none, which is the honest zero-denominator case the
+ * department card has to handle without printing "0 of 0". One binding is left
+ * failing and one enabled-but-never-connected, because uniform fixture data
+ * hides every bug in a derivation.
+ */
 export const INITIAL_CONNECTORS: Connector[] = [
   {
     id: 'conn-jira',
@@ -443,13 +452,42 @@ export const INITIAL_CONNECTORS: Connector[] = [
     category: 'Issue Tracking',
     usedByModules: ['SpecAI', 'Command Centre', 'My Tasks'],
     tenantAvailable: true,
-    enabledDepartment: true,
-    activatedProject: true,
-    health: '● Connected',
-    syncType: '↕ Bidirectional',
-    lastSyncTime: '2 mins ago',
-    endpointUrl: 'https://incedolabs.atlassian.net',
-    workspaceRepo: 'PROJ-MBV2',
+    enabledDepartments: ['d-engineering', 'd-data'],
+    activations: {
+      'p-mobile-v2': {
+        projectId: 'p-mobile-v2',
+        status: 'connected',
+        syncType: '↕ Bidirectional',
+        lastSyncTime: '2 mins ago',
+        endpointUrl: 'https://incedolabs.atlassian.net',
+        workspaceRepo: 'PROJ-MBV2',
+      },
+      'p-cloud-mig': {
+        projectId: 'p-cloud-mig',
+        status: 'connected',
+        syncType: '↕ Bidirectional',
+        lastSyncTime: '18 mins ago',
+        endpointUrl: 'https://incedolabs.atlassian.net',
+        workspaceRepo: 'PROJ-CCM',
+      },
+      'p-wealth-ai': {
+        projectId: 'p-wealth-ai',
+        status: 'sync-failed',
+        syncType: '↕ Bidirectional',
+        lastSyncTime: '1 hour ago',
+        lastError: 'HTTP 401 Unauthorized — token expired',
+        endpointUrl: 'https://incedolabs.atlassian.net',
+        workspaceRepo: 'PROJ-WAE',
+      },
+      'p-acme-portal': {
+        projectId: 'p-acme-portal',
+        status: 'connected',
+        syncType: '↕ Bidirectional',
+        lastSyncTime: '4 mins ago',
+        endpointUrl: 'https://acme.atlassian.net',
+        workspaceRepo: 'ACME-PORTAL',
+      },
+    },
   },
   {
     id: 'conn-github',
@@ -457,25 +495,43 @@ export const INITIAL_CONNECTORS: Connector[] = [
     category: 'Source Control',
     usedByModules: ['CodeIQ', 'IntelliQA', 'Prompt Controls'],
     tenantAvailable: true,
-    enabledDepartment: true,
-    activatedProject: true,
-    health: '● Connected',
-    syncType: '↕ Bidirectional',
-    lastSyncTime: 'Just now',
-    endpointUrl: 'https://github.com/incedolabs/mobile-banking-v2',
-    workspaceRepo: 'incedolabs/mobile-banking-v2',
+    enabledDepartments: ['d-engineering', 'd-data'],
+    activations: {
+      'p-mobile-v2': {
+        projectId: 'p-mobile-v2',
+        status: 'connected',
+        syncType: '↕ Bidirectional',
+        lastSyncTime: 'Just now',
+        endpointUrl: 'https://github.com/incedolabs/mobile-banking-v2',
+        workspaceRepo: 'incedolabs/mobile-banking-v2',
+      },
+      'p-cloud-mig': {
+        projectId: 'p-cloud-mig',
+        status: 'connected',
+        syncType: '↕ Bidirectional',
+        lastSyncTime: '6 mins ago',
+        endpointUrl: 'https://github.com/incedolabs/cloud-core',
+        workspaceRepo: 'incedolabs/cloud-core',
+      },
+      'p-wealth-ai': {
+        projectId: 'p-wealth-ai',
+        status: 'connected',
+        syncType: '↕ Bidirectional',
+        lastSyncTime: '22 mins ago',
+        endpointUrl: 'https://github.com/incedolabs/wealth-advisor',
+        workspaceRepo: 'incedolabs/wealth-advisor',
+      },
+    },
   },
   {
     id: 'conn-gitlab',
     name: 'GitLab',
     category: 'Source Control',
     usedByModules: ['CodeIQ', 'Release Pulse'],
+    /* Withdrawn: the dead end every lens below has to explain rather than grey out. */
     tenantAvailable: false,
-    enabledDepartment: false,
-    activatedProject: false,
-    health: '○ Not connected',
-    syncType: '→ Push',
-    lastSyncTime: 'Never',
+    enabledDepartments: [],
+    activations: {},
   },
   {
     id: 'conn-figma',
@@ -483,26 +539,42 @@ export const INITIAL_CONNECTORS: Connector[] = [
     category: 'Design',
     usedByModules: ['DesignAI', 'SpecAI'],
     tenantAvailable: true,
-    enabledDepartment: true,
-    activatedProject: true,
-    health: '● Connected',
-    syncType: '↓ Read',
-    lastSyncTime: '15 mins ago',
-    endpointUrl: 'https://figma.com/@incedo-design-system',
-    workspaceRepo: 'Mobile-Banking-UI-Kit-2026',
+    enabledDepartments: ['d-engineering'],
+    activations: {
+      'p-mobile-v2': {
+        projectId: 'p-mobile-v2',
+        status: 'connected',
+        syncType: '↓ Read',
+        lastSyncTime: '15 mins ago',
+        endpointUrl: 'https://figma.com/@incedo-design-system',
+        workspaceRepo: 'Mobile-Banking-UI-Kit-2026',
+      },
+    },
   },
   {
     id: 'conn-cicd',
-    name: 'GitHub Actions / GitLab CI / Jenkins',
+    name: 'Jenkins',
     category: 'CI/CD',
     usedByModules: ['IntelliQA', 'Release Pulse'],
     tenantAvailable: true,
-    enabledDepartment: true,
-    activatedProject: true,
-    health: '⚠ Last sync failed',
-    syncType: '⟳ Trigger + status',
-    lastSyncTime: '1 hour ago (HTTP 502 Bad Gateway)',
-    endpointUrl: 'https://jenkins.internal.incedolabs.com',
+    enabledDepartments: ['d-engineering'],
+    activations: {
+      'p-mobile-v2': {
+        projectId: 'p-mobile-v2',
+        status: 'sync-failed',
+        syncType: '⟳ Trigger + status',
+        lastSyncTime: '1 hour ago',
+        lastError: 'HTTP 502 Bad Gateway',
+        endpointUrl: 'https://jenkins.internal.incedolabs.com',
+      },
+      'p-cloud-mig': {
+        projectId: 'p-cloud-mig',
+        status: 'connected',
+        syncType: '⟳ Trigger + status',
+        lastSyncTime: '9 mins ago',
+        endpointUrl: 'https://jenkins.internal.incedolabs.com',
+      },
+    },
   },
   {
     id: 'conn-confluence',
@@ -510,12 +582,25 @@ export const INITIAL_CONNECTORS: Connector[] = [
     category: 'Documentation',
     usedByModules: ['SpecAI', 'Architect Hub'],
     tenantAvailable: true,
-    enabledDepartment: true,
-    activatedProject: true,
-    health: '● Connected',
-    syncType: '→ Push',
-    lastSyncTime: '30 mins ago',
-    endpointUrl: 'https://incedolabs.atlassian.net/wiki',
+    /* Enabled for Engineering only, so Data & Analytics sees the honest
+       "your department has not enabled this" dead end. */
+    enabledDepartments: ['d-engineering'],
+    activations: {
+      'p-mobile-v2': {
+        projectId: 'p-mobile-v2',
+        status: 'connected',
+        syncType: '→ Push',
+        lastSyncTime: '30 mins ago',
+        endpointUrl: 'https://incedolabs.atlassian.net/wiki',
+      },
+      /* Enabled and never set up — the fourth project state. */
+      'p-wealth-ai': {
+        projectId: 'p-wealth-ai',
+        status: 'not-set-up',
+        syncType: '→ Push',
+        lastSyncTime: 'Never',
+      },
+    },
   },
   {
     id: 'conn-cursor',
@@ -523,12 +608,16 @@ export const INITIAL_CONNECTORS: Connector[] = [
     category: 'AI Tools',
     usedByModules: ['CodeIQ'],
     tenantAvailable: true,
-    enabledDepartment: true,
-    activatedProject: true,
-    health: '● Connected',
-    syncType: '↕ Bidirectional',
-    lastSyncTime: '5 mins ago',
-    endpointUrl: 'mcp://claude-code-daemon:8080',
+    enabledDepartments: ['d-engineering', 'd-data', 'd-digital'],
+    activations: {
+      'p-mobile-v2': {
+        projectId: 'p-mobile-v2',
+        status: 'connected',
+        syncType: '↕ Bidirectional',
+        lastSyncTime: '5 mins ago',
+        endpointUrl: 'mcp://claude-code-daemon:8080',
+      },
+    },
   },
 ];
 

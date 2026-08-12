@@ -22,6 +22,7 @@ import {
   GENERATED_STORIES,
 } from '../data/specAiGenerated';
 import { withDeliveryStatus } from '../data/completion';
+import { isActivated } from '../data/connectors';
 import {
   ARCHETYPES,
   SPEC_STAGES,
@@ -1003,8 +1004,13 @@ export const useSpecAiSlice = ({
     const state = specAiFor(projectId);
     const jira = connectors.find((c) => c.id === 'conn-jira');
 
-    if (!jira?.activatedProject) {
-      addToast('This needs the Jira connector. Ask your admin.', 'error');
+    /*
+     * Asked of *this* project. It used to read a single platform-wide flag,
+     * which meant one project connecting Jira let every other project on the
+     * platform export to it.
+     */
+    if (!isActivated(jira, projectId)) {
+      addToast('This project is not connected to Jira. Ask your admin.', 'error');
       return;
     }
 
