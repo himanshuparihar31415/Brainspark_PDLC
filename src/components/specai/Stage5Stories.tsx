@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
+import { isActivated } from '../../data/connectors';
 import {
   SpecAiState,
   SpecStageKey,
@@ -80,6 +81,7 @@ export const Stage5Stories: React.FC<{
 }> = ({ state, readOnly, onViewSource, track, onTrackChange }) => {
   const {
     connectors,
+    currentScope,
     reviewStaleStory,
     exportStoriesToJira,
     setJiraMapping,
@@ -92,7 +94,12 @@ export const Stage5Stories: React.FC<{
   const [deliveryFilter, setDeliveryFilter] = useState<StoryDeliveryStatus | 'All'>('All');
   const [mappingOpen, setMappingOpen] = useState(false);
 
-  const jiraReady = Boolean(connectors.find((c) => c.id === 'conn-jira')?.activatedProject);
+  /* This project's binding, not the platform's. */
+  const jiraReady = isActivated(
+    connectors.find((c) => c.id === 'conn-jira'),
+    currentScope.projectId,
+    currentScope.departmentId
+  );
   const unmapped = unmappedStoryTypes(state);
   const pending = state.stories.filter((s) => !s.exported).length;
   const stale = state.stories.filter((s) => s.stale).length;

@@ -129,6 +129,37 @@ export type ConnectorCategory = 'Issue Tracking' | 'Source Control' | 'Design' |
 
 export type SyncType = '↕ Bidirectional' | '↓ Read' | '→ Push' | '⟳ Trigger + status';
 
+/** Where a project's binding actually stands. */
+export type ActivationStatus = 'connected' | 'sync-failed' | 'not-set-up';
+
+/**
+ * One project's binding to a connector.
+ *
+ * Health, sync time, endpoint and credentials live here rather than on the
+ * catalogue entry, because they describe a *binding* and never described the
+ * integration. Two projects on the same Jira have two endpoints, two sync
+ * times, and can fail independently.
+ */
+export interface ConnectorActivation {
+  projectId: string;
+  status: ActivationStatus;
+  syncType: SyncType;
+  lastSyncTime: string;
+  /** Verbatim failure, e.g. "HTTP 502 Bad Gateway". Present when sync-failed. */
+  lastError?: string;
+  endpointUrl?: string;
+  workspaceRepo?: string;
+}
+
+/**
+ * A connector, as the platform catalogue holds it.
+ *
+ * The three rungs of the authority ladder are three different shapes on
+ * purpose. Availability is genuinely tenant-wide, so it is a boolean.
+ * Enablement varies by department and activation varies by project, so those
+ * are keyed — a single flag for either meant one project activating Jira
+ * silently activated it for every other project on the platform.
+ */
 export interface Connector {
   id: string;
   name: string;
@@ -136,13 +167,10 @@ export interface Connector {
   usedByModules: string[];
   /** Set by a Tenant Admin. When false, no department may enable this connector. */
   tenantAvailable: boolean;
-  enabledDepartment: boolean;
-  activatedProject: boolean;
-  health: '● Connected' | '⚠ Last sync failed' | '○ Not connected';
-  syncType: SyncType;
-  lastSyncTime: string;
-  endpointUrl?: string;
-  workspaceRepo?: string;
+  /** Departments a Department Admin has enabled it for. */
+  enabledDepartments: string[];
+  /** Project bindings, keyed by projectId. Absent means never set up. */
+  activations: Record<string, ConnectorActivation>;
 }
 
 /**

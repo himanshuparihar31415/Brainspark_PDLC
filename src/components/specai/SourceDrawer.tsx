@@ -1,5 +1,6 @@
 import React from 'react';
 import { useApp } from '../../context/AppContext';
+import { isActivated, isEnabledFor } from '../../data/connectors';
 import { SpecSource } from '../../types/specai';
 import { INGEST_COPY } from '../../data/specai';
 import { RefreshCw, Trash2, X } from 'lucide-react';
@@ -30,12 +31,16 @@ export const SourceDrawer: React.FC<{
     { label: 'Contents', value: source.detail ?? '—' },
     {
       label: 'Connection',
+      /* Answered against this project and department rather than a platform
+         flag, so a source connected elsewhere no longer reads as connected here. */
       value: connector
-        ? connector.activatedProject
-          ? 'Activated for this project'
-          : connector.enabledDepartment
-          ? 'Enabled for department, not activated'
-          : 'Not enabled'
+        ? isActivated(connector, currentScope.projectId, currentScope.departmentId)
+          ? 'Connected for this project'
+          : isEnabledFor(connector, currentScope.departmentId)
+          ? 'Enabled for the department, not connected here'
+          : connector.tenantAvailable
+          ? 'Not enabled for this department'
+          : 'Withdrawn platform-wide'
         : 'Local to this workspace',
     },
     { label: 'Project', value: currentScope.projectName ?? '—' },

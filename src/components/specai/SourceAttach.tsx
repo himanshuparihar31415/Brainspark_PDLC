@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { useApp } from '../../context/AppContext';
+import { isActivated } from '../../data/connectors';
 import { SpecAiState, SpecSource } from '../../types/specai';
 import {
   INGEST_COPY,
@@ -29,14 +30,18 @@ export const SourceAttach: React.FC<{
   disabled: boolean;
   onOpenSource: (source: SpecSource) => void;
 }> = ({ state, disabled, onOpenSource }) => {
-  const { connectors, addSpecSource, addToast } = useApp();
+  const { connectors, currentScope, addSpecSource, addToast } = useApp();
 
   const [open, setOpen] = useState(false);
   const [url, setUrl] = useState('');
   const picker = useRef<HTMLInputElement>(null);
 
-  const confluenceReady = Boolean(
-    connectors.find((c) => c.id === 'conn-confluence')?.activatedProject
+  /* Scoped to this project. It used to read a single platform-wide flag, so one
+     project connecting Confluence answered yes for every other project. */
+  const confluenceReady = isActivated(
+    connectors.find((c) => c.id === 'conn-confluence'),
+    currentScope.projectId,
+    currentScope.departmentId
   );
   const parsing = state.sources.some((s) => s.ingest === 'Parsing' || s.ingest === 'Queued');
 

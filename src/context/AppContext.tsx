@@ -6,6 +6,7 @@ import {
   Project,
   TeamMember,
   Connector,
+  ConnectorActivation,
   CatalogueAgent,
   AgentEvaluation,
   PromptInstruction,
@@ -144,8 +145,14 @@ interface AppContextType extends SpecAiSlice {
   closeProject: (id: string) => void;
   assignTeamMember: (data: Partial<TeamMember>) => void;
   setConnectorTenantAvailability: (id: string, available: boolean) => void;
-  toggleConnectorEnabled: (id: string) => void;
-  activateConnectorProject: (id: string, endpoint?: string, repo?: string) => void;
+  setConnectorDepartmentEnabled: (id: string, departmentId: string, enabled: boolean) => void;
+  activateConnectorProject: (
+    id: string,
+    projectId: string,
+    endpoint?: string,
+    repo?: string
+  ) => void;
+  testConnectorConnection: (id: string, projectId: string) => void;
   registerAgent: (payload: AgentRegistration) => boolean;
   updateAgent: (id: string, patch: AgentUpdate) => void;
   /** Soft delete — the agent stays in the catalogue, flagged inactive. */
@@ -530,18 +537,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
 
     const target = connectors.find((c) => c.id === id);
+    /* Counted before the state changes, so the audit records what was actually
+       destroyed rather than the empty maps left behind. */
+    const clearedDepartments = target?.enabledDepartments.length ?? 0;
+    const clearedProjects = Object.values<ConnectorActivation>(target?.activations ?? {}).filter(
+      (a) => a.status !== 'not-set-up'
+    ).length;
+
     setConnectors((prev) =>
       prev.map((c) =>
         c.id === id
           ? available
             ? { ...c, tenantAvailable: true }
-            : {
-                ...c,
-                tenantAvailable: false,
-                enabledDepartment: false,
-                activatedProject: false,
-                health: '○ Not connected' as const,
-              }
+            : /* Withdrawal cascades the whole way down: no project keeps a live
+                 binding to something the platform has retired. */
+              { ...c, tenantAvailable: false, enabledDepartments: [], activations: {} }
           : c
       )
     );
@@ -549,72 +559,190 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     addToast(
       available
         ? `${target?.name || 'Connector'} is now available to departments.`
-        : `${target?.name || 'Connector'} withdrawn platform-wide. Department and project bindings cleared.`,
+        : `${target?.name || 'Connector'} withdrawn. ${clearedDepartments} ${
+            clearedDepartments === 1 ? 'department' : 'departments'
+          } and ${clearedProjects} ${
+            clearedProjects === 1 ? 'project' : 'projects'
+          } disconnected.`,
       available ? 'success' : 'info'
     );
     addAuditLog(
       'Set Connector Platform Availability',
       `Connector: ${target?.name || id}`,
       `Available: ${available}`,
-      available ? 'Available to departments' : 'Withdrawn; downstream bindings cleared'
+      available
+        ? 'Available to departments'
+        : `Withdrawn; ${clearedDepartments} enablements and ${clearedProjects} activations cleared`
     );
   };
 
-  const toggleConnectorEnabled = (id: string) => {
+  /**
+   * Department baseline, for one named department.
+   *
+   * Disabling drops the activations of that department's projects only — the
+   * other departments' bindings are none of its business, which is the whole
+   * reason enablement is keyed rather than a flag.
+   */
+  const setConnectorDepartmentEnabled = (
+    id: string,
+    departmentId: string,
+    enabled: boolean
+  ) => {
     if (!canManageConnector(currentRole, 'department-baseline')) {
       addToast(connectorDeniedReason('department-baseline'), 'error');
       return;
     }
 
     const target = connectors.find((c) => c.id === id);
-    if (target && !target.tenantAvailable) {
+    if (!target) return;
+    if (!target.tenantAvailable) {
       addToast(`${target.name} is not available on this platform.`, 'error');
       return;
     }
 
+    const department = departments.find((d) => d.id === departmentId);
+    const theirProjects = projects.filter((p) => p.departmentId === departmentId).map((p) => p.id);
+    const dropped = theirProjects.filter(
+      (pid) => target.activations[pid] && target.activations[pid].status !== 'not-set-up'
+    ).length;
+
     setConnectors((prev) =>
-      prev.map((c) =>
-        c.id === id
-          ? c.enabledDepartment
-            ? // Disabling the baseline also drops project activations beneath it.
-              { ...c, enabledDepartment: false, activatedProject: false, health: '○ Not connected' as const }
-            : { ...c, enabledDepartment: true }
-          : c
-      )
+      prev.map((c) => {
+        if (c.id !== id) return c;
+        if (enabled) {
+          return {
+            ...c,
+            enabledDepartments: [...new Set([...c.enabledDepartments, departmentId])],
+          };
+        }
+        const activations = { ...c.activations };
+        theirProjects.forEach((pid) => delete activations[pid]);
+        return {
+          ...c,
+          enabledDepartments: c.enabledDepartments.filter((d) => d !== departmentId),
+          activations,
+        };
+      })
     );
-    addToast(`Updated connector department status.`);
-    addAuditLog('Toggle Connector Baseline', `Connector ID: ${id}`, 'Department enable toggle', 'Updated connector status');
+
+    addToast(
+      enabled
+        ? `${target.name} enabled for ${department?.name ?? 'the department'}.`
+        : `${target.name} disabled for ${department?.name ?? 'the department'}. ${dropped} ${
+            dropped === 1 ? 'project' : 'projects'
+          } disconnected.`,
+      enabled ? 'success' : 'info'
+    );
+    addAuditLog(
+      'Set Connector Department Baseline',
+      `${target.name} · ${department?.name ?? departmentId}`,
+      `Enabled: ${enabled}`,
+      enabled ? 'Projects may now activate it' : `${dropped} project activations cleared`
+    );
   };
 
-  const activateConnectorProject = (id: string, endpoint?: string, repo?: string) => {
+  /** Binds one project, with credentials scoped to that project alone. */
+  const activateConnectorProject = (
+    id: string,
+    projectId: string,
+    endpoint?: string,
+    repo?: string
+  ) => {
     if (!canManageConnector(currentRole, 'project-activation')) {
       addToast(connectorDeniedReason('project-activation'), 'error');
       return;
     }
 
-    const gate = connectors.find((c) => c.id === id);
-    if (gate && !gate.enabledDepartment) {
-      addToast(`${gate.name} is not enabled for this department.`, 'error');
+    const target = connectors.find((c) => c.id === id);
+    const project = projects.find((p) => p.id === projectId);
+    if (!target || !project) return;
+
+    if (!target.tenantAvailable) {
+      addToast(`${target.name} is not available on this platform.`, 'error');
       return;
     }
+    if (!target.enabledDepartments.includes(project.departmentId)) {
+      addToast(`${target.name} is not enabled for ${project.departmentName}.`, 'error');
+      return;
+    }
+
+    const existing = target.activations[projectId];
 
     setConnectors((prev) =>
       prev.map((c) =>
         c.id === id
           ? {
               ...c,
-              activatedProject: true,
-              health: '● Connected' as const,
-              endpointUrl: endpoint || c.endpointUrl,
-              workspaceRepo: repo || c.workspaceRepo,
-              lastSyncTime: 'Just now',
+              activations: {
+                ...c.activations,
+                [projectId]: {
+                  projectId,
+                  status: 'connected',
+                  syncType: existing?.syncType ?? '↕ Bidirectional',
+                  lastSyncTime: 'Just now',
+                  lastError: undefined,
+                  endpointUrl: endpoint || existing?.endpointUrl,
+                  workspaceRepo: repo || existing?.workspaceRepo,
+                },
+              },
             }
           : c
       )
     );
+
+    addToast(`${target.name} connected for ${project.name}.`);
+    addAuditLog(
+      'Activate Connector',
+      `${target.name} · ${project.name}`,
+      `Endpoint: ${endpoint ?? '—'}`,
+      'Connected with project-scoped credentials'
+    );
+  };
+
+  /**
+   * Re-run the handshake. Simulated, and it says so by keeping whatever error
+   * the binding already carried when it fails — inventing a fresh one would make
+   * a retry look like new information.
+   */
+  const testConnectorConnection = (id: string, projectId: string) => {
     const target = connectors.find((c) => c.id === id);
-    addToast(`${target?.name || 'Connector'} activated for project.`);
-    addAuditLog('Activate Connector', `Connector: ${target?.name}`, `Endpoint: ${endpoint}`, 'Activated with project credentials');
+    const activation = target?.activations[projectId];
+    if (!target || !activation) return;
+
+    /* A binding that was failing stays failing; one that was fine reports fine.
+       Nothing here is a real network call and pretending otherwise would be a
+       lie the user cannot check. */
+    const ok = activation.status === 'connected';
+
+    addToast(
+      ok
+        ? `${target.name} responded. Last sync just now.`
+        : `${target.name} still failing — ${activation.lastError ?? 'no error recorded'}.`,
+      ok ? 'success' : 'error'
+    );
+
+    if (ok) {
+      setConnectors((prev) =>
+        prev.map((c) =>
+          c.id === id
+            ? {
+                ...c,
+                activations: {
+                  ...c.activations,
+                  [projectId]: { ...activation, lastSyncTime: 'Just now' },
+                },
+              }
+            : c
+        )
+      );
+    }
+
+    addAuditLog(
+      'Test Connector Connection',
+      `${target.name} · ${projectId}`,
+      'Manual test',
+      ok ? 'Responded' : `Failed: ${activation.lastError ?? 'unknown'}`
+    );
   };
 
   /**
@@ -878,7 +1006,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         closeProject,
         assignTeamMember,
         setConnectorTenantAvailability,
-        toggleConnectorEnabled,
+        setConnectorDepartmentEnabled,
+        testConnectorConnection,
         activateConnectorProject,
         registerAgent,
         updateAgent,
