@@ -1,4 +1,5 @@
 import { Role } from '../types';
+import { MODULE_DEFS, moduleProductName } from './modules';
 import {
   AgentExecution,
   KpiReading,
@@ -93,7 +94,7 @@ export const LEVELS: Record<
   },
   L2: {
     label: 'Module',
-    content: 'Per-module trends across Spec AI, Proto AI, Code IQ, IntelliQA, Release Pulse',
+    content: 'Per-module trends across Spec AI, Proto AI, CodeIQ, IntelliQA, Release Pulse',
     audience: 'Product owners, engineering leaders',
   },
   L3: {
@@ -592,15 +593,17 @@ export const agentProfiles = (executions: AgentExecution[]): AgentProfile[] => {
     .sort((a, b) => b.costUsd - a.costUsd);
 };
 
-export const MODULE_LABELS: Record<string, string> = {
-  spec_ai: 'Spec AI',
-  proto_ai: 'Proto AI',
-  code_iq: 'Code IQ',
-  intelli_qa: 'IntelliQA',
-  release_pulse: 'Release Pulse',
-};
+/**
+ * Run and event rows carry the server's snake_case module name. The label is
+ * derived from MODULE_DEFS rather than restated here — this map previously said
+ * 'Code IQ', a spelling no other surface used and nothing could match.
+ */
+export const MODULE_LABELS: Record<string, string> = Object.fromEntries(
+  MODULE_DEFS.map((d) => [d.apiKey, d.productName])
+);
 
-export const moduleLabel = (key: string): string => MODULE_LABELS[key] ?? key;
+/** Unknown keys are shown verbatim: better a raw key than a wrong label. */
+export const moduleLabel = (key: string): string => MODULE_LABELS[key] ?? moduleProductName(key);
 
 export const formatMoney = money;
 export const formatPct = pct;

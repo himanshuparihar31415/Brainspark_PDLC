@@ -1,4 +1,5 @@
-import { Project, Task, TeamMember } from '../types';
+import { ModuleKey, Project, Task, TeamMember } from '../types';
+import { MODULE_DEFS, moduleKeyFor } from './modules';
 import { StoryDeliveryStatus, UserStory } from '../types/specai';
 import { STORY_DELIVERY_STATUSES, isStoryDone } from './completion';
 
@@ -23,21 +24,26 @@ import { STORY_DELIVERY_STATUSES, isStoryDone } from './completion';
  * Which modules actually report story-level delivery. Everything else is shown
  * as not instrumented rather than as zero — a module with no data and a module
  * with no work look identical at 0%, and only one of them is a problem.
+ *
+ * Keyed by ModuleKey rather than by label. The previous version matched on the
+ * string 'Spec AI' and listed a sibling as 'Code IQ', which resolved to no
+ * module at all: the rollup it keyed produced an empty set that rendered
+ * identically to a module with no work.
  */
-export const INSTRUMENTED_MODULES = ['Spec AI'] as const;
+export const INSTRUMENTED_MODULE_KEYS: ModuleKey[] = ['specai'];
 
-export const DELIVERY_MODULES = [
-  'Spec AI',
-  'Proto AI',
-  'Code IQ',
-  'IntelliQA',
-  'Release Pulse',
-] as const;
+/** Rollup order. Labels come from MODULE_DEFS, so a sixth spelling cannot appear. */
+export const DELIVERY_MODULE_KEYS: ModuleKey[] = MODULE_DEFS.map((d) => d.key);
 
-export type DeliveryModule = (typeof DELIVERY_MODULES)[number];
+export const DELIVERY_MODULES: string[] = MODULE_DEFS.map((d) => d.productName);
 
-export const isInstrumented = (module: string): boolean =>
-  (INSTRUMENTED_MODULES as readonly string[]).includes(module);
+export type DeliveryModule = string;
+
+/** Accepts any spelling — a key, a display name, or a tracker's own wording. */
+export const isInstrumented = (module: string): boolean => {
+  const key = moduleKeyFor(module);
+  return key !== null && INSTRUMENTED_MODULE_KEYS.includes(key);
+};
 
 // ───────────────────────────── Shape ─────────────────────────────
 

@@ -7,6 +7,7 @@ import {
   CardType,
   JiraMapping,
   QuestionStatus,
+  QuestionTrack,
   SourceType,
   SpecAiState,
   SpecStageKey,
@@ -1042,6 +1043,47 @@ export const useSpecAiSlice = ({
     );
   };
 
+  /**
+   * Raise a question from a downstream module.
+   *
+   * The only write Spec AI accepts from outside itself, and it is deliberately
+   * the weakest one available: a question, owned by the spec's owner, that
+   * somebody still has to answer. A downstream module must not be able to edit a
+   * requirement or a story — CodeIQ observing that a criterion caused nine
+   * discarded attempts is evidence that it was written badly, not authority to
+   * rewrite it.
+   *
+   * Duplicate text is ignored rather than stacked. A signal emitted twice is the
+   * same signal.
+   */
+  const raiseSpecQuestion = (
+    projectId: string,
+    text: string,
+    rationale: string,
+    track: QuestionTrack = 'Product'
+  ): boolean => {
+    let raised = false;
+    patch(projectId, (s) => {
+      if (s.questions.some((q) => q.text.toLowerCase() === text.toLowerCase())) return s;
+      raised = true;
+      return {
+        ...s,
+        questions: [
+          ...s.questions,
+          {
+            id: nid('q'),
+            track,
+            text,
+            rationale,
+            owner: currentRole === 'Product Manager' ? currentUserName : 'Maya Kapoor',
+            status: 'Open' as const,
+          },
+        ],
+      };
+    });
+    return raised;
+  };
+
   const setStoryDeliveryStatus = (
     projectId: string,
     storyId: string,
@@ -1093,6 +1135,7 @@ export const useSpecAiSlice = ({
     setJiraMapping,
     exportStoriesToJira,
     setStoryDeliveryStatus,
+    raiseSpecQuestion,
   };
 };
 

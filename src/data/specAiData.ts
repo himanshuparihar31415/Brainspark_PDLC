@@ -591,31 +591,37 @@ const finEdge: SpecAiState = {
       fallback: 'After three failed attempts, prompt for PIN',
       acceptance: [
         {
+          id: 'AC-1',
           given: 'a registered supported device',
           when: 'biometric verification succeeds',
           then: 'the customer is authenticated and reaches the dashboard',
         },
         {
+          id: 'AC-2',
           given: 'three consecutive biometric failures',
           when: 'the customer retries',
           then: 'the app requires PIN authentication',
         },
         {
+          id: 'AC-3',
           given: 'biometric capability is unavailable',
           when: 'the login screen opens',
           then: 'the biometric option is hidden and PIN remains available',
         },
         {
+          id: 'AC-4',
           given: 'a device binding has been revoked',
           when: 'biometric login is attempted from that device',
           then: 'the attempt is refused and a security event is recorded',
         },
         {
+          id: 'AC-5',
           given: 'a successful biometric login',
           when: 'the session token is issued',
           then: 'the token honours the existing 15-minute expiry',
         },
         {
+          id: 'AC-6',
           given: 'a rooted or jailbroken device',
           when: 'the login screen opens',
           then: 'biometric login is not offered',
@@ -640,6 +646,7 @@ const finEdge: SpecAiState = {
         'Three consecutive failures force PIN authentication and emit a security event to the audit bus',
       acceptance: [
         {
+          id: 'AC-1',
           given: 'three consecutive biometric failures',
           when: 'the third failure is recorded',
           then: 'a security event carrying the device identifier is published',

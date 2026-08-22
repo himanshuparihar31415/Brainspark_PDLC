@@ -1,39 +1,32 @@
+@import '../workspace.css';
+
 /*
  * Spec AI v2 design system — lifted from spec_ai_mockup.html.
  *
  * Everything is scoped under `.sx` and uses bespoke class names rather than
  * Tailwind utilities. That is deliberate: the app's index.css remaps slate and
  * indigo to an Apple palette through @theme, so anything built with its utilities
- * inherits the old look. Own variables plus own class names is the only way this
- * design survives inside the existing shell.
+ * inherits the old look. Own class names is the only way this design survives
+ * inside the existing shell.
  *
- * Values are the mockup's, unchanged.
+ * Values are the mockup's, unchanged — they now live in workspace.css, which
+ * CodeIQ shares.
  */
 
+/*
+ * Greys, lines, radius, fonts and the accent now come from workspace.css, which
+ * CodeIQ shares. Only the names below are local — a confidence band is Spec AI's
+ * own vocabulary and does not mean the same thing as CodeIQ's gap.
+ */
 .sx {
-  --bg: #f6f7f9;
-  --surface: #ffffff;
-  --surface-2: #fbfbfd;
-  --ink: #14171f;
-  --ink-soft: #667085;
-  --ink-faint: #98a2b3;
-  --line: #e4e7ec;
-  --line-strong: #d0d5dd;
-  --accent: #3538cd;
-  --accent-dark: #2a2ca3;
-  --accent-soft: #eef0fc;
-  --conf-high: #16794f;
-  --conf-high-bg: #e7f6ef;
-  --conf-med: #92670b;
-  --conf-med-bg: #fbf3df;
-  --conf-low: #b42318;
-  --conf-low-bg: #fdedec;
-  --flag: #6941c6;
-  --flag-bg: #f4ebff;
-  --radius: 10px;
-  --font-display: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
-  --font-body: 'Inter', ui-sans-serif, system-ui, sans-serif;
-  --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
+  --conf-high: var(--sem-good);
+  --conf-high-bg: var(--sem-good-bg);
+  --conf-med: var(--sem-warn);
+  --conf-med-bg: var(--sem-warn-bg);
+  --conf-low: var(--sem-bad);
+  --conf-low-bg: var(--sem-bad-bg);
+  --flag: var(--sem-note);
+  --flag-bg: var(--sem-note-bg);
 
   height: 100%;
   display: flex;

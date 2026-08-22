@@ -19,8 +19,10 @@ export const MODULE_DEFS: ModuleDef[] = [
   {
     key: 'specai',
     name: 'Spec AI',
+    productName: 'Spec AI',
+    apiKey: 'spec_ai',
+    aliases: ['SpecAI'],
     agentId: 'agent-specai',
-    phaseMatch: 'SpecAI',
     primary: { label: 'stories created', unit: 'count' },
     secondary: { label: 'pushed to tracker', unit: 'count' },
     quality: { label: 'Avg story quality', unit: 'score' },
@@ -34,8 +36,10 @@ export const MODULE_DEFS: ModuleDef[] = [
   {
     key: 'design',
     name: 'Design',
+    productName: 'Proto AI',
+    apiKey: 'proto_ai',
+    aliases: ['DesignAI', 'Design AI', 'ProtoAI', 'design_ai'],
     agentId: 'agent-design',
-    phaseMatch: 'DesignAI',
     primary: { label: 'designs generated', unit: 'count' },
     secondary: { label: 'accepted', unit: 'count' },
     quality: { label: 'Avg design consistency', unit: 'score' },
@@ -49,23 +53,33 @@ export const MODULE_DEFS: ModuleDef[] = [
   {
     key: 'codeiq',
     name: 'CodeIQ',
+    productName: 'CodeIQ',
+    apiKey: 'code_iq',
+    /* 'Code IQ' was the delivery and Observability label and resolved to nothing. */
+    aliases: ['Code IQ'],
     agentId: 'agent-codeiq',
-    phaseMatch: 'CodeIQ',
     primary: { label: 'PRs scaffolded', unit: 'count' },
     secondary: { label: 'test suites generated', unit: 'count' },
     quality: { label: 'Avg code-scan pass rate', unit: 'percent' },
     pooledRoles: ['Tech Lead'],
     pipeline: {
-      unit: 'PRs',
-      completionPhrase: 'merged',
+      /*
+       * Criteria, not PRs. A merged PR that realized nothing is precisely what
+       * this module exists to catch, so counting merges would report the thing
+       * being measured as the measure.
+       */
+      unit: 'criteria',
+      completionPhrase: 'realized in code',
       workspaceSubLabel: 'Code intelligence & scaffolding',
     },
   },
   {
     key: 'intelliqa',
     name: 'IntelliQA',
+    productName: 'IntelliQA',
+    apiKey: 'intelli_qa',
+    aliases: ['Intelli QA'],
     agentId: 'agent-intelliqa',
-    phaseMatch: 'IntelliQA',
     primary: { label: 'test cases created', unit: 'count' },
     secondary: { label: 'runs', unit: 'count' },
     quality: { label: 'Avg defect-detection rate', unit: 'percent' },
@@ -80,8 +94,10 @@ export const MODULE_DEFS: ModuleDef[] = [
   {
     key: 'release',
     name: 'Release',
+    productName: 'Release Pulse',
+    apiKey: 'release_pulse',
+    aliases: ['ReleasePulse'],
     agentId: 'agent-release',
-    phaseMatch: 'Release Pulse',
     primary: { label: 'deploys', unit: 'count' },
     secondary: { label: 'deploy success rate', unit: 'percent' },
     quality: { label: 'Avg lead time to release', unit: 'days' },
@@ -96,6 +112,59 @@ export const MODULE_DEFS: ModuleDef[] = [
 
 export const moduleDef = (key: ModuleKey): ModuleDef =>
   MODULE_DEFS.find((m) => m.key === key) as ModuleDef;
+
+// ───────────────────────── Module identity ─────────────────────────
+
+/**
+ * The module's identity lives in exactly one place, and this is it.
+ *
+ * Five names for one capability are already in the tree and most of them are
+ * legitimate: `ModuleKey` is the typed key, `apiKey` mirrors the PromptOps and
+ * Observability server contract, `name` and `productName` are two different
+ * display registers, and free-text `Task.module` arrives from fixtures in
+ * whatever case someone typed. What was not legitimate was 'Code IQ' — a label
+ * that matched none of the above, so the delivery rollup it keyed silently
+ * produced an empty set rather than an error.
+ *
+ * A sixth, `phaseMatch`, was removed after this resolver landed: each of its
+ * values was already the module's name, productName or an alias, so it was one
+ * more spelling to keep in step for no additional match.
+ *
+ * Everything below resolves a string to a `ModuleKey`. Nothing else in the
+ * codebase should compare module names by hand.
+ */
+
+/** Case- and separator-insensitive: 'Code IQ', 'code_iq' and 'codeiq' all agree. */
+const normalise = (label: string) => label.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+/**
+ * Resolve any spelling of a module to its key, or null when nothing matches.
+ *
+ * Null is the point. A caller that filters on a label the platform does not
+ * recognise gets nothing back, and the difference between "no work in this
+ * module" and "this label is a typo" is invisible in the result — so callers
+ * are made to handle the miss.
+ */
+export const moduleKeyFor = (label: string): ModuleKey | null => {
+  const target = normalise(label);
+  if (!target) return null;
+
+  const hit = MODULE_DEFS.find((d) =>
+    [d.key, d.name, d.productName, d.apiKey, ...d.aliases].some(
+      (candidate) => normalise(candidate) === target
+    )
+  );
+  return hit?.key ?? null;
+};
+
+/** True when a free-text module name belongs to this module. */
+export const isModule = (label: string, key: ModuleKey) => moduleKeyFor(label) === key;
+
+/** The product-facing label for a module, whatever namespace the caller holds. */
+export const moduleProductName = (label: string): string => {
+  const key = moduleKeyFor(label);
+  return key ? moduleDef(key).productName : label;
+};
 
 export interface ModuleRollup {
   key: ModuleKey;

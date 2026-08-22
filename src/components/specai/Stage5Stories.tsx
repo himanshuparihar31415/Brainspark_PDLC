@@ -448,8 +448,10 @@ export const Stage5Stories: React.FC<{
                 <div className="text-[9px] font-bold uppercase tracking-wider text-slate-400">
                   Acceptance criteria
                 </div>
-                {s.acceptance.map((ac, i) => (
-                  <p key={i} className="font-mono text-[10px] leading-relaxed text-slate-700">
+                {s.acceptance.map((ac) => (
+                  <p key={ac.id} className="font-mono text-[10px] leading-relaxed text-slate-700">
+                    <b className="text-slate-500">{ac.id}</b>
+                    <br />
                     <b className="text-slate-500">Given</b> {ac.given}
                     <br />
                     <b className="text-slate-500">When</b> {ac.when}

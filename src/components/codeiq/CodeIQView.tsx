@@ -1,186 +1,193 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import './codeiq.css';
+import { Plug } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
-import { Criterion, ReviewTarget, ThrashRow } from '../../types/codeiq';
-import { REVIEW_TARGETS, THRASH } from '../../data/codeiq';
+import { Criterion, ThrashReading } from '../../types/codeiq';
+import { codeIqProjectFor } from '../../data/codeiq';
+import { canManageRepoPolicy } from '../../data/rbac';
+import { Surface, SurfaceRail } from './SurfaceRail';
 import { ReviewPanel } from './ReviewPanel';
 import { DashboardPanel } from './DashboardPanel';
+import { SpecQualityPanel } from './SpecQualityPanel';
+import { UntrackedPanel } from './UntrackedPanel';
+import { RepoPolicyPanel } from './RepoPolicyPanel';
 
 /**
  * CodeIQ — intent-to-code lineage and adjudication.
  *
- * Two surfaces, because those are the two the module actually owes anyone: the
- * review panel a developer or reviewer reads against a PR, and the leadership
- * dashboard. The traceability graph is a third surface and is not built here.
+ * Five surfaces down a rail rather than across a strip. The strip presented them
+ * as peers and they are not: three are readings of one lineage — a reviewer, a
+ * lead and a PM asking different questions of the same data — and two are the
+ * change that lineage could not explain and the configuration deciding what it
+ * can explain. See SurfaceRail.
  *
- * In the product these are not both a portal. The review panel belongs inline
- * in the IDE and on the PR comment — a developer should almost never "go to
- * CodeIQ". The tab strip is a demo affordance, and the copy says so rather than
- * quietly implying a portal-first design.
+ * There is no top bar. It held the module name, a tagline, the project name and
+ * the tabs: a full row of height whose first two repeated what the rail
+ * highlights and whose third repeated what the platform header prints two rows
+ * above it.
+ *
+ * In the product these surfaces are not all a portal. The review panel belongs
+ * inline in the IDE and on the PR comment — a developer should almost never "go
+ * to CodeIQ" — and the copy says so rather than quietly implying otherwise.
+ *
+ * Everything rendered belongs to one project, read from `currentScope`.
  */
-
-type Surface = 'review' | 'dashboard';
-
-/** Who is acting, for the dismissal record. Never anonymous. */
-const stamp = () =>
-  new Date().toLocaleString('en-GB', {
-    day: 'numeric',
-    month: 'short',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-
 export const CodeIQView: React.FC = () => {
-  const { currentUser, addToast, addAuditLog } = useApp();
-  const actor = currentUser?.name ?? 'Unknown user';
+  const {
+    currentScope,
+    currentRole,
+    projects,
+    codeIqFor,
+    adjudicate,
+    sendThrashUpstream,
+    setUntrackedPolicy,
+    setRepoPolicy,
+    navigateTo,
+  } = useApp();
 
   const [surface, setSurface] = useState<Surface>('review');
-  const [targets, setTargets] = useState<ReviewTarget[]>(REVIEW_TARGETS);
-  const [activeTicket, setActiveTicket] = useState(REVIEW_TARGETS[0].ticket);
-  const [thrash, setThrash] = useState<ThrashRow[]>(THRASH);
+  const [activeStory, setActiveStory] = useState<string | null>(null);
+  const [railMini, setRailMini] = useState(false);
 
-  const target = targets.find((t) => t.ticket === activeTicket) ?? targets[0];
+  /* One project at a time — see codeIqProjectFor for why there is no rollup. */
+  const project = codeIqProjectFor(currentScope, projects);
+  const projectId = project?.id ?? '';
+  const { state, indexed, indexedAt, feeds, targets, thrash, instrumentation } =
+    codeIqFor(projectId);
 
-  /** Rewrite one criterion inside the active target, leaving everything else alone. */
-  const patchCriterion = (id: string, fn: (c: Criterion) => Criterion) =>
-    setTargets((all) =>
-      all.map((t) =>
-        t.ticket !== target.ticket
-          ? t
-          : { ...t, criteria: t.criteria.map((c) => (c.id === id ? fn(c) : c)) }
-      )
-    );
+  /* A story selected in one project must not survive into the next. */
+  useEffect(() => {
+    setActiveStory(null);
+  }, [projectId]);
 
-  /**
-   * What each action does.
+  const target = targets.find((t) => t.storyKey === activeStory) ?? targets[0] ?? null;
+
+  const openStory = (storyKey: string) => {
+    if (targets.some((t) => t.storyKey === storyKey)) {
+      setActiveStory(storyKey);
+      setSurface('review');
+    }
+  };
+
+  const rail = (
+    <SurfaceRail
+      surface={surface}
+      onPick={setSurface}
+      collapsed={railMini}
+      onToggleCollapsed={() => setRailMini((v) => !v)}
+      untrackedCount={state.untracked.length}
+      projectName={project?.name}
+    />
+  );
+
+  /*
+   * Three kinds of nothing, and each one asks for something different.
    *
-   * The two that change the verdict — "not applicable" and "drift accepted" —
-   * write a dismissal rather than deleting the row. A silently removed finding
-   * is indistinguishable from one that was never found, and the graph is only
-   * worth trusting if an override leaves a name behind it.
+   *   no source feed → connect a repository
+   *   not indexed    → wait for the first scan
+   *   nothing open   → there is genuinely nothing to adjudicate
+   *
+   * Collapsing them would be the module's worst failure mode: a clean dashboard
+   * where no code was ever read claims the code was checked and cleared, which
+   * is the one thing CodeIQ must never imply.
    */
-  const act = (criterion: Criterion, action: string, secondary: boolean) => {
-    const audit = (outcome: string) =>
-      addAuditLog('CodeIQ Adjudication', `${target.ticket} · ${criterion.id}`, action, outcome);
+  const blank = !feeds.source ? (
+    <div className="cq-blank">
+      <Plug size={18} />
+      <b>No source control connected for {project?.name ?? 'this project'}.</b>
+      <p>
+        CodeIQ maps acceptance criteria onto commits, so it needs a repository feed before it can
+        say anything. Nothing has been read here — which is not the same as finding no gaps.
+      </p>
+      <button className="cq-btn primary" onClick={() => navigateTo('Connectors')}>
+        Open Connectors
+      </button>
+    </div>
+  ) : !indexed ? (
+    <div className="cq-blank">
+      <b>{feeds.live.join(' and ')} connected. Nothing indexed yet.</b>
+      <p>
+        The first scan builds the criterion-to-code map for this project. Until it runs there is
+        nothing to adjudicate, and no verdict either way on what has been built.
+      </p>
+    </div>
+  ) : null;
 
-    if (!secondary) {
-      switch (criterion.status) {
-        case 'missing':
-          patchCriterion(criterion.id, (c) => ({ ...c, flaggedUpstream: true }));
-          addToast(`${criterion.id} sent back to Spec AI as unrealized.`);
-          audit('Returned upstream to Spec AI');
-          return;
-        case 'drifted':
-          addToast(`${criterion.id} flagged for rework. The PR is not blocked.`, 'info');
-          audit('Flagged for rework; merge not gated');
-          return;
-        case 'partial':
-          addToast(`Showing the part of ${criterion.id} with no mapped code.`, 'info');
-          audit('Inspected partial coverage');
-          return;
-        default:
-          addToast(`Evidence for ${criterion.id} — ${criterion.files.length} mapped files.`, 'info');
-          audit('Viewed evidence');
-          return;
-      }
-    }
-
-    /* Secondary actions are the overrides, and all of them are recorded. */
-    const as: Criterion['dismissal'] =
-      criterion.status === 'drifted'
-        ? {
-            by: actor,
-            at: stamp(),
-            as: 'drift accepted',
-            reason: 'Realized behaviour accepted as intended; the criterion is now out of date.',
-          }
-        : criterion.status === 'missing'
-        ? {
-            by: actor,
-            at: stamp(),
-            as: 'not applicable',
-            reason: 'Marked not applicable to this change set.',
-          }
-        : criterion.status === 'partial'
-        ? {
-            by: actor,
-            at: stamp(),
-            as: 'accepted as complete',
-            reason: 'Remaining scope accepted as out of this ticket.',
-          }
-        : undefined;
-
-    if (!as) {
-      addToast('Mapping disputed. Recorded against the lineage.', 'info');
-      audit('Mapping disputed');
-      return;
-    }
-
-    patchCriterion(criterion.id, (c) => ({ ...c, dismissal: as }));
-    addToast(`${criterion.id} — ${as.as}. Recorded against ${actor}.`, 'info');
-    audit(`Dismissed as ${as.as}`);
-  };
-
-  const sendUpstream = (row: ThrashRow) => {
-    setThrash((rows) =>
-      rows.map((r) =>
-        r.ticket === row.ticket && r.criterionId === row.criterionId
-          ? { ...r, sentUpstream: true }
-          : r
-      )
+  if (blank) {
+    return (
+      <div className="cq">
+        {rail}
+        <div className="cq-body">
+          <div className="cq-wrap">{blank}</div>
+        </div>
+      </div>
     );
-    addToast(`${row.ticket} ${row.criterionId} sent to Spec AI as under-specified.`);
-    addAuditLog(
-      'CodeIQ Thrash Signal',
-      `${row.ticket} · ${row.criterionId}`,
-      `${row.discarded} of ${row.attempts} attempts discarded over ${row.days} days`,
-      'Emitted upstream to Spec AI'
-    );
-  };
-
-  const openTicket = (key: string) => {
-    if (!targets.some((t) => t.ticket === key)) {
-      addToast(`No review panel wired for ${key} in this mock.`, 'info');
-      return;
-    }
-    setActiveTicket(key);
-    setSurface('review');
-  };
+  }
 
   return (
     <div className="cq">
-      <header className="cq-top">
-        <span className="cq-mark">
-          CodeIQ
-          <em>intent → code lineage</em>
-        </span>
-
-        <div className="cq-tabs">
-          <button className={surface === 'review' ? 'on' : ''} onClick={() => setSurface('review')}>
-            Review
-          </button>
-          <button
-            className={surface === 'dashboard' ? 'on' : ''}
-            onClick={() => setSurface('dashboard')}
-          >
-            Dashboard
-          </button>
-        </div>
-      </header>
+      {rail}
 
       <div className="cq-body">
+        {!feeds.agent && (
+          <div className="cq-wrap" style={{ paddingBottom: 0 }}>
+            <div className="cq-degraded">
+              No IDE agent connected. Criterion-to-code mapping still works; the generation
+              attempts behind each criterion do not, so lineage and rework signals are blank.
+            </div>
+          </div>
+        )}
+
         {surface === 'review' ? (
-          <ReviewPanel
-            target={target}
+          target ? (
+            <ReviewPanel
+              target={target}
+              targets={targets}
+              onPickTarget={setActiveStory}
+              onAct={(criterion: Criterion, action: string, secondary: boolean) =>
+                adjudicate(projectId, target.storyKey, criterion, action, secondary)
+              }
+            />
+          ) : (
+            <div className="cq-wrap">
+              <div className="cq-blank">
+                <b>Nothing open to adjudicate.</b>
+                <p>
+                  {/*
+                   * Named per repo, because there is no honest single answer: two
+                   * repos scanned eleven minutes apart give the project no one time.
+                   */}
+                  Indexed {indexedAt.map((r) => `${r.repo} ${r.at}`).join(', ') || 'recently'}. No
+                  story in this project has code landed against it yet, so there is nothing to map
+                  criteria to.
+                </p>
+              </div>
+            </div>
+          )
+        ) : surface === 'dashboard' ? (
+          <DashboardPanel
+            instrumentation={instrumentation}
             targets={targets}
-            onPickTarget={setActiveTicket}
-            onAct={act}
+            untracked={state.untracked}
+            thrash={thrash}
+            onSendUpstream={(row: ThrashReading) => sendThrashUpstream(projectId, row)}
+            onOpenStory={openStory}
+          />
+        ) : surface === 'spec' ? (
+          <SpecQualityPanel
+            thrash={thrash}
+            onSendUpstream={(row: ThrashReading) => sendThrashUpstream(projectId, row)}
+          />
+        ) : surface === 'untracked' ? (
+          <UntrackedPanel
+            untracked={state.untracked}
+            onSetPolicy={(commit, policy) => setUntrackedPolicy(projectId, commit, policy)}
           />
         ) : (
-          <DashboardPanel
-            thrash={thrash}
-            onSendUpstream={sendUpstream}
-            onOpenTicket={openTicket}
+          <RepoPolicyPanel
+            repos={state.repos}
+            editable={canManageRepoPolicy(currentRole)}
+            onChange={(repo, next) => setRepoPolicy(projectId, repo, next)}
           />
         )}
       </div>

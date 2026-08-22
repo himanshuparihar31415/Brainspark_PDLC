@@ -328,10 +328,10 @@ export const DeliveryPanel: React.FC<{ state: SpecAiState; readOnly: boolean }> 
                       As <b>{s.role}</b>, I want {s.goal} so that {s.benefit}.
                     </p>
 
-                    {s.acceptance.map((a, i) => (
-                      <div className="dlv-ac" key={i}>
-                        <span>Given</span> {a.given} <span>When</span> {a.when} <span>Then</span>{' '}
-                        {a.then}
+                    {s.acceptance.map((a) => (
+                      <div className="dlv-ac" key={a.id}>
+                        <span>{a.id}</span> <span>Given</span> {a.given} <span>When</span> {a.when}{' '}
+                        <span>Then</span> {a.then}
                       </div>
                     ))}
 

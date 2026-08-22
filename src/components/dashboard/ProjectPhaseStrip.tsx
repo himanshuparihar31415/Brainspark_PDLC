@@ -2,7 +2,7 @@ import React from 'react';
 import { useApp } from '../../context/AppContext';
 import { ModuleKey } from '../../types';
 import { TileKey } from './RollupTiles';
-import { MODULE_DEFS, formatUsd, moduleDef } from '../../data/modules';
+import { MODULE_DEFS, formatUsd, isModule, moduleDef } from '../../data/modules';
 import { Pipeline } from '../command/Pipeline';
 import { BlockersRail, buildBlockers } from '../command/BlockersRail';
 import { AwaitingReview, buildReviewQueue } from '../command/AwaitingReview';
@@ -68,7 +68,7 @@ export const ProjectPhaseStrip: React.FC<ProjectPhaseStripProps> = ({
     Partial<Record<ModuleKey, { text: string; sortValue: number }>>
   >((acc, def) => {
     const spend = projectTasks
-      .filter((t) => t.module.toLowerCase().includes(def.phaseMatch.toLowerCase()))
+      .filter((t) => isModule(t.module, def.key))
       .reduce((sum, t) => sum + (t.costUsd ?? 0), 0);
     if (spend > 0) acc[def.key] = { text: formatUsd(spend), sortValue: spend };
     return acc;

@@ -217,7 +217,7 @@ const CriterionRow: React.FC<{
 export const ReviewPanel: React.FC<{
   target: ReviewTarget;
   targets: ReviewTarget[];
-  onPickTarget: (ticket: string) => void;
+  onPickTarget: (storyKey: string) => void;
   onAct: (criterion: Criterion, action: string, secondary: boolean) => void;
 }> = ({ target, targets, onPickTarget, onAct }) => {
   const [filter, setFilter] = useState<CriterionStatus | 'all'>('all');
@@ -237,7 +237,8 @@ export const ReviewPanel: React.FC<{
       {/* ── What is being adjudicated ── */}
       <div className="cq-target">
         <div style={{ minWidth: 0 }}>
-          <span className="key">{target.ticket}</span>
+          <span className="key">{target.storyKey}</span>
+          <span className="cq-from">from Spec AI</span>
           <h1>{target.title}</h1>
           <div className="cq-meta">
             <span>
@@ -257,7 +258,7 @@ export const ReviewPanel: React.FC<{
           <i>CodeIQ does not change it — it only says what is true</i>
           {targets.length > 1 && (
             <select
-              value={target.ticket}
+              value={target.storyKey}
               onChange={(e) => onPickTarget(e.target.value)}
               style={{
                 marginTop: 6,
@@ -270,8 +271,8 @@ export const ReviewPanel: React.FC<{
               }}
             >
               {targets.map((t) => (
-                <option key={t.ticket} value={t.ticket}>
-                  {t.ticket} · {t.pr}
+                <option key={t.storyKey} value={t.storyKey}>
+                  {t.storyKey} · {t.pr}
                 </option>
               ))}
             </select>

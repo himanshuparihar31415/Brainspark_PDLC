@@ -49,16 +49,19 @@ export const DELIVERY_STORIES: UserStory[] = [
     benefit: 'I am not made to type a PIN every single time I open the app',
     acceptance: [
       {
+        id: 'AC-1',
         given: 'a customer who has completed onboarding on a device with an enrolled biometric',
         when: 'they open the app',
         then: 'biometric sign-in is offered as the default method and no PIN is requested',
       },
       {
+        id: 'AC-2',
         given: 'the biometric check succeeds',
         when: 'the session is issued',
         then: 'the customer lands on the account summary and the audit record shows a sign-in method of "biometric"',
       },
       {
+        id: 'AC-3',
         given: 'the device has no biometric enrolled at the operating-system level',
         when: 'the app starts',
         then: 'PIN entry is shown with no mention of biometrics anywhere on the screen',
@@ -89,16 +92,19 @@ export const DELIVERY_STORIES: UserStory[] = [
     benefit: 'a failing sensor never locks me out of my own account',
     acceptance: [
       {
+        id: 'AC-1',
         given: 'biometric sign-in is offered',
         when: 'the biometric check fails three consecutive times',
         then: 'PIN entry is shown and further biometric attempts are refused for the rest of that session',
       },
       {
+        id: 'AC-2',
         given: 'a customer who signed in with their PIN after a biometric lockout',
         when: 'they next launch the app',
         then: 'biometric sign-in is offered again',
       },
       {
+        id: 'AC-3',
         given: 'the third consecutive failure',
         when: 'the lockout is applied',
         then: 'a biometric_lockout security event is raised carrying the device identifier and no customer-identifying data',
@@ -129,16 +135,19 @@ export const DELIVERY_STORIES: UserStory[] = [
     benefit: 'a rooted handset cannot be used to bypass the PIN',
     acceptance: [
       {
+        id: 'AC-1',
         given: 'a device reporting a jailbreak, root, or an unlocked bootloader',
         when: 'the app starts',
         then: 'biometric sign-in is not offered and the customer is taken straight to PIN entry',
       },
       {
+        id: 'AC-2',
         given: 'a device that had a biometric enrolment and has since become untrusted',
         when: 'the integrity check runs',
         then: 'the enrolment is revoked server-side and the customer is told why at the next sign-in',
       },
       {
+        id: 'AC-3',
         given: 'the integrity check itself cannot complete',
         when: 'the app starts',
         then: 'the device is treated as untrusted rather than trusted',
@@ -169,16 +178,19 @@ export const DELIVERY_STORIES: UserStory[] = [
     benefit: 'resetting my device does not cost me the feature permanently',
     acceptance: [
       {
+        id: 'AC-1',
         given: 'a customer whose device was factory reset',
         when: 'they sign in with their PIN',
         then: 'they are offered biometric enrolment again as a fresh device binding',
       },
       {
+        id: 'AC-2',
         given: 'a previous binding for that same device still exists',
         when: 'the new enrolment completes',
         then: 'the old binding is revoked and does not count toward the registered-device limit',
       },
       {
+        id: 'AC-3',
         given: 'a customer who declines re-enrolment',
         when: 'they sign in again',
         then: 'they are not asked a second time for thirty days',
@@ -211,16 +223,19 @@ export const DELIVERY_STORIES: UserStory[] = [
     benefit: 'customers are not re-challenged mid-task for no security gain',
     acceptance: [
       {
+        id: 'AC-1',
         given: 'a session opened with biometrics',
         when: 'the customer has been idle for less than thirty minutes',
         then: 'the session stays valid and no re-authentication is requested',
       },
       {
+        id: 'AC-2',
         given: 'an idle period that reaches thirty minutes',
         when: 'the customer next interacts',
         then: 're-authentication is required and the reason is recorded as idle_timeout',
       },
       {
+        id: 'AC-3',
         given: 'a payment or a change of payee',
         when: 'the session is more than five minutes old',
         then: 'step-up authentication is required regardless of the idle timer',
@@ -253,16 +268,19 @@ export const DELIVERY_STORIES: UserStory[] = [
     benefit: 'turning the feature off actually takes effect everywhere, not just next time',
     acceptance: [
       {
+        id: 'AC-1',
         given: 'a customer who disables biometric sign-in in settings',
         when: 'the change is saved',
         then: 'every active session on every device is invalidated and the customer is signed out',
       },
       {
+        id: 'AC-2',
         given: 'a session open on another device',
         when: 'that device next calls the API',
         then: 'it receives a 401 and returns the customer to PIN entry',
       },
       {
+        id: 'AC-3',
         given: 'a revocation that partially fails',
         when: 'any session cannot be invalidated',
         then: 'the setting change is rolled back and the customer is told biometrics are still on',
@@ -295,16 +313,19 @@ export const DELIVERY_STORIES: UserStory[] = [
     benefit: 'an enrolment cannot be lifted from one handset and replayed on another',
     acceptance: [
       {
+        id: 'AC-1',
         given: 'an enrolment request carrying a device attestation',
         when: 'the attestation verifies',
         then: 'a binding is created for that device alone and returned with a binding identifier',
       },
       {
+        id: 'AC-2',
         given: 'an attestation that has already been used',
         when: 'a second binding is requested with it',
         then: 'the request is rejected with 409 and the existing binding is returned unchanged',
       },
       {
+        id: 'AC-3',
         given: 'an attestation the vendor cannot verify',
         when: 'the request is made',
         then: 'it fails closed with 503 and no binding is created',
@@ -335,16 +356,19 @@ export const DELIVERY_STORIES: UserStory[] = [
     benefit: 'losing a phone does not mean losing control of my account',
     acceptance: [
       {
+        id: 'AC-1',
         given: 'a customer with registered devices',
         when: 'they open device management',
         then: 'each device is listed with its name, the date it was last used, and whether biometrics are enabled on it',
       },
       {
+        id: 'AC-2',
         given: 'a customer removing a device',
         when: 'they confirm',
         then: 'the binding is revoked, any session on that device ends, and the list updates without a reload',
       },
       {
+        id: 'AC-3',
         given: 'a customer removing the device they are currently signed in on',
         when: 'they confirm',
         then: 'they are warned they will be signed out and must confirm a second time',
@@ -383,16 +407,19 @@ export const DELIVERY_STORIES: UserStory[] = [
     benefit: 'a compromised account cannot quietly accumulate trusted devices',
     acceptance: [
       {
+        id: 'AC-1',
         given: 'a customer who already has five registered devices',
         when: 'they attempt to register a sixth',
         then: 'registration is refused and they are shown the list to choose one to remove',
       },
       {
+        id: 'AC-2',
         given: 'a customer who has just removed a device',
         when: 'they retry registration',
         then: 'it succeeds',
       },
       {
+        id: 'AC-3',
         given: 'a binding revoked by an integrity failure',
         when: 'the registered-device count is taken',
         then: 'that binding is excluded from the total',
@@ -425,21 +452,25 @@ export const DELIVERY_STORIES: UserStory[] = [
     benefit: 'the feature can be evidenced to an auditor without reading application logs',
     acceptance: [
       {
+        id: 'AC-1',
         given: 'any biometric sign-in attempt',
         when: 'it succeeds or fails',
         then: 'an audit record is written carrying the outcome, the method, the device identifier and the timestamp',
       },
       {
+        id: 'AC-2',
         given: 'a written audit record',
         when: 'it is inspected',
         then: 'it contains no biometric template and no raw device serial',
       },
       {
+        id: 'AC-3',
         given: 'an audit store that is unavailable',
         when: 'a decision is made',
         then: 'the record is queued and written on recovery, and no sign-in is refused because of it',
       },
       {
+        id: 'AC-4',
         given: 'a compliance export for a date range',
         when: 'it runs',
         then: 'every decision in that range appears exactly once',

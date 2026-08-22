@@ -400,11 +400,31 @@ export interface ModulePipelineCopy {
 
 export interface ModuleDef {
   key: ModuleKey;
+  /** Short label, used where space is tight — pipeline cards, dashboard strips. */
   name: string;
+  /**
+   * The product-facing name, used by delivery rollups and Observability. It is
+   * genuinely not always `name`: the design module is "Design" on a pipeline card
+   * and "Proto AI" in a delivery table. Keeping both here is what stops a fifth
+   * spelling appearing the next time a surface needs the longer one.
+   */
+  productName: string;
+  /**
+   * snake_case identifier used by the PromptOps agent catalogue
+   * (`CatalogueAgent.module_name`) and by Observability runs. A second namespace
+   * rather than a stray spelling — it mirrors a server contract, so it is mapped
+   * here and never renamed to match the client.
+   */
+  apiKey: string;
+  /**
+   * Historical and alternate spellings that must still resolve to this module.
+   * Free-text module names arrive from fixtures and, eventually, from trackers;
+   * `moduleKeyFor` consults this so an unrecognised label fails loudly at the
+   * call site instead of silently matching nothing.
+   */
+  aliases: string[];
   /** Matching CatalogueAgent.id, so cards can link to the catalogue. */
   agentId: string;
-  /** Substring matched against a task's free-text module name. */
-  phaseMatch: string;
   primary: ModuleMetricDef;
   secondary: ModuleMetricDef;
   /** The module's headline quality metric. */

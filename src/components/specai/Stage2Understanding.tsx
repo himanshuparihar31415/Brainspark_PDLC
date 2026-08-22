@@ -209,9 +209,9 @@ export const Stage2Understanding: React.FC<{
                       <div className="mb-1.5 text-[9px] font-bold uppercase tracking-wider text-slate-400">
                         Acceptance criteria ({req.acceptance.length} scenarios)
                       </div>
-                      {req.acceptance.map((ac, i) => (
+                      {req.acceptance.map((ac) => (
                         <p
-                          key={i}
+                          key={ac.id}
                           className="mb-1.5 font-mono text-[9px] leading-relaxed text-slate-700"
                         >
                           <b className="text-slate-500">Given</b> {ac.given}

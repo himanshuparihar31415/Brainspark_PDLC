@@ -54,10 +54,12 @@ import {
 } from '../data/promptInstructions';
 import { INITIAL_PIPELINE } from '../data/pipelineData';
 import {
+  codeIqPhaseFromTargets,
   projectCompletionFromPhases,
   specAiPhaseFromStories,
 } from '../data/completion';
 import { SpecAiSlice, useSpecAiSlice } from './useSpecAi';
+import { CodeIqSlice, useCodeIqSlice } from './useCodeIq';
 
 export type { NavView };
 
@@ -93,7 +95,7 @@ export interface AuthResult {
   error?: string;
 }
 
-interface AppContextType extends SpecAiSlice {
+interface AppContextType extends SpecAiSlice, CodeIqSlice {
   isAuthenticated: boolean;
   currentUser: UserAccount | null;
   users: UserAccount[];
@@ -271,6 +273,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     connectors,
   });
 
+  /*
+   * CodeIQ, same shape: state keyed by project, mutations beside each other.
+   *
+   * It reads Spec AI's stories and never writes them. Passing a reader rather
+   * than letting the slice reach into Spec AI keeps the dependency one-way and
+   * visible — CodeIQ adjudicates the spec, it does not own it.
+   */
+  const codeiq = useCodeIqSlice({
+    addToast,
+    addAuditLog,
+    currentRole,
+    currentUserName: currentUser?.name ?? 'Unknown user',
+    storiesFor: (projectId: string) => spec.specAiFor(projectId).stories,
+    raiseSpecQuestion: spec.raiseSpecQuestion,
+    connectors,
+    departmentOf: (projectId: string) =>
+      projects.find((p) => p.id === projectId)?.departmentId,
+  });
+
   /**
    * Spec AI stories are the source of truth for the Spec AI pipeline card and,
    * once present, for that project's overall completion. Other module phases
@@ -304,6 +325,44 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return changed ? next : prev;
     });
   }, [spec.specAi]);
+
+  /**
+   * The CodeIQ pipeline card, derived the same way but from a different measure.
+   *
+   * CodeIQ does not own stories, so it cannot report stories finished. What it
+   * can report is how much of what it looked at is realized in code — and a
+   * phase that reads Blocked while a story claims Done is the contradiction the
+   * whole module exists to surface.
+   *
+   * Depends on Spec AI's state as well as CodeIQ's, because the targets are
+   * composed from stories on read.
+   */
+  useEffect(() => {
+    setPipeline((prev) => {
+      let changed = false;
+      const next = prev.map((phase) => {
+        if (phase.module !== 'codeiq') return phase;
+        const derived = codeIqPhaseFromTargets(codeiq.codeIqFor(phase.projectId).targets);
+        if (!derived) return phase;
+        if (
+          phase.done === derived.done &&
+          phase.total === derived.total &&
+          phase.status === derived.status
+        ) {
+          return phase;
+        }
+        changed = true;
+        return {
+          ...phase,
+          done: derived.done,
+          total: derived.total,
+          status: derived.status,
+          daysSinceChange: 0,
+        };
+      });
+      return changed ? next : prev;
+    });
+  }, [codeiq.codeIq, spec.specAi]);
 
   useEffect(() => {
     setProjects((prev) => {
@@ -999,6 +1058,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         agentUsage,
         pipeline,
         ...spec,
+        ...codeiq,
         createDepartment,
         deactivateDepartment,
         suspendDepartment,

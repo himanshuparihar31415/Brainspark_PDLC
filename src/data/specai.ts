@@ -1,5 +1,6 @@
 import { Role } from '../types';
 import {
+  AcceptanceCriterion,
   Archetype,
   ArtifactGroup,
   BriefBandKey,
@@ -575,3 +576,43 @@ export const ARCHETYPES: Archetype[] = [
 export const SPEC_OWNER_ROLES: Role[] = ['Product Manager', 'Architect'];
 
 export const canEditSpecAi = (role: Role): boolean => SPEC_OWNER_ROLES.includes(role);
+
+// ───────────────────────── Criterion identity ─────────────────────────
+
+/**
+ * Mint the next criterion label for a requirement or story.
+ *
+ * Reads the highest number already used rather than counting the array, so a
+ * criterion deleted from the middle never has its label handed to a different
+ * criterion later. Reusing 'AC-2' would silently re-point every mapped file,
+ * drift verdict and dismissal that CodeIQ had already attached to the old one.
+ */
+export const nextCriterionId = (existing: AcceptanceCriterion[]): string => {
+  const highest = existing.reduce((max, c) => {
+    const n = Number(/^AC-(\d+)$/.exec(c.id)?.[1]);
+    return Number.isFinite(n) && n > max ? n : max;
+  }, 0);
+  return `AC-${highest + 1}`;
+};
+
+/**
+ * Give a set of criteria labels, for content arriving without them — a generator
+ * response, or an import. Existing labels are kept; only the gaps are filled.
+ */
+export const withCriterionIds = (
+  criteria: (Omit<AcceptanceCriterion, 'id'> & { id?: string })[]
+): AcceptanceCriterion[] => {
+  const out: AcceptanceCriterion[] = [];
+  for (const c of criteria) {
+    out.push({ ...c, id: c.id ?? nextCriterionId(out) });
+  }
+  return out;
+};
+
+/**
+ * The globally addressable form. Composed at a module boundary rather than
+ * stored, because a criterion's identity belongs to its story and duplicating
+ * the story key onto it gives two things to keep in sync.
+ */
+export const criterionRef = (storyKey: string, criterionId: string) =>
+  `${storyKey}#${criterionId}`;

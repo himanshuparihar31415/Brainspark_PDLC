@@ -47,7 +47,8 @@ interface Item {
 }
 
 export const ProjectDashboardView: React.FC = () => {
-  const { currentScope, currentRole, projects, tasks, agents, specAiFor, navigateTo } = useApp();
+  const { currentScope, currentRole, projects, tasks, agents, specAiFor, codeIqFor, navigateTo } =
+    useApp();
 
   const project = projects.find((p) => p.id === currentScope.projectId) ?? projects[0];
 
@@ -76,7 +77,7 @@ export const ProjectDashboardView: React.FC = () => {
   /* The PM owns the specification rather than the delivery, so they get a second
      band. Everyone else sees the three counts and the list. */
   const isPm = currentRole === 'Product Manager';
-  const pm = isPm ? pmMetrics(spec, project.id) : [];
+  const pm = isPm ? pmMetrics(spec, codeIqFor(project.id)) : [];
 
   const blocked = attention.blockedStories.length + attention.blockedTasks.length;
   const approvals = attention.pendingApprovals.length;

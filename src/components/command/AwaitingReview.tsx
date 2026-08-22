@@ -1,6 +1,6 @@
 import React from 'react';
 import { ModuleKey, Task } from '../../types';
-import { MODULE_DEFS, REVIEW_HOURS_WARN, relativeTime } from '../../data/modules';
+import { MODULE_DEFS, REVIEW_HOURS_WARN, moduleKeyFor, relativeTime } from '../../data/modules';
 import { ArrowRight, Hourglass } from 'lucide-react';
 
 export interface ReviewRow {
@@ -13,13 +13,13 @@ export interface ReviewRow {
   waitingHours: number;
 }
 
-/** Maps a task's free-text module name onto a ModuleKey. */
-const moduleKeyFromName = (name: string): ModuleKey => {
-  const hit = MODULE_DEFS.find(
-    (d) => name.toLowerCase().includes(d.phaseMatch.toLowerCase()) || name === d.name
-  );
-  return hit?.key ?? 'specai';
-};
+/*
+ * Falling back to 'specai' keeps the row renderable when a tracker sends a module
+ * name the platform has never seen. It is a display default, not a claim: the
+ * resolver returning null is the signal that a label needs adding to
+ * MODULE_DEFS.aliases.
+ */
+const moduleKeyFromName = (name: string): ModuleKey => moduleKeyFor(name) ?? 'specai';
 
 export const buildReviewQueue = (tasks: Task[]): ReviewRow[] =>
   tasks

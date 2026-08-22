@@ -1,3 +1,5 @@
+@import '../workspace.css';
+
 /*
  * CodeIQ surface.
  *
@@ -11,57 +13,49 @@
  * else does, because in an adjudication screen colour is the signal.
  */
 
+/*
+ * Greys, lines, radius, fonts and the accent come from workspace.css, shared with
+ * Spec AI v2. CodeIQ used to carry its own green accent; the colour was saying
+ * "this is not Spec AI", which the module name printed on the screen already
+ * said.
+ *
+ * The four status names stay local. They are the only colour in this module that
+ * means anything, and a gap is not a low confidence even at the same hex.
+ */
 .cq {
-  --bg: #f6f7f9;
-  --surface: #ffffff;
-  --surface-2: #fbfbfd;
-  --ink: #14171f;
-  --ink-soft: #667085;
-  --ink-faint: #98a2b3;
-  --line: #e4e7ec;
-  --line-strong: #d0d5dd;
-  --accent: #14663f;
-  --accent-soft: #e7f6ef;
-
-  --ok: #16794f;
-  --ok-bg: #e7f6ef;
-  --warn: #92670b;
-  --warn-bg: #fbf3df;
-  --drift: #6941c6;
-  --drift-bg: #f4ebff;
-  --gap: #b42318;
-  --gap-bg: #fdedec;
-
-  --radius: 10px;
-  --font-display: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
-  --font-body: 'Inter', ui-sans-serif, system-ui, sans-serif;
-  --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
+  --ok: var(--sem-good);
+  --ok-bg: var(--sem-good-bg);
+  --warn: var(--sem-warn);
+  --warn-bg: var(--sem-warn-bg);
+  --drift: var(--sem-note);
+  --drift-bg: var(--sem-note-bg);
+  --gap: var(--sem-bad);
+  --gap-bg: var(--sem-bad-bg);
 
   height: 100%;
   display: flex;
-  flex-direction: column;
   min-height: 0;
   font-family: var(--font-body);
   font-size: 13px;
   color: var(--ink);
-  background: var(--bg);
   -webkit-font-smoothing: antialiased;
+
+  /*
+   * A mesh, not a fill. Two soft tints give the acrylic surfaces above something
+   * to blur — over a flat colour, backdrop-filter is a no-op and the whole
+   * material reads as plain white cards on grey, which is what it was doing.
+   */
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(780px 440px at 6% -8%, rgba(53, 56, 205, 0.07), transparent 70%),
+    radial-gradient(680px 380px at 100% 0%, rgba(22, 121, 79, 0.05), transparent 68%),
+    radial-gradient(900px 620px at 55% 118%, rgba(105, 65, 198, 0.05), transparent 70%);
+  background-attachment: fixed;
 }
 
-.cq *,
-.cq *::before,
-.cq *::after {
-  box-sizing: border-box;
-}
 .cq button {
-  font-family: inherit;
   font-size: inherit;
   cursor: pointer;
-}
-.cq :focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-  border-radius: 4px;
 }
 .cq p {
   margin: 0;
@@ -69,53 +63,188 @@
 
 /* ───────────────────────── shell ───────────────────────── */
 
-.cq-top {
+/*
+ * The rail, not a bar.
+ *
+ * Same idiom as Spec AI v2's phase rail, for the same reason: five items across
+ * the top read as five peers, and they are not. Three readings, then two
+ * settings, separated by nothing louder than a gap.
+ */
+.cq-rail {
+  flex: 0 0 186px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 8px 7px 12px;
+  background: var(--glass);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-right: 1px solid var(--line);
+  box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.6);
+  overflow-y: auto;
+  transition: flex-basis 160ms ease;
+}
+.cq-rail.mini {
+  flex-basis: 46px;
+  align-items: center;
+}
+.cq-rail-fold {
   display: flex;
   align-items: center;
-  gap: 18px;
-  padding: 12px 20px;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  margin: 0 0 6px auto;
+  border: 1px solid transparent;
+  background: none;
+  border-radius: 7px;
+  color: var(--ink-faint);
+}
+.cq-rail.mini .cq-rail-fold {
+  margin: 0 0 6px;
+}
+.cq-rail-fold:hover {
+  border-color: var(--line);
+  color: var(--accent);
   background: var(--surface);
-  border-bottom: 1px solid var(--line);
+}
+
+.cq-rail-i {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  border: 1px solid transparent;
+  background: none;
+  border-radius: 8px;
+  padding: 6px 8px;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--ink-soft);
+  text-align: left;
   flex-shrink: 0;
 }
-.cq-mark {
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 14px;
-  letter-spacing: -0.01em;
+.cq-rail.mini .cq-rail-i {
+  width: auto;
+  justify-content: center;
 }
-.cq-mark em {
+.cq-rail-i > span {
+  flex: 1;
+  min-width: 0;
+}
+.cq-rail-i:hover {
+  background: rgba(255, 255, 255, 0.58);
+  border-color: var(--line-glass);
+  color: var(--ink);
+}
+.cq-rail-i.on {
+  background: var(--glass-strong);
+  border-color: var(--line-glass);
+  color: var(--accent);
+  font-weight: 600;
+  box-shadow: var(--elev-1), var(--inset-hi);
+}
+/* Settings are a second group, not a sixth reading. */
+.cq-rail-i.group {
+  margin-top: 9px;
+}
+.cq-rail-i.group:first-of-type {
+  margin-top: 0;
+}
+/* A count that only ever means work. */
+.cq-rail-i i {
   font-style: normal;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 9px;
+  flex-shrink: 0;
+  padding: 1px 5px;
+  border-radius: 20px;
+  background: var(--warn-bg);
+  color: var(--warn);
+}
+
+/* Whose lineage this is — reference at the foot, not a heading at the top. */
+.cq-rail-foot {
+  margin-top: auto;
+  padding: 10px 8px 0;
+  border-top: 1px solid var(--line);
+  font-size: 11px;
   font-weight: 500;
-  color: var(--ink-faint);
-  margin-left: 8px;
-  letter-spacing: 0.04em;
+  color: var(--ink);
+  line-height: 1.45;
+}
+.cq-rail-foot span {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
   text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-faint);
+  font-weight: 400;
+  margin-bottom: 2px;
 }
-.cq-tabs {
+
+/*
+ * Two kinds of nothing share this block, and the copy inside it is what
+ * separates them — never indexed, versus indexed and clear.
+ */
+.cq-blank {
   display: flex;
-  gap: 2px;
-  margin-left: auto;
-  background: var(--bg);
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 2px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 9px;
+  background: var(--glass-strong);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--line-glass);
+  border-radius: var(--radius);
+  box-shadow: var(--elev-1), var(--inset-hi);
+  padding: 22px 20px;
+  color: var(--ink-faint);
 }
-.cq-tabs button {
-  border: 0;
-  background: transparent;
-  padding: 5px 12px;
-  border-radius: 6px;
+.cq-blank b {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.cq-blank p {
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+  max-width: 62ch;
+}
+
+/* A degraded feed. Amber, because the numbers still mean something. */
+.cq-degraded {
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: var(--warn);
+  background: var(--warn-bg);
+  border: 1px solid var(--warn);
+  border-radius: var(--radius);
+  box-shadow: var(--elev-1);
+  padding: 9px 12px;
+}
+
+/* Instrumentation quality, read before the report it qualifies. */
+.cq-instr {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 20px;
+  align-items: baseline;
+  font-size: 11px;
+  color: var(--ink-soft);
+  padding: 2px 2px 0;
+}
+.cq-instr b {
+  font-family: var(--font-mono);
   font-size: 12px;
   font-weight: 600;
-  color: var(--ink-soft);
-}
-.cq-tabs button.on {
-  background: var(--surface);
   color: var(--ink);
-  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.08);
+  margin-right: 3px;
+}
+.cq-instr .warn {
+  color: var(--warn);
 }
 
 .cq-body {
@@ -140,9 +269,12 @@
   align-items: flex-start;
   gap: 12px 18px;
   padding: 14px 16px;
-  background: var(--surface);
-  border: 1px solid var(--line);
+  background: var(--glass-strong);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--line-glass);
   border-radius: var(--radius);
+  box-shadow: var(--elev-1), var(--inset-hi);
 }
 .cq-target h1 {
   margin: 0;
@@ -156,6 +288,12 @@
   font-size: 11px;
   color: var(--accent);
   font-weight: 500;
+}
+.cq-from {
+  font-family: var(--font-body);
+  font-size: 10px;
+  color: var(--ink-faint);
+  margin-left: 6px;
 }
 .cq-meta {
   display: flex;
@@ -199,6 +337,7 @@
   border-radius: var(--radius);
   border: 1px solid var(--gap);
   background: var(--gap-bg);
+  box-shadow: var(--elev-1);
   color: #7a1c14;
 }
 .cq-gap.clean {
@@ -268,10 +407,19 @@
   gap: 8px;
 }
 .cq-c {
-  background: var(--surface);
-  border: 1px solid var(--line);
+  background: var(--glass-strong);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--line-glass);
   border-radius: var(--radius);
+  box-shadow: var(--elev-1), var(--inset-hi);
   overflow: hidden;
+  transition: box-shadow 160ms ease, border-color 160ms ease;
+}
+/* A criterion row is the thing you act on, so it lifts under the pointer. */
+.cq-c:hover {
+  border-color: rgba(53, 56, 205, 0.22);
+  box-shadow: var(--elev-2), var(--inset-hi);
 }
 .cq-c.dismissed {
   opacity: 0.62;
@@ -388,6 +536,7 @@
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 6px;
+  box-shadow: var(--elev-1);
 }
 .cq-file .path {
   color: var(--ink);
@@ -430,6 +579,7 @@
   border: 1px dashed var(--line-strong);
   border-radius: 6px;
   background: var(--surface);
+  box-shadow: var(--elev-1);
 }
 
 /* ── drift ── */
@@ -476,6 +626,7 @@
   border-radius: 6px;
   background: var(--surface);
   border: 1px solid var(--line);
+  box-shadow: var(--elev-1);
 }
 .cq-gen.discarded {
   opacity: 0.6;
@@ -522,8 +673,10 @@
 }
 .cq-btn {
   border: 1px solid var(--line-strong);
-  background: var(--surface);
+  background: var(--glass-strong);
   border-radius: 7px;
+  box-shadow: var(--elev-1), var(--inset-hi);
+  transition: box-shadow 140ms ease, border-color 140ms ease, transform 140ms ease;
   padding: 5px 11px;
   font-size: 11.5px;
   font-weight: 600;
@@ -531,6 +684,11 @@
 }
 .cq-btn:hover {
   border-color: var(--ink-soft);
+  box-shadow: var(--elev-2), var(--inset-hi);
+}
+.cq-btn:active {
+  transform: translateY(0.5px);
+  box-shadow: var(--elev-1);
 }
 .cq-btn.primary {
   background: var(--ink);
@@ -564,6 +722,7 @@
   border: 1px solid var(--line);
   border-radius: 6px;
   padding: 8px 10px;
+  box-shadow: var(--elev-1);
 }
 .cq-dismissed b {
   color: var(--ink);
@@ -585,9 +744,12 @@
   line-height: 1.5;
 }
 .cq-card {
-  background: var(--surface);
-  border: 1px solid var(--line);
+  background: var(--glass-strong);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--line-glass);
   border-radius: var(--radius);
+  box-shadow: var(--elev-1), var(--inset-hi);
   padding: 14px 16px;
   display: flex;
   flex-direction: column;
@@ -740,6 +902,7 @@
   border: 1px solid var(--line);
   border-radius: 7px;
   background: var(--surface-2);
+  box-shadow: var(--elev-1);
 }
 .cq-th .id {
   font-family: var(--font-mono);
@@ -836,5 +999,243 @@
   .cq-tr .o,
   .cq-tr.head .o {
     display: none;
+  }
+}
+
+/* ───────────────────────── spec quality ───────────────────────── */
+
+/*
+ * One block per criterion. Rework is a per-criterion measure, never per person,
+ * so no row carries a developer's name.
+ */
+.cq-sq {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 12px 13px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-2);
+  box-shadow: var(--elev-1);
+}
+.cq-sq .top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.cq-sq .id {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-soft);
+}
+.cq-sq .cause {
+  font-size: 9.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 7px;
+  border-radius: 5px;
+  color: var(--warn);
+  background: var(--warn-bg);
+}
+/* The worst discard rates get the gap colour; the rest stay amber. */
+.cq-sq .cause.r10,
+.cq-sq .cause.r9,
+.cq-sq .cause.r8 {
+  color: var(--gap);
+  background: var(--gap-bg);
+}
+.cq-sq .top button,
+.cq-sq .top .sent {
+  margin-left: auto;
+}
+.cq-sq .sent {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10.5px;
+  color: var(--ok);
+}
+.cq-sq .text {
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+.cq-sq .nums {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  font-size: 10.5px;
+  color: var(--ink-faint);
+  font-family: var(--font-mono);
+}
+.cq-sq .nums b {
+  color: var(--ink);
+  font-weight: 600;
+}
+.cq-sq .nums .why {
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: var(--ink-soft);
+  flex-basis: 100%;
+}
+
+/* ───────────────────────── untracked ───────────────────────── */
+
+.cq-ut {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 11px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-2);
+  box-shadow: var(--elev-1);
+}
+.cq-ut .head {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  color: var(--ink-faint);
+}
+.cq-ut .sha {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+.cq-ut .summary {
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--ink);
+  min-width: 0;
+}
+.cq-ut .meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--ink-faint);
+  padding-left: 22px;
+}
+.cq-ut .acts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding-left: 22px;
+  margin-top: 2px;
+}
+.cq-ut .acts .helper {
+  font-size: 10.5px;
+  color: var(--ink-faint);
+  line-height: 1.5;
+  flex-basis: 100%;
+}
+
+/* Three named outcomes. The chosen one is stated, not merely highlighted. */
+.cq-pill {
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  border-radius: 999px;
+  padding: 3px 10px;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+.cq-pill:hover {
+  border-color: var(--ink-soft);
+  color: var(--ink);
+}
+.cq-pill.on {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: #fff;
+}
+
+/* ───────────────────────── repo policy ───────────────────────── */
+
+.cq-rp-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.cq-rp-meta {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--ink-faint);
+}
+.cq-rp-locked {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-faint);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+
+.cq-rp-row {
+  display: grid;
+  grid-template-columns: 190px 1fr;
+  gap: 14px;
+  align-items: start;
+  border-top: 1px solid var(--line);
+  padding-top: 11px;
+}
+.cq-rp-row .lbl b {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+}
+.cq-rp-row .lbl span {
+  display: block;
+  font-size: 10.5px;
+  color: var(--ink-faint);
+  line-height: 1.5;
+  margin-top: 2px;
+}
+.cq-rp-row .opts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+.cq-rp-row .helper {
+  flex-basis: 100%;
+  font-size: 10.5px;
+  color: var(--ink-soft);
+  line-height: 1.55;
+}
+
+/* A setting that degrades what the module can say is coloured as such. */
+.cq-pill.risk.on {
+  border-color: var(--gap);
+  background: var(--gap);
+}
+.cq-pill:disabled {
+  cursor: default;
+  opacity: 1;
+}
+.cq-pill:disabled:not(.on) {
+  color: var(--ink-faint);
+  border-color: var(--line);
+}
+.cq-pill:disabled:hover:not(.on) {
+  border-color: var(--line);
+  color: var(--ink-faint);
+}
+
+@media (max-width: 720px) {
+  .cq-rp-row {
+    grid-template-columns: 1fr;
+    gap: 8px;
   }
 }

@@ -1,5 +1,6 @@
 import { SpecAiState } from '../types/specai';
-import { TICKET_ROLLUPS } from './codeiq';
+import { CodeIqReading } from '../types/codeiq';
+import { claimedDone, countBy } from './codeiq';
 
 /**
  * The Product Manager's numbers.
@@ -35,24 +36,25 @@ export interface PmMetric {
   why: string;
 }
 
-/**
- * Only projects with lineage connected have a CodeIQ reading. The fixture is
- * one project's, and showing it against another would be confident nonsense —
- * the same rule the system map follows.
+/*
+ * Only projects with lineage indexed have a CodeIQ reading, and showing one
+ * project's against another would be confident nonsense.
+ *
+ * This used to be a hardcoded allowlist of project ids, which was the right
+ * instinct against the wrong data model: CodeIQ's rows were platform-wide, so
+ * the only way to stop them leaking was to name the one project they belonged
+ * to. Now the state answers the question itself.
  */
-const CODEIQ_PROJECTS = ['p-mobile-v2'];
-export const hasCodeIqSignal = (projectId: string) => CODEIQ_PROJECTS.includes(projectId);
-
-export const pmMetrics = (spec: SpecAiState, projectId: string): PmMetric[] => {
+export const pmMetrics = (spec: SpecAiState, codeIq: CodeIqReading): PmMetric[] => {
   const openProduct = spec.questions.filter(
     (q) => q.status === 'Open' && q.track === 'Product'
   ).length;
 
   const awaitingSignOff = spec.artifacts.filter((a) => a.status !== 'Approved').length;
 
-  const lineage = hasCodeIqSignal(projectId);
-  const notBuilt = lineage
-    ? TICKET_ROLLUPS.filter((t) => t.claimed === 'Done').reduce((n, t) => n + t.missing, 0)
+  /* Null, not zero: no lineage and no gaps look identical at 0. */
+  const notBuilt = codeIq.indexed
+    ? claimedDone(codeIq.targets).reduce((n, t) => n + countBy(t.criteria).missing, 0)
     : null;
 
   return [
@@ -77,10 +79,10 @@ export const pmMetrics = (spec: SpecAiState, projectId: string): PmMetric[] => {
       label: 'not built',
       value: notBuilt,
       tone: notBuilt === null ? undefined : notBuilt > 0 ? 'low' : 'high',
-      hint: lineage
+      hint: codeIq.indexed
         ? 'Acceptance criteria with no code behind them, on work already marked done.'
         : 'No code lineage is connected for this project.',
-      why: lineage
+      why: codeIq.indexed
         ? 'From CodeIQ. These are the criteria you specified that nothing in the change set addresses — the gap between what the tracker claims and what was built.'
         : 'CodeIQ correlates IDE, git and tracker events for this project once its repositories are connected. Until then there is nothing honest to report here.',
     },

@@ -88,6 +88,19 @@ export const isModuleWorkspace = (nav: NavView) => MODULE_WORKSPACES.includes(na
 export const isGovernanceRole = (role: Role) => GOVERNANCE_ROLES.includes(role);
 
 /**
+ * Who may change how a repository is read.
+ *
+ * Everyone downstream of the spec may dispute a CodeIQ verdict — that is what
+ * the review panel is for, and every override is recorded. Repository policy is
+ * different in kind: changing the join-key scheme changes every verdict at once,
+ * and turning the semantic diff off makes a formatting-only commit count as
+ * delivery. So it sits with whoever runs the project, plus the Tech Lead who
+ * owns the repository convention in the first place.
+ */
+export const canManageRepoPolicy = (role: Role) =>
+  GOVERNANCE_ROLES.includes(role) || role === 'Tech Lead';
+
+/**
  * A Project Admin can browse the agent catalogue but cannot change it —
  * registering, editing routing or deactivating an agent affects every project on
  * the department baseline.

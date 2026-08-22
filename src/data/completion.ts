@@ -204,6 +204,45 @@ export const specAiPhaseFromStories = (
   return { done, total: planned, status };
 };
 
+/**
+ * Derive the CodeIQ pipeline phase from its review targets.
+ *
+ * Deliberately not the same shape as Spec AI's. Spec AI *owns* stories, so its
+ * numerator is stories finished. CodeIQ owns nothing — it adjudicates — so its
+ * numerator is criteria realized in code out of criteria it could see.
+ *
+ * A dismissed criterion counts as resolved rather than as a gap: someone put
+ * their name to a reason, and continuing to count it would mean the number could
+ * never reach its denominator no matter what anyone did.
+ *
+ * Status is not a completion judgement. Anything unrealized on work the tracker
+ * already calls done is the module's headline finding, and a phase that reads
+ * 'In progress' while a story claims Done is the contradiction worth surfacing.
+ * Returns null when nothing has been indexed — the caller keeps its seeded
+ * numbers rather than showing a confident zero.
+ */
+export const codeIqPhaseFromTargets = (
+  targets: { claimed: string; criteria: { status: string; dismissal?: unknown }[] }[]
+): { done: number; total: number; status: PhaseStatus } | null => {
+  if (targets.length === 0) return null;
+
+  const criteria = targets.flatMap((t) => t.criteria);
+  if (criteria.length === 0) return null;
+
+  const resolved = criteria.filter((c) => c.status === 'covered' || Boolean(c.dismissal));
+
+  /* Unrealized criteria on work already claimed done. The gap that matters. */
+  const overstated = targets
+    .filter((t) => t.claimed === 'Done')
+    .flatMap((t) => t.criteria)
+    .filter((c) => c.status !== 'covered' && !c.dismissal).length;
+
+  const status: PhaseStatus =
+    overstated > 0 ? 'Blocked' : resolved.length === criteria.length ? 'Complete' : 'In progress';
+
+  return { done: resolved.length, total: criteria.length, status };
+};
+
 /** Unweighted average of phase done/total for one project's pipeline. */
 export const projectCompletionFromPhases = (phases: PipelinePhase[]): number => {
   if (phases.length === 0) return 0;

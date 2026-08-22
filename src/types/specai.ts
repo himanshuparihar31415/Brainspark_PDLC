@@ -335,6 +335,21 @@ export interface UnderstandingSection {
 }
 
 export interface AcceptanceCriterion {
+  /**
+   * Stable label, scoped to the parent requirement or story: 'AC-1', 'AC-2'.
+   *
+   * Minted once and never reused or renumbered. Downstream modules hang durable
+   * records off this — CodeIQ attaches mapped files, a drift verdict and a named
+   * dismissal per criterion, and IntelliQA files test cases against it. A
+   * positional label recomputed on render would silently re-point all of that
+   * the first time a criterion was inserted above another, so the number is
+   * stored rather than derived. It follows that after an insert the labels no
+   * longer run in order, which is the same trade every issue tracker makes.
+   *
+   * Globally addressable form is `${story.key}#${criterion.id}`, composed at the
+   * module boundary rather than stored here.
+   */
+  id: string;
   given: string;
   when: string;
   then: string;
