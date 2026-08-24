@@ -497,12 +497,26 @@ export const buildTargets = (
     .filter((t): t is ReviewTarget => t !== null)
     .sort((a, b) => severity(b) - severity(a));
 
+/**
+ * Commits with no story behind them.
+ *
+ * `message` is the author's subject line and `summary` is what the semantic diff
+ * observed, deliberately in different words. Where they disagree is the whole
+ * value of the screen — see `4f2ac91`, whose subject calls itself a null guard
+ * and whose diff also moved a timeout.
+ *
+ * `change` is absent on notification-service because that repo runs with
+ * `semanticDiff: false`. Nothing classified those commits, so no classification
+ * is recorded — the panel says "not classified" rather than guessing.
+ */
 export const UNTRACKED: UntrackedChange[] = [
   {
     repo: 'mobile-banking',
     commit: '4f2ac91',
     author: 'Daniel Okafor',
-    summary: 'Hotfix: null guard on the enrolment response',
+    message: 'fix(enrol): null guard on enrolment response',
+    summary: 'Guards a null device id, and raises the binding timeout from 5s to 30s',
+    change: 'behavioral',
     files: 2,
     at: '16 Aug · 22:14',
     policy: 'flag',
@@ -511,30 +525,132 @@ export const UNTRACKED: UntrackedChange[] = [
     repo: 'identity-service',
     commit: 'ba07e3d',
     author: 'Cursor (agent)',
-    summary: 'Refactor session helpers, extract token parser',
+    message: 'refactor(session): extract token parser',
+    summary: 'Splits the session helper; token expiry is now evaluated before signature',
+    change: 'behavioral',
     files: 9,
     at: '16 Aug · 15:02',
     policy: 'auto-ticket',
   },
   {
+    repo: 'mobile-banking',
+    commit: 'e70b155',
+    author: 'Claude Code (agent)',
+    message: 'chore: remove dead code in the legacy PIN path',
+    summary: 'Deletes the unreachable PIN fallback branch and its two callers',
+    change: 'behavioral',
+    files: 14,
+    at: '14 Aug · 19:30',
+    policy: 'flag',
+  },
+  {
     repo: 'identity-service',
     commit: '19cc7f0',
     author: 'Priya Nair',
-    summary: 'Dependency bump and lockfile',
+    message: 'chore(deps): bump jose and regenerate the lockfile',
+    summary: 'Dependency versions and lockfile only. No reachable behaviour changed',
+    change: 'cosmetic',
     files: 3,
     at: '15 Aug · 08:47',
     policy: 'tolerate',
   },
   {
+    repo: 'identity-service',
+    commit: '2d90fca',
+    author: 'renovate[bot]',
+    message: 'chore(deps): bump @types/node from 22.5.1 to 22.7.4',
+    summary: 'Type definitions only. Nothing in the compiled output moved',
+    change: 'cosmetic',
+    files: 2,
+    at: '15 Aug · 04:10',
+    policy: 'flag',
+  },
+  {
     repo: 'mobile-banking',
-    commit: 'e70b155',
+    commit: '8b1c4e2',
+    author: 'renovate[bot]',
+    message: 'chore(deps): bump react-native-svg from 15.3.0 to 15.6.0',
+    summary: 'Patch bump inside a vendored dependency. No first-party code touched',
+    change: 'cosmetic',
+    files: 2,
+    at: '14 Aug · 03:52',
+    policy: 'flag',
+  },
+  {
+    repo: 'notification-service',
+    commit: 'c04e881',
+    author: 'Samir Patel',
+    message: 'feat(push): exponential backoff on delivery retry',
+    summary: 'Semantic diff is off for this repository — no classification was produced',
+    files: 6,
+    at: '16 Aug · 09:31',
+    policy: 'flag',
+  },
+  {
+    repo: 'notification-service',
+    commit: '5ac2f18',
     author: 'Claude Code (agent)',
-    summary: 'AI cleanup: dead code in the legacy PIN path',
-    files: 14,
-    at: '14 Aug · 19:30',
+    message: 'style(templates): reformat docstrings',
+    summary: 'Semantic diff is off for this repository — no classification was produced',
+    files: 11,
+    at: '13 Aug · 17:05',
     policy: 'flag',
   },
 ];
+
+/**
+ * What a change class means here, and what its absence means.
+ *
+ * The third entry is not a third class — it is the honest reading when the
+ * analysis did not run. Showing `cosmetic` for an unclassified commit is the
+ * failure this copy exists to prevent: it would turn "we did not look" into
+ * "we looked and it was nothing".
+ */
+export const CHANGE_CLASS_COPY: Record<'behavioral' | 'cosmetic' | 'unknown', {
+  label: string;
+  helper: string;
+}> = {
+  behavioral: {
+    label: 'behavioural',
+    helper: 'The diff changes what the code does. Work like this usually wants a story.',
+  },
+  cosmetic: {
+    label: 'cosmetic',
+    helper: 'Formatting, dependencies or dead code. Nothing reachable changed behaviour.',
+  },
+  unknown: {
+    label: 'not classified',
+    helper:
+      'Semantic diff is off for this repository, so nothing classified this commit. Not the same as finding it harmless.',
+  },
+};
+
+/**
+ * How to label one commit's change class, given its repository's settings.
+ *
+ * Two independent reasons to report nothing — no stored classification, or the
+ * repo's semantic diff switched off since indexing — and both must land on
+ * "not classified" rather than on a stale verdict.
+ */
+export const changeClassOf = (
+  row: UntrackedChange,
+  repos: RepoPolicy[]
+): 'behavioral' | 'cosmetic' | 'unknown' => {
+  const repo = repos.find((r) => r.repo === row.repo);
+  if (!repo?.semanticDiff) return 'unknown';
+  return row.change ?? 'unknown';
+};
+
+/**
+ * Which rows a bulk tolerate may touch.
+ *
+ * Cosmetic only, and never an unclassified one. Tolerating a commit is asserting
+ * it needed no story; doing that in bulk is only defensible where the analysis
+ * actually said the commit changed no behaviour. Everything else stays a
+ * one-at-a-time decision, which is the judgement the screen exists for.
+ */
+export const bulkTolerable = (rows: UntrackedChange[], repos: RepoPolicy[]): UntrackedChange[] =>
+  rows.filter((r) => r.policy !== 'tolerate' && changeClassOf(r, repos) === 'cosmetic');
 
 export const countBy = (criteria: Criterion[]): Record<CriterionStatus, number> => ({
   covered: criteria.filter((c) => c.status === 'covered').length,
@@ -630,6 +746,161 @@ export const trustSplit = (targets: ReviewTarget[]) => {
 export const storiesWithGaps = (targets: ReviewTarget[]): ReviewTarget[] =>
   targets.filter((t) => !isGenuinelyDone(t));
 
+/**
+ * Stories claimed done whose criteria are not all realized.
+ *
+ * The one CodeIQ fact other surfaces are allowed to read — the tasks queue and
+ * the project dashboard both ask this question and neither should answer it
+ * itself. Three call sites writing "claimed done with missing criteria" three
+ * ways is how they end up disagreeing about the same story.
+ */
+export const unbuiltStories = (targets: ReviewTarget[]): ReviewTarget[] =>
+  claimedDone(targets).filter((t) => countBy(t.criteria).missing > 0);
+
+/**
+ * The lineage behind one task, or null when there is none to show.
+ *
+ * Joined on `storyId`, which is the immutable key both sides already carry —
+ * never on the title or the display key. A task with no `storyId` is not a
+ * failure to join: `taskType` marks operations, spikes and governance work as
+ * legitimately story-less, and only `story-work` without a story is evidence of
+ * something missing.
+ */
+export const targetForTask = (
+  targets: ReviewTarget[],
+  storyId: string | undefined
+): ReviewTarget | null => (storyId ? targets.find((t) => t.storyId === storyId) ?? null : null);
+
+/**
+ * Criteria with no code behind the story this task delivers.
+ *
+ * Deliberately counts `missing` only. `missing` is the module's high-accuracy
+ * output; drift is a 60–75% assist, and putting an assist on a task row — where
+ * it sits beside a person's name and a sign-off button — would be lending it
+ * authority the analysis does not have.
+ */
+export const unbuiltForTask = (targets: ReviewTarget[], storyId: string | undefined): number => {
+  const target = targetForTask(targets, storyId);
+  return target ? countBy(target.criteria).missing : 0;
+};
+
+// ───────────────────────── Dashboard tiles ─────────────────────────
+
+/**
+ * The findings a dashboard tile can narrow the story list to.
+ *
+ * `overstated` is not a criterion status — it is a property of a story, and it is
+ * the one the module exists for. The other two are criterion counts rolled up to
+ * the stories carrying them.
+ */
+export type GapFilter = 'missing' | 'overstated' | 'drifted';
+
+/**
+ * Does this story match the filter?
+ *
+ * Load-bearing: the tile's own number and the list it filters to are counted
+ * through this same predicate. A tile reading 47 that filters to a list of 44 is
+ * worse than no tile at all, because the reader has no way to tell which of the
+ * two lied.
+ */
+export const matchesGapFilter = (t: ReviewTarget, filter: GapFilter): boolean => {
+  const n = countBy(t.criteria);
+  switch (filter) {
+    case 'missing':
+      return n.missing > 0;
+    case 'drifted':
+      return n.drifted > 0;
+    case 'overstated':
+      return t.claimed === 'Done' && !isGenuinelyDone(t);
+  }
+};
+
+/** Stories under a filter, or all of them when nothing is selected. */
+export const filterTargets = (targets: ReviewTarget[], filter: GapFilter | null) =>
+  filter === null ? targets : targets.filter((t) => matchesGapFilter(t, filter));
+
+export interface GapTile {
+  filter: GapFilter;
+  /** The headline number. */
+  value: number;
+  /** What the number counts, e.g. "criteria". Never omitted — 47 of what? */
+  unit: string;
+  label: string;
+  /** The second line: scope, or the caveat the number has to carry. */
+  note: string;
+  tone: 'bad' | 'warn' | 'drift';
+}
+
+/**
+ * The three filtering tiles, computed together.
+ *
+ * Computed here rather than in the panel so the numbers and the predicates
+ * cannot drift apart, and so the copy that qualifies a number sits beside the
+ * number. Drift carries its accuracy range in `note` because it is a 60–75%
+ * assist sitting beside two counts that are not — and a tile row makes
+ * everything on it look equally solid.
+ */
+export const gapTiles = (targets: ReviewTarget[]): GapTile[] => {
+  const trust = trustSplit(targets);
+  const criteriaWhere = (filter: GapFilter, pick: (n: Record<CriterionStatus, number>) => number) =>
+    targets.filter((t) => matchesGapFilter(t, filter)).reduce((sum, t) => sum + pick(countBy(t.criteria)), 0);
+
+  const noCode = criteriaWhere('missing', (n) => n.missing);
+  const noCodeStories = targets.filter((t) => matchesGapFilter(t, 'missing')).length;
+  const drifted = criteriaWhere('drifted', (n) => n.drifted);
+
+  return [
+    {
+      filter: 'missing',
+      value: noCode,
+      unit: noCode === 1 ? 'criterion' : 'criteria',
+      label: 'No code at all',
+      note: `Across ${noCodeStories} ${noCodeStories === 1 ? 'story' : 'stories'}`,
+      tone: 'bad',
+    },
+    {
+      filter: 'overstated',
+      value: trust.overstated,
+      unit: `of ${trust.claimed} done`,
+      label: 'Marked done, gaps open',
+      note: 'What the tracker claims vs what is built',
+      tone: 'warn',
+    },
+    {
+      filter: 'drifted',
+      value: drifted,
+      unit: drifted === 1 ? 'criterion' : 'criteria',
+      label: 'Drifted from the spec',
+      note: 'Assist only — 60–75% accurate',
+      tone: 'drift',
+    },
+  ];
+};
+
+/**
+ * Copy for the table once a filter is on.
+ *
+ * The title changes rather than a chip appearing beside an unchanged one. A
+ * heading that still reads "Stories with gaps" over a list of two is how a
+ * filtered view gets mistaken for the whole set.
+ */
+export const GAP_FILTER_COPY: Record<GapFilter, { title: string; subtitle: string }> = {
+  missing: {
+    title: 'Stories with criteria that have no code',
+    subtitle: 'At least one acceptance criterion CodeIQ could map to nothing in the change set.',
+  },
+  overstated: {
+    title: 'Stories marked done with gaps open',
+    subtitle:
+      'The tracker says done. Something is missing, drifted or only partly realized — whichever the tracker says.',
+  },
+  drifted: {
+    title: 'Stories where the code drifted from the spec',
+    subtitle:
+      'The code does something the criterion did not ask for. This mapping is an assist, not a verdict.',
+  },
+};
+
 // ───────────────────────── Per-project state ─────────────────────────
 
 /**
@@ -670,6 +941,21 @@ export const REPO_POLICIES: RepoPolicy[] = [
     untracked: 'tolerate',
     semanticDiff: true,
     lastIndexedAt: '11 mins ago',
+  },
+  /*
+   * The badly instrumented one, and it earns its place in the fixture.
+   *
+   * No join key means every commit here arrives untracked, and semantic diff off
+   * means none of them can be classified. Both facts have to be visible
+   * somewhere, or the module only ever demonstrates the case where it works.
+   */
+  {
+    repo: 'notification-service',
+    language: 'Kotlin · Spring',
+    joinKey: 'none',
+    untracked: 'flag',
+    semanticDiff: false,
+    lastIndexedAt: '2 hours ago',
   },
 ];
 

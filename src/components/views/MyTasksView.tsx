@@ -3,7 +3,37 @@ import { useApp } from '../../context/AppContext';
 import { Task } from '../../types';
 import { isGovernanceRole } from '../../data/rbac';
 import { REASON_CHIP, criticalReason } from '../../data/activity';
-import { Check, Sparkles, CheckCircle2, Activity } from 'lucide-react';
+import { codeIqProjectFor, countBy, targetForTask, unbuiltForTask } from '../../data/codeiq';
+import {
+  Check,
+  Sparkles,
+  CheckCircle2,
+  Activity,
+  ArrowRight,
+  FileWarning,
+  GitBranch,
+} from 'lucide-react';
+
+/**
+ * The tabs, and why there are two kinds of them.
+ *
+ * The first five answer one question — *where is this task in its lifecycle* —
+ * and each is a plain read of `Task.status`. Two statuses previously had no tab
+ * at all: a Blocked task was invisible unless you happened to pick All, which is
+ * the opposite of what a queue should surface first.
+ *
+ * `Not built` answers a different question: *was the work actually built*. It is
+ * not a status and it never will be, because the tracker cannot know the answer
+ * — CodeIQ does. So it sits at the end, separated, rather than pretending to be
+ * a sixth lifecycle state.
+ *
+ * `Pending` still shows only under All. It is the one status with no tab, left
+ * that way to keep the row short.
+ */
+const STATUS_TABS = ['All', 'Needs Approval', 'In Progress', 'Blocked', 'Completed'] as const;
+const NOT_BUILT = 'Not built';
+
+type Tab = (typeof STATUS_TABS)[number] | typeof NOT_BUILT;
 
 export const MyTasksView: React.FC = () => {
   const {
@@ -13,11 +43,14 @@ export const MyTasksView: React.FC = () => {
     currentUser,
     currentRole,
     currentScope,
+    projects,
+    codeIqFor,
+    navigateTo,
     navIntent,
     clearNavIntent,
   } = useApp();
 
-  const [filterStatus, setFilterStatus] = useState<string>('All');
+  const [filterStatus, setFilterStatus] = useState<Tab>('All');
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
 
   /*
@@ -46,13 +79,32 @@ export const MyTasksView: React.FC = () => {
   const borrowed = linked && !owned.some((t) => t.id === linked.id) ? linked : undefined;
   const myTasks = borrowed ? [borrowed, ...owned] : owned;
 
+  /*
+   * The lineage, read once for the project in scope.
+   *
+   * Composed from Spec AI on every read, so a task's chip cannot disagree with
+   * what CodeIQ's own surfaces say about the same story.
+   */
+  const cqProject = codeIqProjectFor(currentScope, projects);
+  const { targets, indexed } = codeIqFor(cqProject?.id ?? '');
+  const unbuiltOn = (t: Task) => (indexed ? unbuiltForTask(targets, t.storyId) : 0);
+  const notBuiltCount = myTasks.filter((t) => unbuiltOn(t) > 0).length;
+
   const selectedTask: Task | null =
     myTasks.find((t) => t.id === selectedTaskId) || myTasks[0] || null;
 
-  const filteredTasks = myTasks.filter((t) => {
-    if (filterStatus !== 'All' && t.status !== filterStatus) return false;
-    return true;
-  });
+  const filteredTasks = myTasks
+    .filter((t) => {
+      if (filterStatus === 'All') return true;
+      if (filterStatus === NOT_BUILT) return unbuiltOn(t) > 0;
+      return t.status === filterStatus;
+    })
+    /* Under Not built, worst first — the point of the tab is the biggest gap. */
+    .sort((a, b) => (filterStatus === NOT_BUILT ? unbuiltOn(b) - unbuiltOn(a) : 0));
+
+  /* The lineage behind whatever is open on the right. */
+  const lineage = selectedTask ? targetForTask(targets, selectedTask.storyId) : null;
+  const selectedUnbuilt = selectedTask ? unbuiltOn(selectedTask) : 0;
 
   return (
     <div className="p-6 md:p-8 space-y-6 max-w-7xl mx-auto animate-in fade-in duration-200">
@@ -87,8 +139,8 @@ export const MyTasksView: React.FC = () => {
       )}
 
       {/* Filter Tabs */}
-      <div className="flex items-center gap-2 border-b border-slate-200">
-        {['All', 'Needs Approval', 'In Progress', 'Completed'].map((st) => (
+      <div className="flex flex-wrap items-center gap-2 border-b border-slate-200">
+        {STATUS_TABS.map((st) => (
           <button
             key={st}
             onClick={() => setFilterStatus(st)}
@@ -101,6 +153,30 @@ export const MyTasksView: React.FC = () => {
             {st}
           </button>
         ))}
+
+        {/*
+         * Separated by the divider and the margin, because it is a different
+         * kind of question from the five to its left. Hidden entirely when the
+         * project has no lineage indexed — an empty tab reading "Not built (0)"
+         * would claim everything was verified and clean.
+         */}
+        {indexed && notBuiltCount > 0 && (
+          <button
+            onClick={() => setFilterStatus(NOT_BUILT)}
+            title="Tasks whose story has acceptance criteria with no code behind them"
+            className={`ml-auto flex items-center gap-1.5 px-4 py-2.5 text-xs font-bold border-b-2 transition-all cursor-pointer ${
+              filterStatus === NOT_BUILT
+                ? 'border-rose-600 text-rose-700'
+                : 'border-transparent text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            <FileWarning className="h-3.5 w-3.5" />
+            {NOT_BUILT}
+            <span className="rounded-md border border-rose-200 bg-rose-50 px-1.5 py-px font-mono text-[10px] text-rose-700">
+              {notBuiltCount}
+            </span>
+          </button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -113,6 +189,7 @@ export const MyTasksView: React.FC = () => {
           ) : (
             filteredTasks.map((t) => {
               const isSelected = selectedTask?.id === t.id;
+              const unbuilt = unbuiltOn(t);
               return (
                 <div
                   key={t.id}
@@ -165,6 +242,27 @@ export const MyTasksView: React.FC = () => {
                         </span>
                       ) : null;
                     })()}
+
+                    {/*
+                     * A separate vocabulary from criticalReason on purpose.
+                     *
+                     * That function opens by returning null for anything
+                     * Completed — it answers "has this stopped". This chip has to
+                     * appear precisely on completed work, because a finished task
+                     * whose criteria have no code is the finding. Overloading one
+                     * chip set would have meant changing what "critical" means.
+                     *
+                     * And the wording is narrow: CodeIQ observed no mapped code,
+                     * which is not the same claim as "incomplete".
+                     */}
+                    {unbuilt > 0 && (
+                      <span
+                        className="rounded-md border border-rose-200 bg-rose-50 px-1.5 py-px text-[10px] font-bold text-rose-700"
+                        title="CodeIQ found no code mapped to these acceptance criteria."
+                      >
+                        {unbuilt} {unbuilt === 1 ? 'criterion' : 'criteria'} with no code
+                      </span>
+                    )}
                     <span>{t.project}</span>
                   </div>
 
@@ -211,37 +309,121 @@ export const MyTasksView: React.FC = () => {
               </div>
             )}
 
-            <div className="flex items-center justify-between pt-4 border-t border-slate-100">
-              <span className="text-xs text-slate-400">Assigned to: <strong className="text-slate-800">{selectedTask.assignee}</strong></span>
-
-              {selectedTask.status === 'Needs Approval' ? (
-                <div className="flex items-center gap-2">
+            {/*
+             * Where the code for this task landed.
+             *
+             * Every field is read off the CodeIQ target rather than restated, so
+             * the panel cannot claim a branch or a PR the lineage does not have.
+             */}
+            {lineage && (
+              <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2 text-xs font-bold text-slate-900">
+                    <GitBranch className="w-4 h-4 text-slate-500" />
+                    <span>Code lineage</span>
+                  </div>
                   <button
-                    onClick={() => completeTask(selectedTask.id)}
-                    className="px-4 py-2 border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-bold rounded-xl"
+                    onClick={() => navigateTo('CodeIQ')}
+                    className="flex cursor-pointer items-center gap-1 text-[11px] font-bold text-indigo-600 hover:underline"
                   >
-                    Reject Artifact
-                  </button>
-                  <button
-                    onClick={() => approveTaskArtifact(selectedTask.id)}
-                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-md flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <Check className="w-4 h-4" />
-                    <span>Approve & Sign-Off</span>
+                    Open in CodeIQ <ArrowRight className="h-3 w-3" />
                   </button>
                 </div>
-              ) : selectedTask.status !== 'Completed' ? (
-                <button
-                  onClick={() => completeTask(selectedTask.id)}
-                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-md"
-                >
-                  Mark Completed
-                </button>
-              ) : (
-                <span className="text-xs font-bold text-emerald-600 flex items-center gap-1">
-                  <CheckCircle2 className="w-4 h-4" /> Signed off & completed
-                </span>
+
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-[11px] text-slate-500">
+                  <span className="font-bold text-indigo-600">{lineage.storyKey}</span>
+                  <span>
+                    {lineage.repo} · {lineage.branch}
+                  </span>
+                  <span>{lineage.pr}</span>
+                  {/*
+                   * Who owns the story and who committed the code are two
+                   * different people often enough to be worth printing both.
+                   */}
+                  {lineage.author !== lineage.owner && <span>committed by {lineage.author}</span>}
+                </div>
+
+                <div className="flex flex-wrap gap-1.5 font-mono text-[10px]">
+                  {(() => {
+                    const n = countBy(lineage.criteria);
+                    const cells: [number, string, string][] = [
+                      [n.covered, 'realized', 'bg-emerald-50 text-emerald-700 border-emerald-200'],
+                      [n.missing, 'no code', 'bg-rose-50 text-rose-700 border-rose-200'],
+                      [n.drifted, 'drifted', 'bg-violet-50 text-violet-700 border-violet-200'],
+                      [n.partial, 'partial', 'bg-amber-50 text-amber-800 border-amber-200'],
+                    ];
+                    return cells
+                      .filter(([v]) => v > 0)
+                      .map(([v, label, cls]) => (
+                        <span key={label} className={`rounded-md border px-1.5 py-px font-bold ${cls}`}>
+                          {v} {label}
+                        </span>
+                      ));
+                  })()}
+                </div>
+              </div>
+            )}
+
+            <div className="flex flex-col gap-3 pt-4 border-t border-slate-100">
+              {/*
+               * Said before the button, not instead of it.
+               *
+               * Advisory on purpose: `missing` is CodeIQ's high-accuracy output,
+               * but it is still an inference, and a module that blocks a sign-off
+               * on an inference gets switched off within a week. Drift is
+               * deliberately not mentioned here — at 60–75% it has no business
+               * beside an approval control.
+               */}
+              {selectedUnbuilt > 0 && selectedTask.status !== 'Completed' && (
+                <div className="flex items-start gap-2.5 rounded-xl border border-rose-200 bg-rose-50/70 px-3.5 py-2.5">
+                  <FileWarning className="mt-px h-3.5 w-3.5 shrink-0 text-rose-600" />
+                  <span className="text-[11px] leading-relaxed text-rose-900">
+                    <strong>
+                      {selectedUnbuilt} acceptance{' '}
+                      {selectedUnbuilt === 1 ? 'criterion has' : 'criteria have'} no code behind
+                      {selectedUnbuilt === 1 ? ' it' : ' them'}.
+                    </strong>{' '}
+                    CodeIQ could not map anything in the change set to
+                    {selectedUnbuilt === 1 ? ' it' : ' them'}. Worth checking before you sign off —
+                    this does not block the approval.
+                  </span>
+                </div>
               )}
+
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-xs text-slate-400">
+                  Assigned to: <strong className="text-slate-800">{selectedTask.assignee}</strong>
+                </span>
+
+                {selectedTask.status === 'Needs Approval' ? (
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => completeTask(selectedTask.id)}
+                      className="px-4 py-2 border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-bold rounded-xl"
+                    >
+                      Reject Artifact
+                    </button>
+                    <button
+                      onClick={() => approveTaskArtifact(selectedTask.id)}
+                      className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-md flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <Check className="w-4 h-4" />
+                      <span>Approve &amp; Sign-Off</span>
+                    </button>
+                  </div>
+                ) : selectedTask.status !== 'Completed' ? (
+                  <button
+                    onClick={() => completeTask(selectedTask.id)}
+                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-md"
+                  >
+                    Mark Completed
+                  </button>
+                ) : (
+                  <span className="text-xs font-bold text-emerald-600 flex items-center gap-1">
+                    <CheckCircle2 className="w-4 h-4" /> Signed off &amp; completed
+                  </span>
+                )}
+              </div>
             </div>
           </div>
         ) : (

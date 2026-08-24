@@ -2,7 +2,6 @@ import React from 'react';
 import {
   FileSearch,
   GitCommitHorizontal,
-  LayoutDashboard,
   PanelLeftClose,
   PanelLeftOpen,
   Settings2,
@@ -12,55 +11,84 @@ import {
 /**
  * The surfaces, down the side.
  *
- * Along the top they were a row of five peers, which is not what they are.
- * Review, Dashboard and Spec quality are three readings of one lineage — a
- * reviewer, a lead and a PM asking different questions of the same data. Untracked
- * and Repo policy are not readings at all: one is the change the lineage could
- * not explain, the other is the configuration that decides what it can explain.
- * A flat strip says all five are the same kind of thing.
+ * Four items in two groups. Review and Spec quality are readings of one lineage
+ * — a reviewer or lead asking whether it was built, a PM asking whether it was
+ * specifiable. Untracked and Repo policy are not readings at all: one is the
+ * change the lineage could not explain, the other is the configuration that
+ * decides what it can explain.
+ *
+ * Review absorbed the Dashboard surface. They were a list of stories and the
+ * panel that received one, so keeping them apart meant the list vanished the
+ * moment it was used — see ReviewSurface.
  *
  * Same rail idiom as Spec AI v2's phases, for the same reason and with the same
  * fold-to-icons behaviour when the work wants the width.
  */
 
-export type Surface = 'review' | 'dashboard' | 'spec' | 'untracked' | 'repos';
+export type Surface = 'review' | 'spec' | 'untracked' | 'repos';
 
-const READINGS: { key: Surface; label: string; icon: React.ElementType }[] = [
+interface Item {
+  key: Surface;
+  label: string;
+  icon: React.ElementType;
+}
+
+const READINGS: Item[] = [
   { key: 'review', label: 'Review', icon: FileSearch },
-  { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { key: 'spec', label: 'Spec quality', icon: Sparkles },
 ];
 
-const SETTINGS: { key: Surface; label: string; icon: React.ElementType }[] = [
+const SETTINGS: Item[] = [
   { key: 'untracked', label: 'Untracked', icon: GitCommitHorizontal },
   { key: 'repos', label: 'Repo policy', icon: Settings2 },
 ];
+
+/**
+ * What each count means, spelled out for the screen reader and the tooltip.
+ *
+ * A bare number beside a word is not a label — "Review 6" could as easily be six
+ * stories as six gaps, and the two would be acted on differently.
+ */
+const COUNT_NOTE: Partial<Record<Surface, (n: number) => string>> = {
+  review: (n) => `${n} acceptance ${n === 1 ? 'criterion' : 'criteria'} with no code`,
+  spec: (n) => `${n} rework ${n === 1 ? 'signal' : 'signals'} not yet raised upstream`,
+  untracked: (n) => `${n} ${n === 1 ? 'commit' : 'commits'} with no story`,
+};
 
 export const SurfaceRail: React.FC<{
   surface: Surface;
   onPick: (surface: Surface) => void;
   collapsed: boolean;
   onToggleCollapsed: () => void;
-  /** Unjoined commits. A count worth carrying because it only ever means work. */
-  untrackedCount: number;
+  /**
+   * Outstanding work per surface. Only where the number means work — Repo policy
+   * has settings, not a backlog, so it never carries one, and a zero renders
+   * nothing rather than a reassuring badge.
+   */
+  counts: Partial<Record<Surface, number>>;
   /** Named here rather than in a bar of its own — see CodeIQView. */
   projectName?: string;
-}> = ({ surface, onPick, collapsed, onToggleCollapsed, untrackedCount, projectName }) => {
-  const item = (
-    { key, label, icon: Icon }: { key: Surface; label: string; icon: React.ElementType },
-    group: boolean
-  ) => (
-    <button
-      key={key}
-      className={`cq-rail-i ${surface === key ? 'on' : ''} ${group ? 'group' : ''}`}
-      onClick={() => onPick(key)}
-      title={collapsed ? label : undefined}
-    >
-      <Icon size={14} />
-      {!collapsed && <span>{label}</span>}
-      {key === 'untracked' && untrackedCount > 0 && <i>{untrackedCount}</i>}
-    </button>
-  );
+  /** The provenance strip. Passed in so the rail owns placement, not state. */
+  provenance?: React.ReactNode;
+}> = ({ surface, onPick, collapsed, onToggleCollapsed, counts, projectName, provenance }) => {
+  const item = ({ key, label, icon: Icon }: Item, group: boolean) => {
+    const n = counts[key] ?? 0;
+    const note = n > 0 ? COUNT_NOTE[key]?.(n) : undefined;
+    return (
+      <button
+        key={key}
+        className={`cq-rail-i ${surface === key ? 'on' : ''} ${group ? 'group' : ''}`}
+        onClick={() => onPick(key)}
+        title={collapsed ? [label, note].filter(Boolean).join(' — ') : note}
+      >
+        <Icon size={14} />
+        {!collapsed && <span>{label}</span>}
+        {n > 0 && (
+          <i aria-label={note}>{n}</i>
+        )}
+      </button>
+    );
+  };
 
   return (
     <nav className={`cq-rail ${collapsed ? 'mini' : ''}`}>
@@ -72,6 +100,9 @@ export const SurfaceRail: React.FC<{
       >
         {collapsed ? <PanelLeftOpen size={14} /> : <PanelLeftClose size={14} />}
       </button>
+
+      {/* Where this reading came from, before any of the readings. */}
+      {provenance}
 
       {READINGS.map((r, i) => item(r, i === 0))}
       {SETTINGS.map((s, i) => item(s, i === 0))}

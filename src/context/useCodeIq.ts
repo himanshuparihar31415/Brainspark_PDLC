@@ -305,6 +305,40 @@ export const useCodeIqSlice = ({
   };
 
   /**
+   * Tolerate several commits at once.
+   *
+   * The panel restricts this to commits the semantic diff called cosmetic, and
+   * that restriction is the whole reason a bulk action is defensible here:
+   * tolerating a commit asserts it needed no story, which is a judgement, but
+   * making that judgement one lockfile bump at a time is ceremony rather than
+   * judgement. `auto-ticket` has no bulk equivalent, because it creates work.
+   *
+   * One audit entry naming every SHA, not one per row. A reader looking at this
+   * later needs to see that the decision was made once, over a named set.
+   */
+  const tolerateUntracked = (projectId: string, commits: string[]) => {
+    if (commits.length === 0) return;
+
+    patch(projectId, (s) => ({
+      ...s,
+      untracked: s.untracked.map((u) =>
+        commits.includes(u.commit) ? { ...u, policy: 'tolerate' as UntrackedPolicy } : u
+      ),
+    }));
+
+    addToast(
+      `${commits.length} ${commits.length === 1 ? 'commit' : 'commits'} tolerated — no story expected.`,
+      'info'
+    );
+    addAuditLog(
+      'CodeIQ Untracked Change',
+      `${commits.length} commits`,
+      `Bulk tolerate: ${commits.join(', ')}`,
+      `Recorded against ${currentUserName}; classified cosmetic by semantic diff`
+    );
+  };
+
+  /**
    * Change how a repository is read.
    *
    * Authority is checked at the call site rather than here — the slice records
@@ -338,6 +372,7 @@ export const useCodeIqSlice = ({
     adjudicate,
     sendThrashUpstream,
     setUntrackedPolicy,
+    tolerateUntracked,
     setRepoPolicy,
   };
 };

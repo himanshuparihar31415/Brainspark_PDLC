@@ -40,9 +40,6 @@ const PromptControlsView = lazy(() =>
 const SecurityView = lazy(() =>
   import('./components/views/SecurityView').then((m) => ({ default: m.SecurityView }))
 );
-const ProjectDashboardView = lazy(() =>
-  import('./components/views/ProjectDashboardView').then((m) => ({ default: m.ProjectDashboardView }))
-);
 const CommandCentreView = lazy(() =>
   import('./components/views/CommandCentreView').then((m) => ({ default: m.CommandCentreView }))
 );
@@ -97,8 +94,17 @@ const AppContent: React.FC = () => {
         return <PromptControlsView />;
       case 'Security':
         return <SecurityView />;
+      /*
+       * PDLC personas and the Project Admin see the same dashboard.
+       *
+       * These were two components behind two nav keys that both render as
+       * "Dashboard" in the sidebar (see NAV_LABELS), so they read as one screen
+       * behaving differently per role. DashboardView already derives its persona
+       * from the role and falls back to the project tier for every PDLC role, so
+       * pointing this key at it is the whole change.
+       */
       case 'My Services':
-        return <ProjectDashboardView />;
+        return <DashboardView />;
       case 'Command Centre':
         return <CommandCentreView />;
       case 'Spec AI':

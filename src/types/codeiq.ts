@@ -213,7 +213,26 @@ export interface UntrackedChange {
   repo: string;
   commit: string;
   author: string;
+  /**
+   * The developer's own subject line, verbatim.
+   *
+   * Distinct from `summary` and the distinction is the point: this is what
+   * somebody claimed they did, and the summary is what the diff observed. A
+   * commit reading `refactor: tidy imports` that moved a rate limit is exactly
+   * the row worth looking at, and collapsing the two columns hides it.
+   */
+  message: string;
+  /** What the semantic diff observed, in CodeIQ's words rather than the author's. */
   summary: string;
+  /**
+   * Behavioural or cosmetic — the field that decides whether this commit needed a
+   * story at all.
+   *
+   * Optional because it is an output, not a property of the commit. A repository
+   * with `semanticDiff` off produces no classification, and storing one anyway
+   * would let the panel show a verdict the analysis never reached.
+   */
+  change?: ChangeClass;
   files: number;
   at: string;
   policy: UntrackedPolicy;

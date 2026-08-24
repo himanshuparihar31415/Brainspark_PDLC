@@ -7,6 +7,7 @@ import { RollupTiles, TileAction, TileKey } from '../dashboard/RollupTiles';
 import { BreakdownModal, BreakdownSection } from '../dashboard/BreakdownModal';
 import { ModuleStrip } from '../dashboard/ModuleStrip';
 import { ProjectPhaseStrip } from '../dashboard/ProjectPhaseStrip';
+import { ProjectSignals } from '../dashboard/ProjectSignals';
 import { Wallet, AlertTriangle } from 'lucide-react';
 
 /** Tile behaviour per tier. Admin tiers redirect (detail lives on other
@@ -311,7 +312,20 @@ export const DashboardView: React.FC = () => {
       {/* Lower strip is role-dependent: module roll-up for the admin tiers,
           single-project phase strip for the Project Admin. */}
       {persona === 'project' ? (
-        <ProjectPhaseStrip activeFilter={activeFilter} completion={completion} />
+        <>
+          <ProjectPhaseStrip activeFilter={activeFilter} completion={completion} />
+          {/*
+           * Every persona now lands on this dashboard, not just the Project
+           * Admin. The rollup above answers "how is the project doing"; this
+           * answers "is anything waiting on me", which is what the separate PDLC
+           * dashboard used to be for and is the reason it could be retired.
+           *
+           * Only at project tier, and that falls out of the data rather than a
+           * role check: codeIqProjectFor resolves one project or none, so a
+           * Tenant Admin's cross-department view has nothing to render.
+           */}
+          <ProjectSignals />
+        </>
       ) : (
         <ModuleStrip />
       )}

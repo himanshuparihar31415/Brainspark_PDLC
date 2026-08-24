@@ -214,12 +214,18 @@ const CriterionRow: React.FC<{
   );
 };
 
+/*
+ * The story picker is gone from this panel.
+ *
+ * It was a <select> of every target, which existed only because the list of
+ * stories lived on a different surface. The list is beside this panel now, so a
+ * dropdown duplicating it would be a second control for one choice — and the two
+ * could disagree about which story is open.
+ */
 export const ReviewPanel: React.FC<{
   target: ReviewTarget;
-  targets: ReviewTarget[];
-  onPickTarget: (storyKey: string) => void;
   onAct: (criterion: Criterion, action: string, secondary: boolean) => void;
-}> = ({ target, targets, onPickTarget, onAct }) => {
+}> = ({ target, onAct }) => {
   const [filter, setFilter] = useState<CriterionStatus | 'all'>('all');
   const [open, setOpen] = useState<string | null>(null);
 
@@ -232,8 +238,9 @@ export const ReviewPanel: React.FC<{
   const headline = gapHeadline(target.criteria);
   const clean = target.criteria.every((c) => c.status === 'covered' || c.dismissal);
 
+  /* No cq-wrap here: the surface owns the page width and the column it sits in. */
   return (
-    <div className="cq-wrap">
+    <div className="cq-detail-in">
       {/* ── What is being adjudicated ── */}
       <div className="cq-target">
         <div style={{ minWidth: 0 }}>
@@ -256,27 +263,6 @@ export const ReviewPanel: React.FC<{
         <div className="cq-claim">
           <b>Tracker says {target.claimed}</b>
           <i>CodeIQ does not change it — it only says what is true</i>
-          {targets.length > 1 && (
-            <select
-              value={target.storyKey}
-              onChange={(e) => onPickTarget(e.target.value)}
-              style={{
-                marginTop: 6,
-                fontSize: 11,
-                padding: '3px 6px',
-                border: '1px solid var(--line-strong)',
-                borderRadius: 6,
-                background: 'var(--surface)',
-                fontFamily: 'var(--font-mono)',
-              }}
-            >
-              {targets.map((t) => (
-                <option key={t.storyKey} value={t.storyKey}>
-                  {t.storyKey} · {t.pr}
-                </option>
-              ))}
-            </select>
-          )}
         </div>
       </div>
 

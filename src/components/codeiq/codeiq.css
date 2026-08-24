@@ -185,6 +185,143 @@
 }
 
 /*
+ * Provenance, at the head of the rail.
+ *
+ * Three states rather than a green dot that is always on. Colour lands on the
+ * dot only — the text stays readable in all three, because a degraded feed still
+ * has a report worth reading and greying it out would say otherwise.
+ */
+.cq-prov {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0 1px 8px;
+  padding: 7px 8px;
+  border: 1px solid var(--line-glass);
+  border-radius: 8px;
+  background: var(--glass-strong);
+  box-shadow: var(--elev-1), var(--inset-hi);
+}
+.cq-prov .from {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.cq-prov .from b {
+  color: var(--ink-faint);
+  font-weight: 400;
+}
+/* The dot. The one thing that carries the state. */
+.cq-prov .from i,
+.cq-prov.mini i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+.cq-prov.live .from i,
+.cq-prov.live.mini i {
+  background: var(--ok);
+}
+.cq-prov.degraded .from i,
+.cq-prov.degraded.mini i {
+  background: var(--warn);
+}
+.cq-prov.dark .from i,
+.cq-prov.dark.mini i {
+  background: var(--ink-faint);
+}
+.cq-prov .det,
+.cq-prov .when {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  line-height: 1.45;
+  color: var(--ink-faint);
+}
+.cq-prov.degraded .det {
+  color: var(--warn);
+}
+.cq-prov.mini {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  margin-bottom: 8px;
+}
+.cq-prov.mini i {
+  margin: 0;
+}
+
+/*
+ * The slim bar. Search on the left, audit on the right, nothing in the middle.
+ *
+ * Sticky, because the search affordance is worth reaching without scrolling back
+ * up a long criteria list.
+ */
+.cq-top {
+  position: sticky;
+  top: -18px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 1220px;
+  margin: -18px auto 14px;
+  padding: 10px 0;
+  background: linear-gradient(var(--bg) 72%, transparent);
+}
+.cq-search {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex: 1;
+  min-width: 0;
+  max-width: 420px;
+  padding: 6px 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: var(--glass-strong);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  box-shadow: var(--elev-1), var(--inset-hi);
+  color: var(--ink-faint);
+  text-align: left;
+}
+.cq-search:hover {
+  border-color: var(--ink-soft);
+  color: var(--ink-soft);
+}
+.cq-search > span {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11.5px;
+}
+.cq-search kbd {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  padding: 1px 5px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--ink-faint);
+}
+/* Audit sits at the far end; there is deliberately nothing between them. */
+.cq-top > .cq-btn {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/*
  * Two kinds of nothing share this block, and the copy inside it is what
  * separates them — never indexed, versus indexed and clear.
  */
@@ -226,6 +363,17 @@
   padding: 9px 12px;
 }
 
+/* With an icon beside the sentence rather than floating above it. */
+.cq-degraded.row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.cq-degraded.row svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
 /* Instrumentation quality, read before the report it qualifies. */
 .cq-instr {
   display: flex;
@@ -259,6 +407,14 @@
   display: flex;
   flex-direction: column;
   gap: 14px;
+}
+/*
+ * The dashboard only. 940px is a reading measure for the review panel's single
+ * column of criteria; two columns inside it would give the rework card no room
+ * to be legible.
+ */
+.cq-wrap.wide {
+  max-width: 1220px;
 }
 
 /* ───────────────────────── review header ───────────────────────── */
@@ -731,6 +887,341 @@
 
 /* ───────────────────────── dashboard ───────────────────────── */
 
+/*
+ * Tiles.
+ *
+ * Three of the four narrow the story list below them, which is the only reason
+ * they are buttons. The fourth is a door to another surface — untracked change
+ * has no story to filter a story list by, which is what makes it untracked.
+ *
+ * Colour sits on the number and on the active ring, nowhere else. A tile row
+ * makes everything on it look equally solid, and one of these four is a 60–75%
+ * assist, so the caveat is printed on the tile rather than implied by a hue.
+ */
+.cq-tiles {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+.cq-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-align: left;
+  padding: 12px 13px 10px;
+  border-radius: var(--radius);
+  border: 1px solid var(--line-glass);
+  background: var(--glass-strong);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  box-shadow: var(--elev-1), var(--inset-hi);
+  cursor: pointer;
+  transition: box-shadow 140ms ease, transform 140ms ease, border-color 140ms ease;
+}
+.cq-tile:hover {
+  box-shadow: var(--elev-2), var(--inset-hi);
+  transform: translateY(-1px);
+}
+.cq-tile .lbl {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  line-height: 1.35;
+}
+.cq-tile .n {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  min-width: 0;
+}
+.cq-tile .n b {
+  font-family: var(--font-display);
+  font-size: 27px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+.cq-tile .n i {
+  font-style: normal;
+  font-size: 10.5px;
+  color: var(--ink-soft);
+  min-width: 0;
+}
+.cq-tile .foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+.cq-tile .foot em {
+  font-style: normal;
+  font-size: 10px;
+  color: var(--ink-faint);
+  line-height: 1.4;
+}
+.cq-tile .act {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 7px;
+  border-radius: 5px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  color: var(--ink-soft);
+}
+.cq-tile.bad .n b {
+  color: var(--gap);
+}
+.cq-tile.warn .n b {
+  color: var(--warn);
+}
+.cq-tile.drift .n b {
+  color: var(--drift);
+}
+.cq-tile.note .n b {
+  color: var(--accent);
+}
+
+/* The active filter. Ring plus a filled pill — aria-pressed carries the state. */
+.cq-tile.on {
+  box-shadow: var(--elev-2), var(--inset-hi);
+}
+.cq-tile.bad.on {
+  border-color: var(--gap);
+}
+.cq-tile.warn.on {
+  border-color: var(--warn);
+}
+.cq-tile.drift.on {
+  border-color: var(--drift);
+}
+.cq-tile.on .act {
+  color: #fff;
+  border-color: transparent;
+}
+.cq-tile.bad.on .act {
+  background: var(--gap);
+}
+.cq-tile.warn.on .act {
+  background: var(--warn);
+}
+.cq-tile.drift.on .act {
+  background: var(--drift);
+}
+
+/*
+ * Two columns: the gap report, and the rework signal beside it.
+ *
+ * Stacked, the rework list read as the bottom of the gap report. They are
+ * different questions asked by different people — a lead reads the left column,
+ * a PM the right.
+ */
+/*
+ * Master and detail, side by side.
+ *
+ * The list used to be a surface of its own that you left in order to use. At this
+ * width both fit: the stories stay legible at 330px because their rows are three
+ * short lines rather than six columns, and the criteria get the rest — they are
+ * the reading, and Given/When/Then needs the measure.
+ */
+.cq-review {
+  display: grid;
+  grid-template-columns: 330px minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+.cq-master {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  min-width: 0;
+  padding: 13px 14px;
+  border: 1px solid var(--line-glass);
+  border-radius: var(--radius);
+  background: var(--glass-strong);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  box-shadow: var(--elev-1), var(--inset-hi);
+  /* Sticky so the list stays reachable beside a long criteria column. */
+  position: sticky;
+  top: 46px;
+}
+.cq-mhead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+.cq-mhead > div {
+  min-width: 0;
+}
+.cq-mlist {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  max-height: 46vh;
+  overflow-y: auto;
+  margin: 0 -4px;
+  padding: 0 4px;
+}
+
+/*
+ * A story, as something you pick.
+ *
+ * A button rather than a row with a button in it: the whole card is the target,
+ * which is what the merge is for. `aria-current` marks the open one, so the
+ * highlight is not the only signal.
+ */
+.cq-mrow {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  text-align: left;
+  padding: 8px 9px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-2);
+  transition: border-color 140ms ease, box-shadow 140ms ease, background 140ms ease;
+}
+.cq-mrow:hover {
+  border-color: var(--line-strong);
+  background: var(--surface);
+  box-shadow: var(--elev-1);
+}
+.cq-mrow.on {
+  border-color: var(--accent);
+  background: var(--surface);
+  box-shadow: var(--elev-2), var(--inset-hi);
+}
+.cq-mrow .top,
+.cq-mrow .bot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.cq-mrow .k {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--accent);
+}
+.cq-mrow .t {
+  font-size: 11.5px;
+  line-height: 1.4;
+  color: var(--ink);
+  /* Two lines then ellipsis — the detail column prints the title in full. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.cq-mrow .o {
+  flex-shrink: 0;
+  font-size: 10px;
+  color: var(--ink-faint);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cq-detail {
+  min-width: 0;
+}
+/* The review panel, given the column rather than the page. */
+.cq-detail-in {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+/* In the master column the bar has no room to sit beside the numbers. */
+.cq-trust.compact {
+  gap: 14px;
+  padding-bottom: 2px;
+  border-bottom: 1px solid var(--line);
+}
+.cq-trust.compact .cq-num b {
+  font-size: 20px;
+}
+.cq-trust.compact .cq-bar {
+  flex-basis: 100%;
+  min-width: 0;
+}
+
+@media (max-width: 1160px) {
+  .cq-review {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .cq-master {
+    position: static;
+  }
+  .cq-mlist {
+    max-height: none;
+  }
+  .cq-tiles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.cq-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  box-shadow: var(--elev-1);
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--ink);
+  cursor: pointer;
+}
+.cq-chip:hover {
+  border-color: var(--ink);
+}
+
+/*
+ * The count under a list, and the way out of a filter.
+ *
+ * Rendered whether or not a filter is on, because "of m" is the number a reader
+ * assumes rather than checks.
+ */
+.cq-count {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-top: 9px;
+  border-top: 1px solid var(--line);
+  font-size: 10.5px;
+  color: var(--ink-faint);
+}
+.cq-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--accent);
+  cursor: pointer;
+}
+.cq-link:hover {
+  text-decoration: underline;
+}
+
 .cq-h2 {
   font-family: var(--font-display);
   font-size: 13px;
@@ -806,46 +1297,6 @@
   background: var(--gap);
 }
 
-/* rollup table */
-.cq-table {
-  display: flex;
-  flex-direction: column;
-}
-.cq-tr {
-  display: grid;
-  grid-template-columns: 88px 1fr 118px 132px;
-  gap: 10px;
-  align-items: center;
-  padding: 9px 4px;
-  border-bottom: 1px solid var(--line);
-  font-size: 12px;
-}
-.cq-tr:last-child {
-  border-bottom: 0;
-}
-.cq-tr.head {
-  font-size: 9.5px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--ink-faint);
-  padding-bottom: 6px;
-}
-.cq-tr .k {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--accent);
-}
-.cq-tr .t {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.cq-tr .o {
-  font-size: 11px;
-  color: var(--ink-soft);
-}
 .cq-verdict {
   font-size: 10.5px;
   font-weight: 600;
@@ -888,96 +1339,6 @@
   background: var(--warn-bg);
 }
 
-/* thrash */
-.cq-thrash {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-}
-.cq-th {
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  padding: 9px 11px;
-  border: 1px solid var(--line);
-  border-radius: 7px;
-  background: var(--surface-2);
-  box-shadow: var(--elev-1);
-}
-.cq-th .id {
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  color: var(--ink-faint);
-  flex-shrink: 0;
-}
-.cq-th .tx {
-  flex: 1;
-  min-width: 0;
-  font-size: 12px;
-  line-height: 1.45;
-}
-.cq-th .n {
-  flex-shrink: 0;
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  color: var(--ink-soft);
-  text-align: right;
-}
-.cq-th .n b {
-  color: var(--gap);
-  font-weight: 600;
-}
-
-/* untracked */
-.cq-un {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 10px;
-  border-bottom: 1px solid var(--line);
-  font-size: 11.5px;
-}
-.cq-un:last-child {
-  border-bottom: 0;
-}
-.cq-un .sha {
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  color: var(--ink-faint);
-  flex-shrink: 0;
-}
-.cq-un .s {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.cq-un .who {
-  font-size: 10.5px;
-  color: var(--ink-soft);
-  flex-shrink: 0;
-}
-.cq-pol {
-  flex-shrink: 0;
-  font-size: 10px;
-  font-weight: 600;
-  padding: 2px 7px;
-  border-radius: 5px;
-}
-.cq-pol.flag {
-  color: var(--warn);
-  background: var(--warn-bg);
-}
-.cq-pol.auto-ticket {
-  color: var(--drift);
-  background: var(--drift-bg);
-}
-.cq-pol.tolerate {
-  color: var(--ink-faint);
-  background: var(--bg);
-}
-
 /* footnote about what these numbers can and cannot mean */
 .cq-foot {
   font-size: 10.5px;
@@ -991,18 +1352,23 @@
   font-weight: 600;
 }
 
-@media (max-width: 720px) {
-  .cq-tr {
-    grid-template-columns: 76px 1fr;
-    row-gap: 4px;
-  }
-  .cq-tr .o,
-  .cq-tr.head .o {
-    display: none;
-  }
-}
 
 /* ───────────────────────── spec quality ───────────────────────── */
+
+/*
+ * The list container, still used here.
+ *
+ * It was declared beside the dashboard's capped rework preview and went out with
+ * it when Review absorbed the Dashboard — but Spec quality, which owns the full
+ * list, was the other user. Caught by the used-versus-defined audit rather than
+ * by looking at the screen, which is the second time that audit has paid for
+ * itself on this module.
+ */
+.cq-thrash {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
 
 /*
  * One block per criterion. Rework is a per-criterion measure, never per person,
@@ -1082,56 +1448,166 @@
 
 /* ───────────────────────── untracked ───────────────────────── */
 
-.cq-ut {
+/*
+ * One table, not a stack of cards.
+ *
+ * Grouping by repository made a decision look like a heading; the repository is
+ * a filter and a column, because the interesting comparison is across repos —
+ * one tolerating refactors by policy beside one that flags them.
+ */
+.cq-ubar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px 16px;
+  padding: 11px 13px;
+  border-radius: var(--radius);
+  border: 1px solid var(--line-glass);
+  background: var(--glass);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  box-shadow: var(--elev-1), var(--inset-hi);
+}
+.cq-ubar label {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 11px 12px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--surface-2);
-  box-shadow: var(--elev-1);
+  gap: 3px;
 }
-.cq-ut .head {
-  display: flex;
-  align-items: baseline;
-  gap: 9px;
+.cq-ubar label > span {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
   color: var(--ink-faint);
 }
-.cq-ut .sha {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--accent);
-  flex-shrink: 0;
+/* The bulk action sits at the far end — it applies to the filtered set. */
+.cq-ubar > button {
+  margin-left: auto;
 }
-.cq-ut .summary {
-  font-size: 12.5px;
+
+.cq-sel {
+  border: 1px solid var(--line-strong);
+  border-radius: 7px;
+  background: var(--surface);
+  box-shadow: var(--elev-1);
+  padding: 4px 7px;
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--ink);
+  cursor: pointer;
+  max-width: 100%;
+}
+.cq-sel:hover {
+  border-color: var(--ink-soft);
+}
+
+.cq-utable {
+  display: flex;
+  flex-direction: column;
+}
+.cq-utr {
+  display: grid;
+  /* tick · sha · author's words · what the diff saw · author · type · policy */
+  grid-template-columns: 26px 82px minmax(0, 1.05fr) minmax(0, 1.4fr) 108px 96px 104px;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 4px;
+  border-bottom: 1px solid var(--line);
+  font-size: 12px;
+}
+.cq-utr:last-child {
+  border-bottom: 0;
+}
+.cq-utr.head {
+  font-size: 9.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-faint);
+  padding-bottom: 6px;
+}
+.cq-utr input[type='checkbox'] {
+  cursor: pointer;
+  accent-color: var(--accent);
+}
+.cq-utr input[type='checkbox']:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+.cq-utr .sha {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--ink-faint);
+}
+/* The author's own subject line: a literal, so mono. */
+.cq-utr .msg {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
   line-height: 1.45;
   color: var(--ink);
   min-width: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
-.cq-ut .meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 14px;
+/* What the diff observed, in prose because it is CodeIQ speaking. */
+.cq-utr .obs {
+  min-width: 0;
+  font-size: 11.5px;
+  line-height: 1.45;
+}
+.cq-utr .obs em {
+  display: block;
+  font-style: normal;
   font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-size: 9.5px;
   color: var(--ink-faint);
-  padding-left: 22px;
-}
-.cq-ut .acts {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
-  padding-left: 22px;
   margin-top: 2px;
 }
-.cq-ut .acts .helper {
-  font-size: 10.5px;
+.cq-utr .who {
+  min-width: 0;
+  font-size: 11px;
+  color: var(--ink-soft);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/*
+ * Behavioural, cosmetic, or not classified.
+ *
+ * The third is not a third class — it is what the row says when the analysis did
+ * not run, and it is grey rather than green for that reason. Colouring it like a
+ * clean result would turn "we did not look" into "we looked and it was nothing".
+ */
+.cq-type {
+  justify-self: start;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+}
+.cq-type.behavioral {
+  color: var(--gap);
+  background: var(--gap-bg);
+}
+.cq-type.cosmetic {
+  color: var(--ink-soft);
+  background: var(--bg);
+  border-color: var(--line);
+}
+.cq-type.unknown {
   color: var(--ink-faint);
-  line-height: 1.5;
-  flex-basis: 100%;
+  background: transparent;
+  border-color: var(--line-strong);
+  border-style: dashed;
 }
 
 /* Three named outcomes. The chosen one is stated, not merely highlighted. */
