@@ -130,3 +130,46 @@ export const v2NextAction = (s: V2Signals): string | null => {
   if (s.stories === 0) return 'Decompose into specs';
   return null;
 };
+
+// ────────────────────────────── Sessions ──────────────────────────────
+
+/**
+ * What a session is called before anyone renames it.
+ *
+ * The first clause of the problem statement, near enough — a name you can find
+ * a row by, rather than a paragraph in a table cell. The statement itself stays
+ * whole; this is only the label on it.
+ */
+export const sessionTitleFrom = (statement: string): string => {
+  const clean = statement.trim().replace(/\s+/g, ' ');
+  if (!clean) return 'Untitled specification';
+
+  /* Prefer a natural break, then fall back to a word boundary near the cap. */
+  const stop = clean.search(/[.;:—]|\sbecause\s|\sso that\s/i);
+  const head = stop > 24 ? clean.slice(0, stop) : clean;
+  if (head.length <= 58) return head;
+
+  const cut = head.slice(0, 58);
+  return `${cut.slice(0, cut.lastIndexOf(' ') > 30 ? cut.lastIndexOf(' ') : 58)}…`;
+};
+
+/**
+ * How long ago a session was touched, in the terms a list needs: precise while
+ * that matters, coarse once it does not.
+ */
+export const sessionAge = (iso: string, now: number = Date.now()): string => {
+  const then = new Date(iso).getTime();
+  if (Number.isNaN(then)) return '—';
+
+  const mins = Math.max(0, Math.round((now - then) / 60000));
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+
+  const hours = Math.round(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+
+  const days = Math.round(hours / 24);
+  if (days < 7) return `${days}d ago`;
+
+  return new Date(then).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+};

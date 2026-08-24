@@ -556,7 +556,11 @@ const finEdgeIntake: SpecIntake = {
 };
 
 const finEdge: SpecAiState = {
+  sessionId: 'sess-fmb2-auth',
   projectId: 'p-mobile-v2',
+  title: 'Biometric login for returning customers',
+  createdAt: '2026-07-28T09:12:00.000Z',
+  updatedAt: '2026-08-24T16:40:00.000Z',
   specKey: 'FMB2',
   currentStage: 'knowledge',
   lockedStages: [],
@@ -685,7 +689,11 @@ const finEdge: SpecAiState = {
 
 /** A fresh workspace with nothing brought in yet. */
 const blank: SpecAiState = {
+  sessionId: 'sess-acp-1',
   projectId: 'p-acme-portal',
+  title: 'Untitled specification',
+  createdAt: '2026-08-01T09:00:00.000Z',
+  updatedAt: '2026-08-01T09:00:00.000Z',
   specKey: 'ACP',
   currentStage: 'knowledge',
   lockedStages: [],
@@ -719,18 +727,297 @@ const blank: SpecAiState = {
   saveState: 'Saved',
 };
 
-export const INITIAL_SPEC_AI: SpecAiState[] = [finEdge, blank];
+/* ─────────────────────────── Other open sessions ───────────────────────────
+ *
+ * A project does not have one problem worth specifying, it has several, and they
+ * are worked on at different times and get to different places. These two sit
+ * beside the authentication spec on the same project so the Command Centre's
+ * session list has something to be a list of — one barely started, one waiting on
+ * decomposition. Both are read through the same derivations as the first, so the
+ * phase and the progress on each row are worked out, not written down here.
+ */
 
-export const blankSpecAiState = (projectId: string): SpecAiState => ({
+const CARD_FREEZE_STATEMENT =
+  'Customers who lose a card have to call the contact centre to freeze it and order a replacement. Card operations want both self-serve in the app.';
+
+const cardFreezeIntake: SpecIntake = {
+  raw: CARD_FREEZE_STATEMENT,
+  kind: 'Problem statement',
+  kindReason: 'prose describing intent',
+  conciseBrief: [
+    CARD_FREEZE_STATEMENT,
+    'What I took from your input: subject — card servicing.',
+  ].join('\n\n'),
+  signals: [{ label: 'Subject', value: 'card servicing' }],
+  task: {
+    title: 'Specify self-serve card freeze and replacement',
+    statement: CARD_FREEZE_STATEMENT,
+    steps: [
+      'Read the card operations material against this statement',
+      'Report what is stated outright and what nothing covers',
+      'Raise the ownership question before any artifact is generated',
+    ],
+    outOfScope: 'Anything no connected source speaks to becomes an open question.',
+  },
+  needs: [],
+  acceptedAt: '2026-08-19T11:05:00.000Z',
+};
+
+const cardFreeze: SpecAiState = {
   ...blank,
-  projectId,
-  specKey: projectId.replace(/^p-/, '').toUpperCase().slice(0, 4),
+  sessionId: 'sess-fmb2-cardfreeze',
+  projectId: 'p-mobile-v2',
+  title: 'Self-serve card freeze and replacement',
+  createdAt: '2026-08-19T11:05:00.000Z',
+  updatedAt: '2026-08-22T14:20:00.000Z',
+  specKey: 'FMB2',
+  intake: cardFreezeIntake,
+  problemStatement: CARD_FREEZE_STATEMENT,
   understanding: blank.understanding.map((s) => ({ ...s })),
-  cards: [],
-  problemStatement: '',
-  sources: [],
-  brief: undefined,
-  intake: undefined,
-  transcript: [],
-  questions: [],
-});
+  brief: {
+    version: 1,
+    summary:
+      'Card loss is handled entirely by the contact centre today. The ask is to move freeze and replacement into the app without changing who is allowed to do either.',
+    generatedFrom: {
+      problemStatement: CARD_FREEZE_STATEMENT,
+      sourceIds: [],
+    },
+    bands: {
+      understood: [
+        {
+          id: 'cf-1',
+          text: 'Freeze and replacement are both contact-centre operations today; nothing in the app touches card state.',
+          evidenceClass: 'Source fact',
+          sourceIds: [],
+          sourceSummary: 'Card operations runbook',
+        },
+        {
+          id: 'cf-2',
+          text: 'The ask, as you stated it: both operations should be self-serve in the app.',
+          evidenceClass: 'User decision',
+          sourceIds: [],
+          sourceSummary: 'No source — stated by you',
+        },
+      ],
+      decided: [],
+      inferring: [
+        {
+          id: 'cf-3',
+          text: 'A freeze is assumed to be reversible by the customer who applied it, since no source says otherwise.',
+          evidenceClass: 'AI assumption',
+          sourceIds: [],
+          sourceSummary: 'Assumption — nothing confirms this',
+        },
+      ],
+      cannotTell: [
+        {
+          id: 'cf-4',
+          text: 'Whether a replacement can be ordered to an address other than the one on file.',
+          evidenceClass: 'AI assumption',
+          sourceIds: [],
+          sourceSummary: 'No source addresses delivery address',
+        },
+      ],
+    },
+    stale: false,
+  },
+  questions: [
+    {
+      id: 'q-cf-1',
+      track: 'Product',
+      text: 'Can a customer unfreeze a card themselves, or does that stay with the contact centre?',
+      rationale: 'The runbook covers freezing and says nothing about the reverse.',
+      owner: 'Maya Kapoor',
+      status: 'Open',
+    },
+    {
+      id: 'q-cf-2',
+      track: 'Product',
+      text: 'Does a replacement order need a delivery address confirmation step?',
+      rationale: 'No source states whether the address on file can be overridden.',
+      owner: 'Maya Kapoor',
+      status: 'Open',
+    },
+    {
+      id: 'q-cf-3',
+      track: 'Architecture',
+      text: 'Which system owns card state — the core banking platform or the card processor?',
+      rationale: 'Both are referenced in the runbook and neither is named as the system of record.',
+      owner: 'Arjun Mehta',
+      status: 'Open',
+    },
+  ],
+};
+
+const STATEMENTS_STATEMENT =
+  'Statement download takes upwards of forty seconds on older iOS devices and times out on anything over twelve months of history.';
+
+const statementsIntake: SpecIntake = {
+  raw: STATEMENTS_STATEMENT,
+  kind: 'Problem statement',
+  kindReason: 'prose describing observed behaviour',
+  conciseBrief: [
+    STATEMENTS_STATEMENT,
+    'What I took from your input: subject — document delivery performance.',
+  ].join('\n\n'),
+  signals: [{ label: 'Subject', value: 'document delivery' }],
+  task: {
+    title: 'Specify the statement download change',
+    statement: STATEMENTS_STATEMENT,
+    steps: [
+      'Read the architecture files against this statement',
+      'Establish where rendering happens today and what bounds the payload',
+      'Produce the design and the contract the change is built from',
+    ],
+    outOfScope: 'Statement content and formatting; only delivery is in scope.',
+  },
+  needs: [],
+  acceptedAt: '2026-06-30T10:00:00.000Z',
+};
+
+const statements: SpecAiState = {
+  ...blank,
+  sessionId: 'sess-fmb2-statements',
+  projectId: 'p-mobile-v2',
+  title: 'Statement download performance',
+  createdAt: '2026-06-30T10:00:00.000Z',
+  updatedAt: '2026-08-25T09:15:00.000Z',
+  specKey: 'FMB2',
+  intake: statementsIntake,
+  problemStatement: STATEMENTS_STATEMENT,
+  /* The definition was finalized, which is what let the artifacts be generated. */
+  lockedStages: ['knowledge'],
+  currentStage: 'artifacts',
+  archMode: 'Brownfield',
+  hasLegacyArchitecture: true,
+  understanding: blank.understanding.map((s) => ({ ...s })),
+  brief: {
+    version: 3,
+    summary:
+      'Statement generation is synchronous and renders the PDF on the device. The agreed direction is to render server-side and hand the app a signed URL, which removes the device from the critical path entirely.',
+    generatedFrom: {
+      problemStatement: STATEMENTS_STATEMENT,
+      sourceIds: [],
+    },
+    bands: {
+      understood: [
+        {
+          id: 'st-1',
+          text: 'PDF rendering happens on the device, against a payload that is unbounded in size.',
+          evidenceClass: 'Source fact',
+          sourceIds: [],
+          sourceSummary: 'Architecture files',
+        },
+        {
+          id: 'st-2',
+          text: 'The gateway times out at thirty seconds, which is what the twelve-month case is hitting.',
+          evidenceClass: 'Source fact',
+          sourceIds: [],
+          sourceSummary: 'Architecture files',
+        },
+      ],
+      decided: [
+        {
+          id: 'st-3',
+          text: 'Rendering moves server-side; the app receives a signed URL with a fifteen-minute expiry.',
+          evidenceClass: 'User decision',
+          sourceIds: [],
+          sourceSummary: 'Settled with you',
+        },
+        {
+          id: 'st-4',
+          text: 'Statements older than twenty-four months are served from the archive tier, asynchronously.',
+          evidenceClass: 'User decision',
+          sourceIds: [],
+          sourceSummary: 'Settled with you',
+        },
+      ],
+      inferring: [],
+      cannotTell: [],
+    },
+    stale: false,
+  },
+  questions: [
+    {
+      id: 'q-st-1',
+      track: 'Architecture',
+      text: 'What expiry should the signed URL carry?',
+      rationale: 'No source states a policy for time-limited document links.',
+      owner: 'Arjun Mehta',
+      status: 'Answered',
+      answer: 'Fifteen minutes, matching the access-token expiry already in use.',
+    },
+  ],
+  artifacts: [
+    {
+      id: 'art-st-design',
+      group: 'Architecture',
+      label: 'Solution design — server-side statement rendering',
+      body: 'Rendering moves to a statement service behind the gateway. The app requests a document, receives a signed URL, and downloads outside the API path.',
+      versions: 2,
+      status: 'Approved',
+      confidence: 'high',
+      stale: false,
+      reviewComments: 3,
+      assignee: 'Arjun Mehta',
+    },
+    {
+      id: 'art-st-contract',
+      group: 'Contracts',
+      label: 'API contract — GET /statements/{id}/document',
+      body: 'Returns a signed URL and an expiry. 202 with a poll location for archive-tier documents.',
+      versions: 1,
+      status: 'Approved',
+      confidence: 'high',
+      stale: false,
+      reviewComments: 1,
+      assignee: 'Arjun Mehta',
+    },
+    {
+      id: 'art-st-prd',
+      group: 'Product',
+      label: 'PRD — Statement download',
+      body: 'Statements open in under five seconds for any period the customer can select, with archive periods acknowledged rather than silently slow.',
+      versions: 2,
+      status: 'Approved',
+      confidence: 'high',
+      stale: false,
+      reviewComments: 5,
+      assignee: 'Maya Kapoor',
+    },
+  ],
+};
+
+export const INITIAL_SPEC_AI: SpecAiState[] = [finEdge, cardFreeze, statements, blank];
+
+/** Ids minted here are for lazily created rows; the seeded ones are written out. */
+let sessionSeq = 0;
+
+export const blankSpecAiState = (
+  projectId: string,
+  sessionId = `sess-${Date.now().toString(36)}${(++sessionSeq).toString(36)}`,
+  title = 'Untitled specification'
+): SpecAiState => {
+  const now = new Date().toISOString();
+  return {
+    ...blank,
+    sessionId,
+    projectId,
+    title,
+    createdAt: now,
+    updatedAt: now,
+    specKey: projectId.replace(/^p-/, '').toUpperCase().slice(0, 4),
+    understanding: blank.understanding.map((s) => ({ ...s })),
+    cards: [],
+    problemStatement: '',
+    sources: [],
+    brief: undefined,
+    intake: undefined,
+    transcript: [],
+    questions: [],
+    lockedStages: [],
+    artifacts: [],
+    modules: [],
+    stories: [],
+  };
+};

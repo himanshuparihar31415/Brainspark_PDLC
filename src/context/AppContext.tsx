@@ -302,8 +302,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       let changed = false;
       const next = prev.map((phase) => {
         if (phase.module !== 'specai') return phase;
-        const stories =
-          spec.specAi.find((s) => s.projectId === phase.projectId)?.stories ?? [];
+        /* The session in front of the team, not whichever one sorts first. */
+        const stories = spec.specAiFor(phase.projectId).stories;
         const derived = specAiPhaseFromStories(stories);
         if (!derived) return phase;
         if (
@@ -368,9 +368,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setProjects((prev) => {
       let changed = false;
       const next = prev.map((project) => {
-        const hasStories = spec.specAi.some(
-          (s) => s.projectId === project.id && s.stories.length > 0
-        );
+        const hasStories = spec.specAiFor(project.id).stories.length > 0;
         if (!hasStories) return project;
         const phases = pipeline.filter((p) => p.projectId === project.id);
         if (phases.length === 0) return project;

@@ -530,12 +530,27 @@ export interface JiraMapping {
   issueTypes: Partial<Record<StoryType, string>>;
 }
 
-// ─────────────────────── Whole-module state, per project ───────────────────────
+// ─────────────────────── Whole-module state, per session ───────────────────────
 
 export type SaveState = 'Saved' | 'Saving' | 'Offline';
 
 export interface SpecAiState {
+  /**
+   * One run of the module: a problem statement and everything worked out from
+   * it.
+   *
+   * A project has as many of these as it has problems worth specifying, and they
+   * sit beside each other rather than overwriting each other — which is what
+   * lets the Command Centre list them and pick one back up. This, not
+   * `projectId`, is the key every mutation resolves to.
+   */
+  sessionId: string;
   projectId: string;
+  /** What the session is called in a list. Seeded from the problem statement. */
+  title: string;
+  createdAt: string;
+  /** Stamped on every mutation, so the list can order by what was touched last. */
+  updatedAt: string;
   /** Display identity for the specification, independent of the platform project. */
   specKey: string;
   currentStage: SpecStageKey;

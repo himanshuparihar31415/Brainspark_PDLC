@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Connector, Role } from '../types';
 import {
   AgentTurn,
@@ -34,6 +34,7 @@ import {
   stageIndex,
   unmappedStoryTypes,
 } from '../data/specai';
+import { sessionTitleFrom } from '../data/specV2';
 
 type Toast = (message: string, type?: 'success' | 'info' | 'error') => void;
 type Audit = (action: string, target: string, input: string, output: string) => void;
@@ -63,17 +64,130 @@ export const useSpecAiSlice = ({
 }: Deps) => {
   const [specAi, setSpecAi] = useState<SpecAiState[]>(INITIAL_SPEC_AI);
 
-  const specAiFor = (projectId: string): SpecAiState =>
-    specAi.find((s) => s.projectId === projectId) ?? blankSpecAiState(projectId);
+  /*
+   * A project can have several specifications open at once, so the array is
+   * keyed by session and one session per project is the one you are in.
+   *
+   * Everything downstream still asks by project — `specAiFor(projectId)`,
+   * `patch(projectId, …)` — and gets the session you resumed. That is what keeps
+   * multiple sessions from rippling through forty mutations and every consumer:
+   * the resolution happens here, once, and "which spec" is a question only this
+   * file and the session list have to hold an answer to.
+   */
+  const [activeSession, setActiveSession] = useState<Record<string, string>>(() =>
+    /* First row per project wins on load; after that, whatever was resumed last. */
+    INITIAL_SPEC_AI.reduce<Record<string, string>>(
+      (acc, s) => (acc[s.projectId] ? acc : { ...acc, [s.projectId]: s.sessionId }),
+      {}
+    )
+  );
 
-  /** Every mutation funnels through here so a missing row is created lazily. */
+  /*
+   * Latest-value mirrors. A generation started against one session lands a
+   * moment later, by which time you may have resumed another — the mutation has
+   * to find the session it was started from, not the one now on screen, and
+   * React state read from a closure is the wrong answer to both questions.
+   */
+  const rowsRef = useRef(specAi);
+  rowsRef.current = specAi;
+  const activeRef = useRef(activeSession);
+  activeRef.current = activeSession;
+
+  /** Sessions on a project, most recently touched first. */
+  const specSessionsFor = (projectId: string): SpecAiState[] =>
+    specAi
+      .filter((s) => s.projectId === projectId)
+      .slice()
+      .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+
+  const activeSessionId = (projectId: string): string | undefined => {
+    const rows = rowsRef.current.filter((s) => s.projectId === projectId);
+    const chosen = activeRef.current[projectId];
+    if (chosen && rows.some((s) => s.sessionId === chosen)) return chosen;
+    return rows[0]?.sessionId;
+  };
+
+  const specAiForSession = (sessionId: string): SpecAiState | undefined =>
+    specAi.find((s) => s.sessionId === sessionId);
+
+  /** The session in front of you on this project. */
+  const specAiFor = (projectId: string): SpecAiState => {
+    const id = activeSessionId(projectId);
+    return (
+      (id ? specAi.find((s) => s.sessionId === id) : undefined) ??
+      specAi.find((s) => s.projectId === projectId) ??
+      blankSpecAiState(projectId)
+    );
+  };
+
+  /**
+   * Every mutation funnels through here so a missing row is created lazily, and
+   * so the row it lands on is the active session rather than whichever session
+   * for this project happens to sit first in the array.
+   */
   const patch = (projectId: string, fn: (prev: SpecAiState) => SpecAiState) => {
+    const target = activeSessionId(projectId) ?? nid('sess');
     setSpecAi((all) => {
-      const base = all.some((s) => s.projectId === projectId)
+      const base = all.some((s) => s.sessionId === target)
         ? all
-        : [...all, blankSpecAiState(projectId)];
-      return base.map((s) => (s.projectId === projectId ? { ...fn(s), saveState: 'Saved' } : s));
+        : [...all, blankSpecAiState(projectId, target)];
+      return base.map((s) =>
+        s.sessionId === target
+          ? { ...fn(s), saveState: 'Saved', updatedAt: new Date().toISOString() }
+          : s
+      );
     });
+    if (activeRef.current[projectId] !== target) {
+      activeRef.current = { ...activeRef.current, [projectId]: target };
+      setActiveSession(activeRef.current);
+    }
+  };
+
+  /** Patch a named session, whatever is active now. Used by delayed generations. */
+  const patchSession = (sessionId: string, fn: (prev: SpecAiState) => SpecAiState) => {
+    setSpecAi((all) =>
+      all.map((s) =>
+        s.sessionId === sessionId
+          ? { ...fn(s), saveState: 'Saved', updatedAt: new Date().toISOString() }
+          : s
+      )
+    );
+  };
+
+  // ── Sessions ───────────────────────────────────────────────────────────────
+
+  /** Pick a session back up. The workspace and the card both read what is active. */
+  const resumeSpecSession = (projectId: string, sessionId: string) => {
+    activeRef.current = { ...activeRef.current, [projectId]: sessionId };
+    setActiveSession(activeRef.current);
+  };
+
+  const renameSpecSession = (sessionId: string, title: string) => {
+    const clean = title.trim();
+    if (!clean) return;
+    setSpecAi((all) =>
+      all.map((s) => (s.sessionId === sessionId ? { ...s, title: clean } : s))
+    );
+    addToast('Session renamed.', 'info');
+  };
+
+  const deleteSpecSession = (projectId: string, sessionId: string) => {
+    const gone = rowsRef.current.find((s) => s.sessionId === sessionId);
+    setSpecAi((all) => all.filter((s) => s.sessionId !== sessionId));
+    if (activeRef.current[projectId] === sessionId) {
+      const next = rowsRef.current.find(
+        (s) => s.projectId === projectId && s.sessionId !== sessionId
+      );
+      activeRef.current = { ...activeRef.current, [projectId]: next?.sessionId ?? '' };
+      setActiveSession(activeRef.current);
+    }
+    addAuditLog(
+      'Delete Spec Session',
+      `Project: ${projectId}`,
+      gone?.title ?? sessionId,
+      'Session removed'
+    );
+    addToast('Session deleted.', 'info');
   };
 
   // ── Sources ────────────────────────────────────────────────────────────────
@@ -168,19 +282,45 @@ export const useSpecAiSlice = ({
    * find becomes an open question in the queue rather than a gate you have to
    * clear before the workspace will open.
    */
-  const startFromProblem = (projectId: string, raw: string) => {
+  const startFromProblem = (
+    projectId: string,
+    raw: string,
+    opts?: { newSession?: boolean }
+  ) => {
     const statement = raw.trim();
     if (!statement) {
       addToast('A problem statement is required — everything after this is read against it.', 'error');
       return;
     }
 
+    /*
+     * A second problem statement on a project is a second specification, not a
+     * replacement for the first — so it opens its own session and the one you
+     * were in stays exactly where you left it.
+     */
+    const existing = activeSessionId(projectId);
+    const fresh = Boolean(opts?.newSession) || !existing;
+    const sessionId = fresh ? nid('sess') : existing!;
+    const title = sessionTitleFrom(statement);
+
+    if (fresh) {
+      const row = blankSpecAiState(projectId, sessionId, title);
+      setSpecAi((all) => (all.some((s) => s.sessionId === sessionId) ? all : [...all, row]));
+      /* The delayed read below happens before React re-renders, so the mirror has
+         to carry the new row itself or the agent reads the previous session. */
+      rowsRef.current = [...rowsRef.current, row];
+      activeRef.current = { ...activeRef.current, [projectId]: sessionId };
+      setActiveSession(activeRef.current);
+    }
+
     const turnId = nid('turn');
 
-    patch(projectId, (s) => ({
+    patchSession(sessionId, (s) => ({
       ...s,
       generating: 'Reading what you brought…',
       problemStatement: statement,
+      /* An untitled session takes its name from the statement that started it. */
+      title: s.problemStatement ? s.title : title,
       transcript: [
         ...s.transcript,
         { id: nid('turn'), from: 'you' as const, text: statement },
@@ -190,7 +330,8 @@ export const useSpecAiSlice = ({
 
     void (async () => {
       const { readIntake, seedBriefFromIntake } = await import('../data/specAiIntake');
-      const before = specAiFor(projectId);
+      const before =
+        rowsRef.current.find((s) => s.sessionId === sessionId) ?? blankSpecAiState(projectId);
       const reading = readIntake(statement);
 
       /* The statement is what you typed. The agent reads it for signals, but it
@@ -214,7 +355,7 @@ export const useSpecAiSlice = ({
       }));
 
       window.setTimeout(() => {
-        patch(projectId, (s) => {
+        patchSession(sessionId, (s) => {
           const asked = new Set(s.questions.map((q) => q.text.toLowerCase()));
           return {
             ...s,
@@ -244,6 +385,16 @@ export const useSpecAiSlice = ({
       }, 140 + calls.length * 190);
     })();
   };
+
+  /**
+   * Open a new specification on this project and start it from the statement.
+   *
+   * Same act as `startFromProblem`, said explicitly: the caller is the session
+   * list, where "start" always means another session rather than more input into
+   * the one already open.
+   */
+  const startSpecSession = (projectId: string, raw: string) =>
+    startFromProblem(projectId, raw, { newSession: true });
 
   // ── Problem statement & synthesis ───────────────────────────────────────────
 
@@ -1101,6 +1252,13 @@ export const useSpecAiSlice = ({
   return {
     specAi,
     specAiFor,
+    specAiForSession,
+    specSessionsFor,
+    activeSessionId,
+    startSpecSession,
+    resumeSpecSession,
+    renameSpecSession,
+    deleteSpecSession,
     addSpecSource,
     removeSpecSource,
     retrySpecSource,
