@@ -282,7 +282,6 @@ export const CodeIQView: React.FC = () => {
                 target &&
                 adjudicate(projectId, target.storyKey, criterion, action, secondary)
               }
-              instrumentation={instrumentation}
               untracked={state.untracked}
               onOpenSurface={setSurface}
             />

@@ -5,11 +5,11 @@ import {
   GAP_FILTER_COPY,
   GapFilter,
   GapTile,
+  STATUS_MINI,
   countBy,
   filterTargets,
   gapTiles,
   isGenuinelyDone,
-  trustSplit,
 } from '../../data/codeiq';
 import { ReviewPanel } from './ReviewPanel';
 import { Surface } from './SurfaceRail';
@@ -37,11 +37,17 @@ import { Surface } from './SurfaceRail';
  *     the merge needed the column. The rail carries its count.
  */
 
+/*
+ * The verdict on a story, in words rather than in the module's vocabulary.
+ *
+ * "Stands up" / "Overstated" / "In flight" were three pieces of jargon doing the
+ * work of three plain phrases.
+ */
 const verdict = (t: ReviewTarget) => {
-  if (t.claimed !== 'Done') return { cls: 'open', label: 'In flight' };
+  if (t.claimed !== 'Done') return { cls: 'open', label: 'In progress' };
   return isGenuinelyDone(t)
-    ? { cls: 'clean', label: 'Stands up' }
-    : { cls: 'overstated', label: 'Overstated' };
+    ? { cls: 'clean', label: 'Fully built' }
+    : { cls: 'overstated', label: 'Not fully built' };
 };
 
 /**
@@ -81,22 +87,11 @@ export const ReviewSurface: React.FC<{
   activeStoryKey: string | null;
   onPickStory: (storyKey: string) => void;
   onAct: (criterion: Criterion, action: string, secondary: boolean) => void;
-  instrumentation: { structuredPct: number; joinedPct: number; unjoined: number };
   untracked: UntrackedChange[];
   onOpenSurface: (surface: Surface) => void;
-}> = ({
-  targets,
-  activeStoryKey,
-  onPickStory,
-  onAct,
-  instrumentation,
-  untracked,
-  onOpenSurface,
-}) => {
+}> = ({ targets, activeStoryKey, onPickStory, onAct, untracked, onOpenSurface }) => {
   const [filter, setFilter] = useState<GapFilter | null>(null);
 
-  const trust = trustSplit(targets);
-  const genuinePct = trust.claimed === 0 ? 0 : (trust.genuine / trust.claimed) * 100;
   const tiles = gapTiles(targets);
   const rows = filterTargets(targets, filter);
 
@@ -111,31 +106,16 @@ export const ReviewSurface: React.FC<{
 
   const flagged = untracked.filter((u) => u.policy === 'flag').length;
 
+  /*
+   * The instrumentation strip used to open this page: two percentages about how
+   * well the pipeline is wired, plus a count of stories with no code, above the
+   * report and in the same weight as it. The second and third said the same thing
+   * — "63% could be joined" is the same fact as "3 stories have no code CodeIQ
+   * can see" — and none of the three was about the code. The provenance strip in
+   * the rail says whether the feed is live, which is the part worth knowing.
+   */
   return (
     <div className="cq-wrap wide">
-      {/*
-       * How much of the report can be trusted, before any of the report.
-       *
-       * Both numbers are about the pipeline rather than the code, and both change
-       * what everything below them means: gaps found over criteria that arrived
-       * as prose, or over commits with no join key, are a statement about the
-       * instrumentation and not about what was built.
-       */}
-      <div className="cq-instr">
-        <span>
-          <b>{instrumentation.structuredPct}%</b> of stories arrived as Given/When/Then
-        </span>
-        <span>
-          <b>{instrumentation.joinedPct}%</b> could be joined to a change set
-        </span>
-        {instrumentation.unjoined > 0 && (
-          <span className="warn">
-            {instrumentation.unjoined} exported{' '}
-            {instrumentation.unjoined === 1 ? 'story has' : 'stories have'} no code CodeIQ can see
-          </span>
-        )}
-      </div>
-
       {/* ── The tiles, three of which filter the list below ── */}
       <div className="cq-tiles">
         {tiles.map((t) => (
@@ -153,13 +133,13 @@ export const ReviewSurface: React.FC<{
          * it is a door to its own surface rather than a fourth predicate.
          */}
         <button className="cq-tile note" onClick={() => onOpenSurface('untracked')}>
-          <span className="lbl">Untracked change</span>
+          <span className="lbl">Commits with no story</span>
           <span className="n">
             <b>{untracked.length}</b>
             <i>{untracked.length === 1 ? 'commit' : 'commits'}</i>
           </span>
           <span className="foot">
-            <em>{flagged} flagged for a decision</em>
+            <em>{flagged} still to decide</em>
             <span className="act">
               Open page <ArrowRight size={10} />
             </span>
@@ -173,12 +153,12 @@ export const ReviewSurface: React.FC<{
           <div className="cq-mhead">
             <div>
               <h2 className="cq-h2">
-                {filter ? GAP_FILTER_COPY[filter].title : 'Stories with code landed'}
+                {filter ? GAP_FILTER_COPY[filter].title : 'Stories with code'}
               </h2>
               <p className="cq-hsub">
                 {filter
                   ? GAP_FILTER_COPY[filter].subtitle
-                  : 'Worst first. Pick one to adjudicate its criteria.'}
+                  : 'Worst first. Pick one to see what was built.'}
               </p>
             </div>
             {filter && (
@@ -190,24 +170,11 @@ export const ReviewSurface: React.FC<{
           </div>
 
           {/*
-           * The trust metric: two numbers rather than one ratio, because a single
-           * percentage hides which side of it you are on.
+           * The trust bar is gone from here. It read "0 stand up / 3 overstated"
+           * over a solid red bar, one column to the left of a tile already
+           * reading "3 of 3 marked done" — the same fact, twice, in two
+           * vocabularies.
            */}
-          <div className="cq-trust compact">
-            <div className="cq-num good">
-              <b>{trust.genuine}</b>
-              <span>stand up</span>
-            </div>
-            <div className="cq-num bad">
-              <b>{trust.overstated}</b>
-              <span>overstated</span>
-            </div>
-            <div className="cq-bar" title={`${trust.genuine} of ${trust.claimed} marked done`}>
-              <i className="g" style={{ width: `${genuinePct}%` }} />
-              <i className="b" style={{ width: `${100 - genuinePct}%` }} />
-            </div>
-          </div>
-
           <div className="cq-mlist">
             {rows.map((t) => {
               const n = countBy(t.criteria);
@@ -225,12 +192,28 @@ export const ReviewSurface: React.FC<{
                   </span>
                   <span className="t">{t.title}</span>
                   <span className="bot">
+                    {/*
+                     * Nothing rather than a grey "none".
+                     *
+                     * On a clean story that chip sat beside a verdict already
+                     * reading "Fully built", so it either repeated it or — read
+                     * quickly — looked like data that had failed to load.
+                     */}
                     <span className="cq-mini">
-                      {n.missing > 0 && <span className="m">{n.missing} missing</span>}
-                      {n.drifted > 0 && <span className="d">{n.drifted} drifted</span>}
-                      {n.partial > 0 && <span className="p">{n.partial} partial</span>}
-                      {n.missing + n.drifted + n.partial === 0 && (
-                        <span style={{ color: 'var(--ink-faint)' }}>none</span>
+                      {n.missing > 0 && (
+                        <span className="m">
+                          {n.missing} {STATUS_MINI.missing}
+                        </span>
+                      )}
+                      {n.drifted > 0 && (
+                        <span className="d">
+                          {n.drifted} {STATUS_MINI.drifted}
+                        </span>
+                      )}
+                      {n.partial > 0 && (
+                        <span className="p">
+                          {n.partial} {STATUS_MINI.partial}
+                        </span>
                       )}
                     </span>
                     <span className="o">{t.owner}</span>
@@ -261,10 +244,7 @@ export const ReviewSurface: React.FC<{
           ) : (
             <div className="cq-blank">
               <b>No story matches this filter.</b>
-              <p>
-                Clear the filter above to see the rest of the stories with code landed against
-                them.
-              </p>
+              <p>Clear the filter above to see the rest of the stories with code.</p>
               <button className="cq-btn" onClick={() => setFilter(null)}>
                 Show all stories
               </button>

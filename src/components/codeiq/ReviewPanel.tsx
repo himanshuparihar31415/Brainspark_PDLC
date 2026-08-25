@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { Criterion, CriterionStatus, ReviewTarget } from '../../types/codeiq';
 import {
-  ACCURACY_NOTE,
+  DRIFT_CAVEAT,
   STATUS_ACTION,
   STATUS_COPY,
   countBy,
@@ -55,22 +55,56 @@ const CriterionRow: React.FC<{
         <span className={`cq-st ${copy.tone}`}>{copy.label}</span>
         <span className="cq-cid">{c.id}</span>
 
+        {/*
+          * Three lines, not one paragraph.
+          *
+          * Given/When/Then ran together as a single wrapped run with the labels
+          * bold inline, which meant finding "Then" — the part that says what
+          * should happen — took reading the whole thing. The labels sit in a
+          * gutter now and each clause owns its line.
+          */}
         <span className="cq-ct">
-          <b>Given</b>
-          {c.given} <b>When</b>
-          {c.when} <b>Then</b>
-          {c.then}
+          <span className="cl">
+            <b>Given</b>
+            <span>{c.given}</span>
+          </span>
+          <span className="cl">
+            <b>When</b>
+            <span>{c.when}</span>
+          </span>
+          <span className="cl">
+            <b>Then</b>
+            <span>{c.then}</span>
+          </span>
+
           <span className="cq-cmeta">
-            <span>
-              {c.files.length === 0
-                ? 'no files mapped'
-                : `${behavioral} behavioural · ${c.files.length} mapped`}
-            </span>
+            {/*
+             * Labelled, and only what applies.
+             *
+             * This was four unlabelled greys run together — "no files mapped no
+             * unit test 90% confidence". Confidence is the one that had to go
+             * conditional: on a criterion with nothing mapped it claimed 90%
+             * confidence in an absence, which is not a thing the analysis can
+             * be confident about and it undercut the number the page most wants
+             * believed.
+             */}
+            {c.files.length === 0 ? (
+              <span className="no-test">No matching code</span>
+            ) : (
+              <span>
+                {behavioral} of {c.files.length} {c.files.length === 1 ? 'file' : 'files'} change
+                behaviour
+              </span>
+            )}
             <span className={c.tests.present ? '' : 'no-test'}>
-              {c.tests.present ? 'unit test present' : 'no unit test'}
+              {c.tests.present ? 'Test exists' : 'No test'}
             </span>
-            {discarded.length > 0 && <span>{discarded.length} discarded</span>}
-            <span>{Math.round(c.confidence * 100)}% confidence</span>
+            {discarded.length > 0 && (
+              <span>
+                {discarded.length} {discarded.length === 1 ? 'attempt' : 'attempts'} discarded
+              </span>
+            )}
+            {c.files.length > 0 && <span>{Math.round(c.confidence * 100)}% match confidence</span>}
           </span>
         </span>
 
@@ -120,6 +154,8 @@ const CriterionRow: React.FC<{
                 <span>{c.drift.realized}</span>
               </div>
               <p className="exp">{c.drift.explanation}</p>
+              {/* The only accuracy caveat left on the page — see DRIFT_CAVEAT. */}
+              <p className="caveat">{DRIFT_CAVEAT}</p>
             </div>
           )}
 
@@ -206,7 +242,6 @@ const CriterionRow: React.FC<{
             >
               {actions.secondary}
             </button>
-            <span className="cq-acc">{ACCURACY_NOTE[c.status]}</span>
           </div>
         </div>
       )}
@@ -243,9 +278,16 @@ export const ReviewPanel: React.FC<{
     <div className="cq-detail-in">
       {/* ── What is being adjudicated ── */}
       <div className="cq-target">
+        {/*
+         * Provenance once.
+         *
+         * "from Spec AI" sat beside the key and "Structured criteria from Spec AI
+         * · Given/When/Then · 3 criteria" sat six lines below it — the same fact
+         * twice, and the second one also counted criteria the list underneath
+         * already shows.
+         */}
         <div style={{ minWidth: 0 }}>
           <span className="key">{target.storyKey}</span>
-          <span className="cq-from">from Spec AI</span>
           <h1>{target.title}</h1>
           <div className="cq-meta">
             <span>
@@ -255,14 +297,15 @@ export const ReviewPanel: React.FC<{
             <span>{target.pr}</span>
             <span>{target.author}</span>
           </div>
-          <div className="cq-meta" style={{ marginTop: 6 }}>
-            <span style={{ fontFamily: 'var(--font-body)' }}>{target.intakeNote}</span>
-          </div>
         </div>
 
+        {/*
+         * The claim, without the commentary. It used to carry "CodeIQ does not
+         * change it — it only says what is true", which is the module talking
+         * about itself on a line reserved for what the tracker says.
+         */}
         <div className="cq-claim">
           <b>Tracker says {target.claimed}</b>
-          <i>CodeIQ does not change it — it only says what is true</i>
         </div>
       </div>
 
@@ -277,33 +320,41 @@ export const ReviewPanel: React.FC<{
           <b>{headline}</b>
           <p>
             {clean
-              ? 'Mapping is 85–95% accurate on structured criteria. It does not mean the code is correct — that is IntelliQA downstream.'
-              : 'Ranked worst first. There is no completion percentage here on purpose: the specific list is the honest output.'}
+              ? 'Every criterion has code behind it. Whether that code is correct is a separate question.'
+              : 'Worst first.'}
           </p>
         </span>
       </div>
 
-      {/* ── Filters ── */}
-      <div className="cq-filters">
-        <button className={`cq-f ${filter === 'all' ? 'on' : ''}`} onClick={() => setFilter('all')}>
-          All <i>{target.criteria.length}</i>
-        </button>
-        {STATUS_ORDER.map((s) => (
+      {/*
+        * Filters, and only for statuses that have something in them.
+        *
+        * A `Built differently 0` button is a control that cannot do anything, and
+        * four of them made the row look like a settings panel. The strip is also
+        * hidden outright below two criteria, where filtering three rows into one
+        * is more work than reading them.
+        */}
+      {target.criteria.length > 2 && (
+        <div className="cq-filters">
           <button
-            key={s}
-            className={`cq-f ${filter === s ? 'on' : ''}`}
-            onClick={() => setFilter(filter === s ? 'all' : s)}
+            className={`cq-f ${filter === 'all' ? 'on' : ''}`}
+            onClick={() => setFilter('all')}
           >
-            {/* The four tone names are the four CSS variables, by design. */}
-            <span className="dot" style={{ background: `var(--${STATUS_COPY[s].tone})` }} />
-            {STATUS_COPY[s].label} <i>{counts[s]}</i>
+            All <i>{target.criteria.length}</i>
           </button>
-        ))}
-        <span className="cq-note">
-          <FileCode2 size={10} style={{ display: 'inline', marginRight: 4 }} />
-          static evidence only · no execution
-        </span>
-      </div>
+          {STATUS_ORDER.filter((s) => counts[s] > 0).map((s) => (
+            <button
+              key={s}
+              className={`cq-f ${filter === s ? 'on' : ''}`}
+              onClick={() => setFilter(filter === s ? 'all' : s)}
+            >
+              {/* The four tone names are the four CSS variables, by design. */}
+              <span className="dot" style={{ background: `var(--${STATUS_COPY[s].tone})` }} />
+              {STATUS_COPY[s].label} <i>{counts[s]}</i>
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* ── The checklist ── */}
       <div className="cq-list">
@@ -321,12 +372,13 @@ export const ReviewPanel: React.FC<{
         )}
       </div>
 
-      <p className="cq-foot">
-        <b>What this is.</b> CodeIQ adjudicates whether the intent that entered the system was
-        realized in code. It does not generate code, run tests, gate the merge, or claim the
-        behaviour is correct. Gap mapping is the headline because it is the most accurate thing
-        here; drift is an assist and is labelled as one.
-      </p>
+      {/*
+       * The closing note is gone. It read "CodeIQ adjudicates whether the intent
+       * that entered the system was realized in code. It does not generate code,
+       * run tests, gate the merge, or claim the behaviour is correct." Four
+       * negations, on every story, explaining the product to somebody already
+       * using it.
+       */}
     </div>
   );
 };

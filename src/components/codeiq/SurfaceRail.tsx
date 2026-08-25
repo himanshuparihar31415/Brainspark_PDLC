@@ -11,7 +11,7 @@ import {
 /**
  * The surfaces, down the side.
  *
- * Four items in two groups. Review and Spec quality are readings of one lineage
+ * Four items in two groups. Review and Spec quality are readings of one history
  * — a reviewer or lead asking whether it was built, a PM asking whether it was
  * specifiable. Untracked and Repo policy are not readings at all: one is the
  * change the lineage could not explain, the other is the configuration that
@@ -39,8 +39,8 @@ const READINGS: Item[] = [
 ];
 
 const SETTINGS: Item[] = [
-  { key: 'untracked', label: 'Untracked', icon: GitCommitHorizontal },
-  { key: 'repos', label: 'Repo policy', icon: Settings2 },
+  { key: 'untracked', label: 'Unlinked commits', icon: GitCommitHorizontal },
+  { key: 'repos', label: 'Repo settings', icon: Settings2 },
 ];
 
 /**
@@ -50,9 +50,22 @@ const SETTINGS: Item[] = [
  * stories as six gaps, and the two would be acted on differently.
  */
 const COUNT_NOTE: Partial<Record<Surface, (n: number) => string>> = {
-  review: (n) => `${n} acceptance ${n === 1 ? 'criterion' : 'criteria'} with no code`,
-  spec: (n) => `${n} rework ${n === 1 ? 'signal' : 'signals'} not yet raised upstream`,
-  untracked: (n) => `${n} ${n === 1 ? 'commit' : 'commits'} with no story`,
+  review: (n) => `${n} ${n === 1 ? 'criterion' : 'criteria'} with no code behind it`,
+  spec: (n) => `${n} ${n === 1 ? 'criterion' : 'criteria'} rewritten repeatedly, not yet raised`,
+  untracked: (n) => `${n} ${n === 1 ? 'commit' : 'commits'} not linked to any story`,
+};
+
+/*
+ * The unit beside the count, where there is room for one.
+ *
+ * A bare `6` next to the word Review could as easily be six stories as six gaps,
+ * and the two are acted on differently. Only Review gets one: `5 rewrites` beside
+ * the longer "Spec quality" pushed the label onto a second line, and a rail item
+ * that wraps costs more clarity than the unit buys. The full sentence is on the
+ * tooltip either way.
+ */
+const COUNT_UNIT: Partial<Record<Surface, string>> = {
+  review: 'gaps',
 };
 
 export const SurfaceRail: React.FC<{
@@ -84,7 +97,10 @@ export const SurfaceRail: React.FC<{
         <Icon size={14} />
         {!collapsed && <span>{label}</span>}
         {n > 0 && (
-          <i aria-label={note}>{n}</i>
+          <i aria-label={note}>
+            {n}
+            {!collapsed && COUNT_UNIT[key] && <em>{COUNT_UNIT[key]}</em>}
+          </i>
         )}
       </button>
     );

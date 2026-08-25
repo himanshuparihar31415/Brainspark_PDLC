@@ -29,30 +29,53 @@ import { criterionRef } from './specai';
 
 // ───────────────────────────── Copy ─────────────────────────────
 
+/*
+ * The four statuses, named in plain words.
+ *
+ * They used to read Covered / Partial / Drifted / Missing, which is the module's
+ * internal vocabulary rather than anybody's. `No code` in particular now matches
+ * the chip on Project Tasks and the number on the project dashboard, so three
+ * surfaces say one thing about the module's main finding instead of three.
+ */
 export const STATUS_COPY: Record<
   CriterionStatus,
   { label: string; tone: string; helper: string }
 > = {
   covered: {
-    label: 'Covered',
+    label: 'Built',
     tone: 'ok',
-    helper: 'Behavioural code maps to this criterion.',
+    helper: 'Code in this change set does what the criterion asks for.',
   },
   partial: {
-    label: 'Partial',
+    label: 'Partly built',
     tone: 'warn',
-    helper: 'Some of the criterion is realized; part of it is not.',
+    helper: 'Part of this is built. Part of it has nothing behind it.',
   },
   drifted: {
-    label: 'Drifted',
+    label: 'Built differently',
     tone: 'drift',
-    helper: 'Code exists but does something other than what was written.',
+    helper: 'Code exists, but it behaves differently from what was asked for.',
   },
   missing: {
-    label: 'Missing',
+    label: 'No code',
     tone: 'gap',
-    helper: 'Nothing in the change set addresses this.',
+    helper: 'Nothing in this change set does what the criterion asks for.',
   },
+};
+
+/**
+ * The same four statuses, short enough for a list chip.
+ *
+ * The master list was rendering its own words — "3 missing", "1 drifted",
+ * "1 partial" — beside a detail column reading "No code", "Built differently",
+ * "Partly built". Same data, two vocabularies, one screen. These sit directly
+ * under STATUS_COPY so that renaming a status forces a look at both.
+ */
+export const STATUS_MINI: Record<CriterionStatus, string> = {
+  covered: 'built',
+  partial: 'partly built',
+  drifted: 'differs',
+  missing: 'no code',
 };
 
 /**
@@ -61,19 +84,24 @@ export const STATUS_COPY: Record<
  * between a report and a tool.
  */
 export const STATUS_ACTION: Record<CriterionStatus, { primary: string; secondary: string }> = {
-  covered: { primary: 'Show evidence', secondary: 'Dispute mapping' },
-  partial: { primary: 'Show what is missing', secondary: 'Accept as complete' },
-  drifted: { primary: 'Flag for rework', secondary: 'Accept drift as intended' },
-  missing: { primary: 'Send back to SpecAI', secondary: 'Mark not applicable' },
+  covered: { primary: 'Show the code', secondary: 'Wrong match' },
+  partial: { primary: 'Show what is missing', secondary: 'Accept as done' },
+  drifted: { primary: 'Ask for a fix', secondary: 'Accept as built' },
+  missing: { primary: 'Ask the author', secondary: 'Does not apply' },
 };
 
-/** Where each output sits on the accuracy ladder (PRD §6). */
-export const ACCURACY_NOTE: Record<CriterionStatus, string> = {
-  covered: 'Gap mapping · 85–95% accurate',
-  partial: 'Gap mapping · 85–95% accurate',
-  drifted: 'Drift detection · 60–75% accurate — an assist, not a verdict',
-  missing: 'Gap mapping · 85–95% accurate',
-};
+/**
+ * The one caveat worth printing, and only where it applies.
+ *
+ * This was a per-status record printed under every criterion's actions, and three
+ * of its four entries were the same sentence — so it appeared on every row and
+ * told the reader nothing about the row they were on. Finding no code is reliable;
+ * deciding that code behaves *differently* from a sentence is not, and that is the
+ * only place a reader needs warning. It now shows inside an expanded
+ * built-differently row, next to the comparison it qualifies.
+ */
+export const DRIFT_CAVEAT =
+  'Reading intent out of code is the least reliable thing CodeIQ does. Treat this as a prompt to look, not as a finding.';
 
 // ───────────────────────── Analysis fixture ─────────────────────────
 
@@ -97,13 +125,13 @@ export const ANALYSIS: Record<string, CriterionAnalysis> = {
     confidence: 0.94,
     files: [
       {
-        path: 'mobile/src/auth/BiometricGate.tsx',
+        path: 'app/auth/BiometricGate.tsx',
         lines: 'L18–L96',
         change: 'behavioral',
         why: 'New branch on the login route, guarded by enrolment state.',
       },
       {
-        path: 'mobile/src/auth/useEnrolment.ts',
+        path: 'app/auth/useEnrolment.ts',
         lines: 'L1–L54',
         change: 'behavioral',
         why: 'Reads enrolment from the identity API.',
@@ -124,9 +152,9 @@ export const ANALYSIS: Record<string, CriterionAnalysis> = {
     status: 'partial',
     confidence: 0.82,
     files: [
-      { path: 'mobile/src/auth/BiometricGate.tsx', lines: 'L97–L131', change: 'behavioral' },
+      { path: 'app/auth/BiometricGate.tsx', lines: 'L97–L131', change: 'behavioral' },
       {
-        path: 'mobile/src/session/issueSession.ts',
+        path: 'app/session/issueSession.ts',
         lines: 'L44–L61',
         change: 'behavioral',
         why: 'Issues the session and routes to the account summary. Nothing here writes the audit record the criterion also asks for.',
@@ -165,12 +193,12 @@ export const ANALYSIS: Record<string, CriterionAnalysis> = {
     confidence: 0.93,
     files: [
       {
-        path: 'mobile/src/auth/attemptCounter.ts',
+        path: 'app/auth/attemptCounter.ts',
         lines: 'L1–L48',
         change: 'behavioral',
         why: 'Counts consecutive failures and refuses further biometric attempts.',
       },
-      { path: 'mobile/src/auth/pin/PinEntry.tsx', lines: 'L88–L104', change: 'behavioral' },
+      { path: 'app/auth/pin/PinEntry.tsx', lines: 'L88–L104', change: 'behavioral' },
     ],
     tests: { present: true, refs: ['attemptCounter.locks-after-three'] },
     lineage: [
@@ -186,7 +214,7 @@ export const ANALYSIS: Record<string, CriterionAnalysis> = {
   'FMB2-AUTH-032#AC-2': {
     status: 'drifted',
     confidence: 0.66,
-    files: [{ path: 'mobile/src/auth/attemptCounter.ts', lines: 'L49–L72', change: 'behavioral' }],
+    files: [{ path: 'app/auth/attemptCounter.ts', lines: 'L49–L72', change: 'behavioral' }],
     drift: {
       expected: 'biometric sign-in is offered again on the next launch',
       realized: 'the lockout is held for 24 hours from the third failure, across launches',
@@ -227,7 +255,7 @@ export const ANALYSIS: Record<string, CriterionAnalysis> = {
     confidence: 0.95,
     files: [
       {
-        path: 'services/identity/src/binding/create.ts',
+        path: 'identity/binding/create.ts',
         lines: 'L1–L88',
         change: 'behavioral',
         why: 'Creates the binding and returns its identifier.',
@@ -248,7 +276,7 @@ export const ANALYSIS: Record<string, CriterionAnalysis> = {
     status: 'covered',
     confidence: 0.92,
     files: [
-      { path: 'services/identity/src/binding/create.ts', lines: 'L89–L126', change: 'behavioral' },
+      { path: 'identity/binding/create.ts', lines: 'L89–L126', change: 'behavioral' },
     ],
     tests: { present: true, refs: ['binding.create.conflicts-with-409'] },
     lineage: [
@@ -261,18 +289,26 @@ export const ANALYSIS: Record<string, CriterionAnalysis> = {
       },
     ],
   },
+  /*
+   * The clean one, and the fixture needs it.
+   *
+   * Every story marked Done used to carry a gap, so the trust split read
+   * "0 stand up / 3 overstated" and a reader clicking through never saw what a
+   * good outcome looks like — which makes the module read as though it only ever
+   * reports failure. This criterion was drift; AUTH-032 still carries a drift, so
+   * nothing is lost by letting this story stand up.
+   */
   'FMB2-DEV-018#AC-3': {
-    status: 'drifted',
-    confidence: 0.71,
+    status: 'covered',
+    confidence: 0.91,
     files: [
-      { path: 'services/identity/src/binding/create.ts', lines: 'L127–L149', change: 'behavioral' },
+      {
+        path: 'identity/binding/create.ts',
+        lines: 'L127–L149',
+        change: 'behavioral',
+        why: 'Fails closed with a 503 and creates no binding when attestation is unavailable.',
+      },
     ],
-    drift: {
-      expected: 'it fails closed with 503 and no binding is created',
-      realized: 'it fails closed with 500 and no binding is created',
-      explanation:
-        'The behaviour is right and the status code is not. A 503 tells a client to retry; a 500 tells it not to. Cheap to fix, and worth fixing before a client depends on the wrong one.',
-    },
     tests: { present: true, refs: ['binding.create.fails-closed'] },
     lineage: [
       {
@@ -291,7 +327,7 @@ export const ANALYSIS: Record<string, CriterionAnalysis> = {
     confidence: 0.89,
     files: [
       {
-        path: 'mobile/src/settings/DeviceList.tsx',
+        path: 'app/settings/DeviceList.tsx',
         lines: 'L1–L142',
         change: 'behavioral',
         why: 'Lists devices with name, last-used date and biometric state.',
@@ -312,9 +348,9 @@ export const ANALYSIS: Record<string, CriterionAnalysis> = {
     status: 'partial',
     confidence: 0.78,
     files: [
-      { path: 'mobile/src/settings/DeviceList.tsx', lines: 'L143–L178', change: 'behavioral' },
+      { path: 'app/settings/DeviceList.tsx', lines: 'L143–L178', change: 'behavioral' },
       {
-        path: 'services/identity/src/binding/revoke.ts',
+        path: 'identity/binding/revoke.ts',
         lines: 'L1–L40',
         change: 'behavioral',
         why: 'Revokes the binding. Nothing in this change set ends the session on that device.',
@@ -672,13 +708,14 @@ export const gapHeadline = (criteria: Criterion[]): string => {
   const partial = live.filter((c) => c.status === 'partial').length;
 
   if (missing === 0 && drifted === 0 && partial === 0) {
-    return 'Every criterion maps to behavioural code.';
+    return 'Everything asked for was built.';
   }
 
   const parts: string[] = [];
-  if (missing > 0) parts.push(`${missing} ${missing === 1 ? 'criterion has' : 'criteria have'} no code`);
-  if (drifted > 0) parts.push(`${drifted} drifted from what was written`);
-  if (partial > 0) parts.push(`${partial} only partly realized`);
+  if (missing > 0)
+    parts.push(`${missing} ${missing === 1 ? 'criterion has' : 'criteria have'} no code`);
+  if (drifted > 0) parts.push(`${drifted} built differently`);
+  if (partial > 0) parts.push(`${partial} only partly built`);
   return parts.join(' · ');
 };
 
@@ -821,8 +858,8 @@ export const filterTargets = (targets: ReviewTarget[], filter: GapFilter | null)
 
 export interface GapTile {
   filter: GapFilter;
-  /** The headline number. */
-  value: number;
+  /** The headline figure. A string, because one of them is "3 of 3". */
+  value: string;
   /** What the number counts, e.g. "criteria". Never omitted — 47 of what? */
   unit: string;
   label: string;
@@ -852,26 +889,31 @@ export const gapTiles = (targets: ReviewTarget[]): GapTile[] => {
   return [
     {
       filter: 'missing',
-      value: noCode,
+      value: String(noCode),
       unit: noCode === 1 ? 'criterion' : 'criteria',
-      label: 'No code at all',
-      note: `Across ${noCodeStories} ${noCodeStories === 1 ? 'story' : 'stories'}`,
+      label: 'Nothing built for it',
+      note: `In ${noCodeStories} ${noCodeStories === 1 ? 'story' : 'stories'}`,
       tone: 'bad',
     },
     {
+      /*
+       * Both numbers in the value, not one in the value and one in the unit.
+       * A big `3` labelled `of 3 done` read as though three of something else
+       * were done.
+       */
       filter: 'overstated',
-      value: trust.overstated,
-      unit: `of ${trust.claimed} done`,
-      label: 'Marked done, gaps open',
-      note: 'What the tracker claims vs what is built',
+      value: `${trust.overstated} of ${trust.claimed}`,
+      unit: 'marked done',
+      label: 'Not fully built',
+      note: 'Called done, but something is missing',
       tone: 'warn',
     },
     {
       filter: 'drifted',
-      value: drifted,
+      value: String(drifted),
       unit: drifted === 1 ? 'criterion' : 'criteria',
-      label: 'Drifted from the spec',
-      note: 'Assist only — 60–75% accurate',
+      label: 'Built differently',
+      note: 'Worth a look, not a verdict',
       tone: 'drift',
     },
   ];
@@ -886,18 +928,21 @@ export const gapTiles = (targets: ReviewTarget[]): GapTile[] => {
  */
 export const GAP_FILTER_COPY: Record<GapFilter, { title: string; subtitle: string }> = {
   missing: {
-    title: 'Stories with criteria that have no code',
-    subtitle: 'At least one acceptance criterion CodeIQ could map to nothing in the change set.',
+    title: 'Nothing built for it',
+    subtitle: 'At least one thing the story asked for has no code behind it.',
   },
   overstated: {
-    title: 'Stories marked done with gaps open',
-    subtitle:
-      'The tracker says done. Something is missing, drifted or only partly realized — whichever the tracker says.',
+    /*
+     * The old subtitle read "The tracker says done. Something is missing,
+     * drifted or only partly realized — whichever the tracker says." The closing
+     * clause repeated the opening and did not parse.
+     */
+    title: 'Marked done, not fully built',
+    subtitle: 'The tracker calls these done. Something in each one is still not built.',
   },
   drifted: {
-    title: 'Stories where the code drifted from the spec',
-    subtitle:
-      'The code does something the criterion did not ask for. This mapping is an assist, not a verdict.',
+    title: 'Built differently',
+    subtitle: 'The code works, but not the way the story described it.',
   },
 };
 

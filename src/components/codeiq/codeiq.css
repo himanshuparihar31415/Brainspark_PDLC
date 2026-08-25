@@ -374,27 +374,6 @@
   margin-top: 2px;
 }
 
-/* Instrumentation quality, read before the report it qualifies. */
-.cq-instr {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px 20px;
-  align-items: baseline;
-  font-size: 11px;
-  color: var(--ink-soft);
-  padding: 2px 2px 0;
-}
-.cq-instr b {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--ink);
-  margin-right: 3px;
-}
-.cq-instr .warn {
-  color: var(--warn);
-}
-
 .cq-body {
   flex: 1;
   min-height: 0;
@@ -444,12 +423,6 @@
   font-size: 11px;
   color: var(--accent);
   font-weight: 500;
-}
-.cq-from {
-  font-family: var(--font-body);
-  font-size: 10px;
-  color: var(--ink-faint);
-  margin-left: 6px;
 }
 .cq-meta {
   display: flex;
@@ -548,11 +521,52 @@
   height: 7px;
   border-radius: 50%;
 }
-.cq-note {
-  margin-left: auto;
-  font-size: 10px;
-  color: var(--ink-faint);
+
+/*
+ * Given / When / Then, one clause per line.
+ *
+ * These ran together as a single wrapped paragraph with the labels bold inline,
+ * so finding "Then" — the clause that says what should happen — meant reading the
+ * whole thing. The label sits in a fixed gutter and the clause owns its line.
+ */
+.cq-ct .cl {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 8px;
+  align-items: baseline;
+}
+.cq-ct .cl b {
   font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-faint);
+  text-align: right;
+}
+.cq-ct .cl > span {
+  min-width: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink);
+}
+
+/* The one accuracy caveat left, inside the comparison it qualifies. */
+.cq-drift .caveat {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--line-strong);
+  font-size: 10.5px;
+  line-height: 1.55;
+  color: var(--ink-faint);
+}
+
+/* The unit beside a rail count — "6 gaps" rather than a bare 6. */
+.cq-rail-i i em {
+  font-style: normal;
+  font-weight: 500;
+  margin-left: 3px;
+  opacity: 0.8;
 }
 
 /* ───────────────────────── criteria list ───────────────────────── */
@@ -858,13 +872,6 @@
   opacity: 0.45;
   cursor: not-allowed;
 }
-.cq-acc {
-  margin-left: auto;
-  font-size: 10px;
-  font-family: var(--font-mono);
-  color: var(--ink-faint);
-  text-align: right;
-}
 
 /* A dismissal is a record, not a delete. */
 .cq-dismissed {
@@ -1141,20 +1148,6 @@
   min-width: 0;
 }
 
-/* In the master column the bar has no room to sit beside the numbers. */
-.cq-trust.compact {
-  gap: 14px;
-  padding-bottom: 2px;
-  border-bottom: 1px solid var(--line);
-}
-.cq-trust.compact .cq-num b {
-  font-size: 20px;
-}
-.cq-trust.compact .cq-bar {
-  flex-basis: 100%;
-  min-width: 0;
-}
-
 @media (max-width: 1160px) {
   .cq-review {
     grid-template-columns: minmax(0, 1fr);
@@ -1247,56 +1240,6 @@
   gap: 11px;
 }
 
-/* Trust metric — two numbers, never one ratio. */
-.cq-trust {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 22px;
-  align-items: flex-end;
-}
-.cq-num {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.cq-num b {
-  font-family: var(--font-display);
-  font-size: 26px;
-  font-weight: 700;
-  line-height: 1;
-  letter-spacing: -0.02em;
-}
-.cq-num.bad b {
-  color: var(--gap);
-}
-.cq-num.good b {
-  color: var(--ok);
-}
-.cq-num span {
-  font-size: 10.5px;
-  color: var(--ink-soft);
-}
-.cq-bar {
-  flex: 1;
-  min-width: 200px;
-  display: flex;
-  height: 9px;
-  border-radius: 999px;
-  overflow: hidden;
-  background: var(--bg);
-  border: 1px solid var(--line);
-}
-.cq-bar i {
-  display: block;
-  height: 100%;
-}
-.cq-bar .g {
-  background: var(--ok);
-}
-.cq-bar .b {
-  background: var(--gap);
-}
-
 .cq-verdict {
   font-size: 10.5px;
   font-weight: 600;
@@ -1351,7 +1294,6 @@
   color: var(--ink-soft);
   font-weight: 600;
 }
-
 
 /* ───────────────────────── spec quality ───────────────────────── */
 
